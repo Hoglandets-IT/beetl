@@ -1,0 +1,5 @@
+[MASTER]
+load-plugins=pylint_report
+disable=C0114,C0115,C0116,W0613,C0103,E1120
+[REPORTS]
+output-format=pylint_report.CustomJsonReporter
