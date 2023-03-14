@@ -1,0 +1,110 @@
+sync:
+  - source: json2
+    destination: json
+    mapping: []
+# Source transformers (transform entire source datasets)
+# Field transformers (Transform single/multiple fields)
+sources:
+  - name: json
+    type: File
+    connection:
+      path: "tests/one.json"
+    config:
+      filetype: json
+      columns:
+      - name: id
+        type: Utf8
+        unique: True
+        skip_update: True
+      - name: name
+        type: Utf8
+        unique: False
+        skip_update: False
+  
+  - name: json2
+    type: File
+    connection:
+      path: "tests/two.json"
+    config:
+      filetype: json
+      columns:
+        - name: id
+          type: Utf8
+          unique: True
+          skip_update: True
+        - name: name
+          type: Utf8
+          unique: False
+          skip_update: False
+  
+  - name: sqlserver
+    type: SQLServer
+    connection:
+      connection_string: "mssql://sa:Password123@127.0.0.1:11433/Test"
+    config:
+      query: "SELECT TOP 10 * FROM dbo.dst"
+      columns:
+        - name: username
+          type: Utf8
+          unique: True
+          skip_update: False
+        - name: userprincipalname
+          type: Utf8
+          unique: True
+          skip_update: False
+        - name: name
+          type: Utf8
+          unique: False
+          skip_update: False
+        - name: email
+          type: Utf8
+          unique: False
+          skip_update: False
+        - name: phone
+          type: Utf8
+          unique: False
+          skip_update: False
+        - name: address
+          type: Utf8
+          unique: False
+          skip_update: False
+        - name: city
+          type: Utf8
+          unique: False
+          skip_update: False
+
+  - name: mysql
+    type: MySQL
+    connection:
+      connection_string: "mysql://username:password@127.0.0.1/SingleID"
+    config:
+      query: "SELECT * FROM dst LIMIT 10"
+      columns:
+        - name: username
+          type: Utf8
+          unique: True
+          skip_update: False
+        - name: userprincipalname
+          type: Utf8
+          unique: True
+          skip_update: False
+        - name: name
+          type: Utf8
+          unique: False
+          skip_update: False
+        - name: email
+          type: Utf8
+          unique: False
+          skip_update: False
+        - name: phone
+          type: Utf8
+          unique: False
+          skip_update: False
+        - name: address
+          type: Utf8
+          unique: False
+          skip_update: False
+        - name: city
+          type: Utf8
+          unique: False
+          skip_update: False

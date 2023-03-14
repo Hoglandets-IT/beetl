@@ -1,0 +1,17 @@
+version: "3.2"
+services:
+  mssql:
+    container_name: mssql
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    environment:
+      ACCEPT_EULA: Y
+      MSSQL_SA_PASSWORD: Password123
+    ports:
+      - 11433:1433
+  mysql:
+    container_name: mysql
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: Password123
+    ports:
+      - 13306:3306

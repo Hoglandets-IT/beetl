@@ -1,2 +1,9 @@
-click
-cprint
+requests
+polars[all]
+sqlalchemy
+faker
+pandas
+pyyaml
+pymysql
+pyodbc
+pymssql

@@ -2,12 +2,9 @@
 import os
 from setuptools import setup, find_packages
 
-# Repository name is the module name with dashes, ex. hit-py-template
-# Module name can only contain underscores, so hit_py_template
-# Also, configure the module under hit_py_template/__version__.py
-repository_name = 'pytemplate'
-module_name = 'pytemplate'
-python_min_version = ">=3.6"
+repository_name = 'beetl'
+module_name = 'beetl'
+python_min_version = ">=3.8"
 
 with open('requirements.txt', 'r') as f:
     required_packages = f.read().splitlines()
