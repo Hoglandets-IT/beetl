@@ -12,3 +12,4 @@ src/**/__pycache__/
 **/*.egg-info/
 tests/*.json
 .oldsrc/
+_build

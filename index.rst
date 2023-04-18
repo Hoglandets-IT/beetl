@@ -11,6 +11,9 @@ Welcome to BeETL's documentation!
    :caption: Contents:
 
 
+Readme File
+===========
+.. mdinclude:: ./README.md
 
 Indices and tables
 ==================

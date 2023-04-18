@@ -7,4 +7,3 @@ pyyaml
 pymysql
 pyodbc
 pymssql
-yaml

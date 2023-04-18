@@ -1,13 +1,16 @@
 # BeETL - Extensible python-based engine for ETL tasks
 BeETL was born from a job as Integration Developer where a majority of the integrations we develop follow the same pattern - get here, transform a little, put there (with the middle step frequently missing altogether). After building our 16th integration between the same two systems with another manual template, we decided to build BeETL.
-Currently limited to one source and one destination(source) per sync, but this will be expanded in the future.
-Note: Even though all the configuration below is in YAML format, you can also use JSON or a python dictionary.
+Currently limited to one datasource per source and destination per sync, but this will be expanded in the future. One configuration can contain multiple syncs.
+
+Note: Even though most of the configuration below is in YAML format, you can also use JSON or a python dictionary.
 
 ## Concepts
+The engine is based largely on the Polars library, meaning the comparison and transformations are done in-memory and very quickly. Numbers show that Polars can outperform Pandas by a factor of 10-100x, depending on the operation.
+
 You can find a more detailed explanation of the concepts below in the [documentation](https://beetl.readthedocs.io/en/latest/). The folder "tests" contains a number of examples of how to use the engine.
 
-### Source(/Destination)
-A source is a data-storage type that can be used to retrieve or store data. This can be a file (XML/JSON/Excel/CSV/others), API, Database or any other data storage type.
+### Datasources
+A datasource is a data-storage type that can be used to retrieve or store data. This can be a file (XML/JSON/Excel/CSV/others), API, Database or any other data storage type.
 A basic source consists of the following configuration:
 ```yaml
 # The source identifier, used for tying a source to a sync
@@ -128,6 +131,7 @@ pip3 install beetl
 
 ### From Source
 ```bash
+git clone https://
 python3 setup.py install
 ```
 
