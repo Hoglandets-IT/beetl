@@ -3,124 +3,133 @@ from dataclasses import dataclass
 import polars as pol
 from typing import List
 
+def register_source(name: str, configuration: type, connection_settings: type):
+    def wrapper(cls: type):
+        Sources.sources[name] = {
+            "class": cls,
+            "configuration": configuration,
+            "connection_settings": connection_settings
+        }
+        return cls
+    return wrapper
+
+class Sources:
+    sources: dict = {}
+
 @dataclass
-class DataColumn:
+class ColumnDefinition:
+    """The definition of a column in a dataset.
+    Name: Name of column
+    Type: Polars data type
+    Unique: Whether it is unique
+    Skip Update: Whether to skip updating this field when inserting/updating source
+    """
     name: str
     type: pol.DataType
     unique: bool = False
     skip_update: bool = False
     
-    def __post_init__(self):
+    def __post_init__(self) -> None:
+        """Get the actual data type from Polars"""
         self.type = getattr(pol, self.type)
 
 @dataclass
-class SourceInterfaceConfig:
-    columns: List[DataColumn]
+class SourceInterfaceConfiguration:
+    """ The configuration class used for data sources, abstract"""
+    columns: List[ColumnDefinition]
     
-    def __post_init__(self):
-        self._format_columns()
-    
-    def _format_columns(self):
-        self.columns = [DataColumn(**col) for col in self.columns]
+    def __init__(self, columns: list):
+        self.columns = [ColumnDefinition(**col) for col in columns]
 
 @dataclass
-class SourceConnectionSettings:
+class SourceInterfaceConnectionSettings:
+    """ The connection configuration class used for data sources, abstract"""
     pass
 
-class SourceInterface(ABC):
-    ConnectionSettingsClass = SourceConnectionSettings
-    SourceConfigClass = SourceInterfaceConfig
+class SourceInterface:
+    ConnectionSettingsClass = SourceInterfaceConnectionSettings
+    SourceConfigClass = SourceInterfaceConfiguration
     
-    """Interface for a connection to a data source, either for reading or writing data"""
+    """ Abstract interface for a connection to a data source """
     connection = None
     connection_settings = None
-    source_config = None
+    source_configuration = None
     
     def __init__(self, config: dict, connection: dict) -> None:
-        """Initiates a Source object
+        """Initiates a source class
 
         Args:
-            source_config (dict): Configuration for the source data (columns, unique IDs, etc.)
-            connection_settings (dict): Configuration for the source (connection information, username, password, etc.)
+            config (dict): Coniguration for the source data (columns, IDs, etc.)
+            connection (dict): Configuration for the source connection (paths, credentials, etc.)
         """
         try:
             self.connection_settings = self.ConnectionSettingsClass(**connection)
-            self.source_config = self.SourceConfigClass(**config)
-        except Exception:
-            raise Exception("Invalid connection settings for source")  
+            self.source_configuration = self.SourceConfigClass(**config)
+        except Exception as e:
+            raise Exception("Invalid connection settings for source: " + str(e))
         
         self._configure()
     
     def __enter__(self):
         self._connect()
         return self
-    
+
     def __exit__(self, exc_type, exc_val, exc_tb):
         self._disconnect()
     
     def _configure(self):
-        """ Commands required to configure the connection to the source
-
-        Raises:
-            NotImplementedError: Needs to be implemented in child class
         """
-        raise NotImplementedError 
+            Method responsible for configuring the connection to 
+            the dataset. Should be overridden in child class. 
+            Called during init.
+        """
+        raise NotImplementedError
     
     def _connect(self):
-        """ Code for starting the connection to the source (optional)
-        
         """
-        pass
-    
-    def _disconnect(self):
-        """ Code for ending the connection to the source (optional)
+            Method responsible for connecting to the dataset.
+            Should be overridden in child class. Called during init.
         """
-        pass
-    
-    @abstractmethod
-    def query(self, *args, **kwargs) -> pol.DataFrame:
-        """Query the data source and retrieve a Polars Dataframe object
+        raise NotImplementedError
 
-        Raises:
-            NotImplementedError: Needs to be implemented in child class
+    def _disconnect(self):
+        """
+            Method responsible for disconnecting from the dataset.
+            Should be overridden in child class. Called during exit.
+        """
+        raise NotImplementedError
+    
+    def query(self, params = None) -> pol.DataFrame:
+        """Run a query on the source and return the results
+
+        Args:
+            params (mixed, optional): Parameters for the query. Defaults to None.
 
         Returns:
-            pol.DataFrame: Dataframe with the results of the query
-        """
-        raise NotImplementedError
-
-    @abstractmethod
-    def insert(self, data: pol.DataFrame):
-        """Insert the data in the dataframe into the source
-
-        Args:
-            data (pol.DataFrame): The data to be inserted
-
-        Raises:
-            NotImplementedError: Needs to be implemented in the child class
+            pol.DataFrame: The results of the query
         """
         raise NotImplementedError
     
-    @abstractmethod
-    def update(self, data: pol.DataFrame):
-        """Update the data in the dataframe into the source
+    def insert(self, data: pol.DataFrame) -> None:
+        """Insert data into the source
 
         Args:
-            data (pol.DataFrame): The data to be updated
+            data (pol.DataFrame): The data to insert
+        """
+        raise NotImplementedError
 
-        Raises:
-            NotImplementedError: Needs to be implemented in the child class
+    def update(self, data: pol.DataFrame) -> None:
+        """Update data in the source
+
+        Args:
+            data (pol.DataFrame): The data to update
         """
         raise NotImplementedError
     
-    @abstractmethod
-    def delete(self, data: pol.DataFrame):
-        """Delete the given rows from the data source
+    def delete(self, data: pol.DataFrame) -> None:
+        """Delete data from the source
 
         Args:
-            data (pol.DataFrame): The rows to be deleted
-
-        Raises:
-            NotImplementedError: Needs to be implemented in the child class
+            data (pol.DataFrame): The data to delete
         """
         raise NotImplementedError

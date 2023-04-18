@@ -1,96 +1,120 @@
-from typing import List, Dict
-from dataclasses import dataclass
-from .sources.interface import SourceInterfaceConfig, SourceConnectionSettings
 import yaml
 import json
+from typing import List, Dict
+from dataclasses import dataclass
+from .sources.interface import (
+    SourceInterfaceConfiguration, 
+    SourceInterfaceConnectionSettings
+)
+from .transformers.interface import (
+    TransformerConfiguration
+)
 
-class SourceConfig:
+class SourceConfiguration:
+    """ The configuration class used for datasources """
     name: str
     source_type: str
-    connection: SourceConnectionSettings
-    config: SourceInterfaceConfig
+    connection: SourceInterfaceConnectionSettings
+    config: SourceInterfaceConfiguration
     
-    def __init__(self, name: str, source_type: str, connection: dict, config: dict):
+    def __init__(self, name: str, source_type: str, connection: dict, config: dict) -> None:
         self.name, self.source_type = name, source_type
-        source_class = __import__(f'sources.{source_type.lower()}')
+        source_class = __import__(f'beetl.sources.{source_type.lower()}')
         self.connection = getattr(source_class, f'{source_type}SourceConnectionSettings')(
             **connection
         )
         self.config = getattr(source_class, f'{source_type}SourceConfig')(
             **config
-        )   
+        )
 
 @dataclass
-class SyncConfig:
-    source: SourceConfig
-    destination: SourceConfig
-    mapping: List[dict]
+class SyncConfiguration:
+    """The configuration for a single sync between two sources"""
+    source: SourceConfiguration
+    destination: SourceConfiguration
+    sourceTransformer: TransformerConfiguration = None
+    fieldTransformers: List[TransformerConfiguration] = None
 
-class Config:
-    def __init__(self, config: dict):
-        version = config.get('configVersion', '1')
+class BeetlConfig:
+    """The configuration class for BeETL"""
+    version: str
+    sources: Dict[str, SourceConfiguration]
+    sync_list: List[SyncConfiguration]
+    
+    def __init__(self, config: dict) -> None:
+        # Set version to keep track of changes
+        # in an effort to keep backwards compatibility
+        self.version = config.get('configVersion', 'V1')
         
-        # Get the class corresponding to the config version
-        module_path = ".".join(self.__module__.split('.')[0:-1])
-        config_module = __import__(
-            '.'.join((
-                    module_path, 
-                    'config'
-                )
-            ), 
-            fromlist=['']
-        )
-        config_class = getattr(config_module, 'ConfigV' + version.upper())
+        # Get the class corresponding to the configuration version
+        module = __import__(self.__module__, fromlist=[''])
+        config_class = getattr(module, f'BeetlConfig{self.version}')
         
-        # Init the config
-        self.__dict__ = config_class(config).__dict__
+        # Transform this class into the versioned configuration class
+        self.__dict__ = config_class(config).__dict__        
     
     @classmethod
-    def from_yaml_file(cls, path: str, encoding: str = 'utf-8'):
-        with open(path, 'r', encoding=encoding) as f:
-            content = yaml.safe_load(f)
-        
-        return cls(content)
+    def from_yaml_file(cls, path: str, encoding: str = 'utf-8') -> "BeetlConfig":
+        """Import configuration from YAML file
 
+        Args:
+            path (str): The path to the configuration file
+            encoding (str, optional): The encoding of the file. Defaults to 'utf-8'.
+
+        Raises:
+            Exception: File not found
+
+        Returns:
+            BeetlConfig: Beetl Configuration
+        """        
+        try:
+            with open(path, 'r', encoding=encoding) as file:
+                config = yaml.safe_load(file)
+                return cls(config)
+        except FileNotFoundError as e:
+            raise Exception(f"The configuration file was not found at the path specified ({path}).") from e
+    
     @classmethod
-    def from_json_file(cls, path: str, encoding: str = 'utf-8'):
-        with open(path, 'r', encoding=encoding) as f:
-            content = json.load(f)
-        
-        return cls(content)
+    def from_json_file(cls, path: str, encoding: str = 'utf-8') -> "BeetlConfig":
+        try:
+            with open(path, 'r', encoding=encoding) as file:
+                config = json.load(file)
+                return cls(config)
+        except FileNotFoundError as e:
+            raise Exception(f"The configuration file was not found at the path specified ({path}).") from e
 
-class ConfigV1(Config):
-    sources: Dict[str, SourceConfig]
-    sync: List[SyncConfig]
-
-    def __init__(self, config: SyncConfig):
-        self.sources = {}
-        module_path = ".".join(self.__module__.split('.')[0:-1])
+class BeetlConfigV1(BeetlConfig):
+    """Version 1 of the Beetl Configuration Interface"""
+    def __init__(self, config: dict):
+        self.sources, self.sync_list = {}, []
         
         if len(config.get('sources', '')) == 0 or len(config.get('sync', '')) == 0:
-            raise Exception('Config must contain at least one source and one sync')
+            raise Exception("The configuration file is missing the 'sources' or 'sync' section.")
         
         for source in config['sources']:
             name = source.pop('name')
             source_type = source.pop('type')
-            source_module = __import__(
-                '.'.join((
-                        module_path, 
-                        'sources', 
-                        source_type.lower()
-                    )
-                ), 
-                fromlist=['']
-            )
-            source_class = getattr(source_module, source_type + 'Source')
+            source_module = __import__('.'.join(self.__module__.split('.')[0:-1] + [f'sources.{source_type.lower()}']), fromlist=[''])
+
+            # source_module = __import__(f'beetl.sources.{source_type.lower()}', fromlist=[''])
+            
+            source_class = getattr(source_module, f'{source_type}Source')
             self.sources[name] = source_class(**source)
         
-        self.sync = []
-        for synchro in config["sync"]:
-            self.sync.append(
-                SyncConfig(
-                    source=self.sources[synchro['source']],
-                    destination=self.sources[synchro['destination']],
-                    mapping=synchro.get('mapping', [])
-                )
+        for sync in config['sync']:
+            syncConfig = SyncConfiguration(
+                    source = self.sources[sync['source']],
+                    destination = self.sources[sync['destination']]
             )
+            if sync.get('sourceTransformer', None):
+                syncConfig.sourceTransformer = TransformerConfiguration("source", sync['sourceTransformer'], {})
+            
+            if sync.get('fieldTransformers', None) is not None:
+                syncConfig.fieldTransformers = []
+                for transformer in sync['fieldTransformers']:
+                    syncConfig.fieldTransformers.append(
+                        TransformerConfiguration("field", transformer.get('transformer'), transformer.get('config', None))
+                    )
+            
+            self.sync_list.append(syncConfig)
+        
