@@ -3,8 +3,10 @@ from .config import BeetlConfig
 from polars import DataFrame as POLARS_DF
 
 class Beetl:
-    config: BeetlConfig = None
     """The main class for BeETL. This class is responsible for orchestrating the ETL process."""
+    config: BeetlConfig = None
+    """Holds the BeETL Configuration"""
+    
     def __init__(self, config: BeetlConfig):
         self.config = config
     
@@ -35,7 +37,10 @@ class Beetl:
         return cls(BeetlConfig.from_json_file(path, encoding))
     
     def compare_datasets(self, source: POLARS_DF, destination: POLARS_DF, keys: List[str] = ["id"], columns: List[str] = []) -> List[POLARS_DF]:
-        """Compares two datasets and returns the differences
+        """
+        This function uses polars DataFrames to quickly compare two datasets and return the differences.
+        
+        Polars is roughly 10-50x faster than Pandas for this task, but this can vary depending on the dataset.
 
         Args:
             source (POLARS_DF): The source dataset
@@ -70,10 +75,15 @@ class Beetl:
     
     def sync(self) -> None:
         """Executes the ETL process. The following steps will be performed:
+        
         1. Load source and destination data
+        
         2. Format source data to be compatible with destination through field and source transformers
+        
         3. Compare source and destination data with compare_datasets
+        
         4. Execute the respective insert, update and delete queries
+        
         """
         for sync in self.config.sync_list:
             source_data = sync.source.query()

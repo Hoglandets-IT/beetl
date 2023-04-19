@@ -76,6 +76,18 @@ class BeetlConfig:
     
     @classmethod
     def from_json_file(cls, path: str, encoding: str = 'utf-8') -> "BeetlConfig":
+        """Import configuration from YAML file
+
+        Args:
+            path (str): The path to the configuration file
+            encoding (str, optional): The encoding of the file. Defaults to 'utf-8'.
+
+        Raises:
+            Exception: File not found
+
+        Returns:
+            BeetlConfig: Beetl Configuration
+        """    
         try:
             with open(path, 'r', encoding=encoding) as file:
                 config = json.load(file)
