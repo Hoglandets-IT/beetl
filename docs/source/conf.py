@@ -7,17 +7,24 @@
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
 project = 'BeETL'
-copyright = '2023, Höglandets IT'
+copyright = '2023, Lars Scheibling'
 author = 'Lars Scheibling'
-release = '0.1.0'
+
+version = '0.1.0'
+release = '2023'
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
 
-extensions = ["m2r2"]
+extensions = [
+    'a2d2'
+    'sphinx.ext.autodoc',
+]
 
 templates_path = ['_templates']
-exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
+exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store', '.venv']
+
+language = 'en'
 
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
