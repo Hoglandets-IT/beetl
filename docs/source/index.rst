@@ -1,14 +1,13 @@
 Welcome to BeETL's documentation!
 =================================
 
-
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
-   
-   
 
-.. mdinclude:: ./README.md
+   classes/beetl
+
+.. mdinclude:: ../../README.md
 
 
 Indices and tables
