@@ -5,34 +5,29 @@ classes/beetl
 
 .. Hidden TOCs
 .. toctree::
-   :caption: Information
+   :caption: General Information
    :maxdepth: 4
    
    readme
+   todo
    background
+   structure
 
 .. toctree::
-   :caption: Usage
-   :maxdepth: 5
-   
-   usage/usage
-   usage/transformers/transformers
-   usage/transformers/source/source
-   usage/transformers/field/field
-   usage/sources/sources
-   usage/sources/api/api
-   usage/sources/database/database
-   usage/sources/fake/fake
-   usage/sources/file/file
+   :caption: Datasources
+   :maxdepth: 3
+
+   sources/index
+   transformers/index
 
 .. toctree::
    :caption: Classes
-   :maxdepth: 1
+   :maxdepth: 3
 
    classes/beetl
    classes/config
-   classes/transformers/interface
-   classes/sources/interface
+   classes/interfaces
+
 
 Indices and tables
 ==================

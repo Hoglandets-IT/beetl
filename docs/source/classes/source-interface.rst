@@ -1,5 +1,5 @@
 Source Interface
-****************
+^^^^^^^^^^^^^^^^
 
 .. automodule:: src.beetl.sources.interface
    :members:
