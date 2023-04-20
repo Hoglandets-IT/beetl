@@ -5,7 +5,7 @@ from .interface import (
     register_transformer
 )
 
-class StringFieldTransformer(FieldTransformerInterface):
+class FrameFieldTransformer(FieldTransformerInterface):
     @staticmethod
     @register_transformer('field', 'frames', 'drop_columns')
     def drop_columns(data: pl.DataFrame, columns: List[str]) -> pl.DataFrame:

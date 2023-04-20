@@ -8,26 +8,26 @@ from .interface import (
     SourceInterfaceConnectionSettings
 )
 
-class MysqlSourceConfiguration(SourceInterfaceConfiguration):
-    """ The configuration class used for MySQL sources """
+class SQLServerConfiguration(SourceInterfaceConfiguration):
+    """ The configuration class used for SQL Server sources """
     columns: List[ColumnDefinition]
 
     def __init__(self, columns: list):
         super().__init__(columns)
 
-class MysqlSourceConnectionSettings(SourceInterfaceConnectionSettings):
-    """ The connection configuration class used for MySQL sources """
+class SQLServerConnectionSettings(SourceInterfaceConnectionSettings):
+    """ The connection configuration class used for SQL Server sources """
     data: POLARS_DF
     
     def __init__(self, settings: dict):
         pass
 
-@register_source('mysql', MysqlSourceConfiguration, MysqlSourceConnectionSettings)
-class MysqlSource(SourceInterface):
-    ConnectionSettingsClass = MysqlSourceConnectionSettings
-    SourceConfigClass = MysqlSourceConfiguration
+@register_source('sqlserver', SQLServerConfiguration, SQLServerConnectionSettings)
+class SQLServer(SourceInterface):
+    ConnectionSettingsClass = SQLServerConnectionSettings
+    SourceConfigClass = SQLServerConfiguration
     
-    """ A source for MySQL data """
+    """ A source for SQL Server data """
     
     def _configure(self): pass
     def _connect(self): pass

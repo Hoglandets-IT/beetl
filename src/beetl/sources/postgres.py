@@ -8,26 +8,26 @@ from .interface import (
     SourceInterfaceConnectionSettings
 )
 
-class MysqlSourceConfiguration(SourceInterfaceConfiguration):
-    """ The configuration class used for MySQL sources """
+class PostgresSourceConfiguration(SourceInterfaceConfiguration):
+    """ The configuration class used for Postgresql sources """
     columns: List[ColumnDefinition]
 
     def __init__(self, columns: list):
         super().__init__(columns)
 
-class MysqlSourceConnectionSettings(SourceInterfaceConnectionSettings):
-    """ The connection configuration class used for MySQL sources """
+class PostgresSourceConnectionSettings(SourceInterfaceConnectionSettings):
+    """ The connection configuration class used for Postgresql sources """
     data: POLARS_DF
     
     def __init__(self, settings: dict):
         pass
 
-@register_source('mysql', MysqlSourceConfiguration, MysqlSourceConnectionSettings)
-class MysqlSource(SourceInterface):
-    ConnectionSettingsClass = MysqlSourceConnectionSettings
-    SourceConfigClass = MysqlSourceConfiguration
+@register_source('postgres', PostgresSourceConfiguration, PostgresSourceConnectionSettings)
+class PostgresSource(SourceInterface):
+    ConnectionSettingsClass = PostgresSourceConnectionSettings
+    SourceConfigClass = PostgresSourceConfiguration
     
-    """ A source for MySQL data """
+    """ A source for Postgresql data """
     
     def _configure(self): pass
     def _connect(self): pass

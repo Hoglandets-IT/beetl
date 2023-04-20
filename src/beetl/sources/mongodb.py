@@ -8,26 +8,26 @@ from .interface import (
     SourceInterfaceConnectionSettings
 )
 
-class MysqlSourceConfiguration(SourceInterfaceConfiguration):
-    """ The configuration class used for MySQL sources """
+class MongoDBSourceConfiguration(SourceInterfaceConfiguration):
+    """ The configuration class used for MongoDB sources """
     columns: List[ColumnDefinition]
 
     def __init__(self, columns: list):
         super().__init__(columns)
 
-class MysqlSourceConnectionSettings(SourceInterfaceConnectionSettings):
-    """ The connection configuration class used for MySQL sources """
+class MongoDBSourceConnectionSettings(SourceInterfaceConnectionSettings):
+    """ The connection configuration class used for MongoDB sources """
     data: POLARS_DF
     
     def __init__(self, settings: dict):
         pass
 
-@register_source('mysql', MysqlSourceConfiguration, MysqlSourceConnectionSettings)
-class MysqlSource(SourceInterface):
-    ConnectionSettingsClass = MysqlSourceConnectionSettings
-    SourceConfigClass = MysqlSourceConfiguration
+@register_source('mongodb', MongoDBSourceConfiguration, MongoDBSourceConnectionSettings)
+class MongoDBSource(SourceInterface):
+    ConnectionSettingsClass = MongoDBSourceConnectionSettings
+    SourceConfigClass = MongoDBSourceConfiguration
     
-    """ A source for MySQL data """
+    """ A source for MongoDB data """
     
     def _configure(self): pass
     def _connect(self): pass

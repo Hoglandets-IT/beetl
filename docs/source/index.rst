@@ -6,7 +6,7 @@ classes/beetl
 .. Hidden TOCs
 .. toctree::
    :caption: General Information
-   :maxdepth: 4
+   :maxdepth: 3
    
    readme
    todo
@@ -17,8 +17,15 @@ classes/beetl
    :caption: Datasources
    :maxdepth: 3
 
-   sources/index
-   transformers/index
+   sources/static
+   sources/databases
+
+.. toctree::
+   :caption: Field Transformers
+   :maxdepth: 3
+
+   transformers/strings
+   transformers/frames
 
 .. toctree::
    :caption: Classes
