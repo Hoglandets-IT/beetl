@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-import polars as pol
+import polars as pl
 from typing import List
 
 def register_source(name: str, configuration: type, connection_settings: type):
@@ -25,13 +25,13 @@ class ColumnDefinition:
     Skip Update: Whether to skip updating this field when inserting/updating source
     """
     name: str
-    type: pol.DataType
+    type: pl.DataType
     unique: bool = False
     skip_update: bool = False
     
     def __post_init__(self) -> None:
         """Get the actual data type from Polars"""
-        self.type = getattr(pol, self.type)
+        self.type = getattr(pl, self.type)
 
 @dataclass
 class SourceInterfaceConfiguration:
@@ -99,37 +99,50 @@ class SourceInterface:
         """
         raise NotImplementedError
     
-    def query(self, params = None) -> pol.DataFrame:
+    def query(self, params = None):
+        """Formats the query according to the column specification
+
+        Args:
+            df (DataFrame): The data from the data source
+        """
+        df = self._query(params)
+        
+        for col in self.source_configuration.columns:
+            df = df.with_columns(pl.col(col.name).cast(col.type))
+        
+        return df
+    
+    def _query(self, params = None) -> pl.DataFrame:
         """Run a query on the source and return the results
 
         Args:
             params (mixed, optional): Parameters for the query. Defaults to None.
 
         Returns:
-            pol.DataFrame: The results of the query
+            pl.DataFrame: The results of the query
         """
         raise NotImplementedError
     
-    def insert(self, data: pol.DataFrame) -> None:
+    def insert(self, data: pl.DataFrame) -> None:
         """Insert data into the source
 
         Args:
-            data (pol.DataFrame): The data to insert
+            data (pl.DataFrame): The data to insert
         """
         raise NotImplementedError
 
-    def update(self, data: pol.DataFrame) -> None:
+    def update(self, data: pl.DataFrame) -> None:
         """Update data in the source
 
         Args:
-            data (pol.DataFrame): The data to update
+            data (pl.DataFrame): The data to update
         """
         raise NotImplementedError
     
-    def delete(self, data: pol.DataFrame) -> None:
+    def delete(self, data: pl.DataFrame) -> None:
         """Delete data from the source
 
         Args:
-            data (pol.DataFrame): The data to delete
+            data (pl.DataFrame): The data to delete
         """
         raise NotImplementedError

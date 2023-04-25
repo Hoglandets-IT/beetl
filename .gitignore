@@ -13,3 +13,5 @@ src/**/__pycache__/
 tests/*.json
 .oldsrc/
 _build
+tests/test_production.py
+tests/__pycache__

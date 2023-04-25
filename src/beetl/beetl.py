@@ -36,7 +36,8 @@ class Beetl:
         """
         return cls(BeetlConfig.from_json_file(path, encoding))
     
-    def compare_datasets(self, source: POLARS_DF, destination: POLARS_DF, keys: List[str] = ["id"], columns: List[str] = []) -> List[POLARS_DF]:
+    @staticmethod
+    def compare_datasets(source: POLARS_DF, destination: POLARS_DF, keys: List[str] = ["id"], columns: List[str] = []) -> List[POLARS_DF]:
         """
         This function uses polars DataFrames to quickly compare two datasets and return the differences.
         
@@ -102,6 +103,10 @@ class Beetl:
                         
             create, update, delete = self.compare_datasets(transformedSource, destination_data, unique, columns)
             
-            sync.destination.insert(create)
-            sync.destination.update(update)
-            sync.destination.delete(delete)
+            amount = {}
+            
+            amount['inserts'] = sync.destination.insert(create)
+            amount['updates'] = sync.destination.update(update)
+            amount['deletes'] = sync.destination.delete(delete)
+            
+            return amount

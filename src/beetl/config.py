@@ -44,14 +44,16 @@ class BeetlConfig:
     def __init__(self, config: dict) -> None:
         # Set version to keep track of changes
         # in an effort to keep backwards compatibility
-        self.version = config.get('configVersion', 'V1')
         
         # Get the class corresponding to the configuration version
         module = __import__(self.__module__, fromlist=[''])
-        config_class = getattr(module, f'BeetlConfig{self.version}')
+        config_class = getattr(module, f'BeetlConfig{config.get("configVersion", "V1")}')
         
         # Transform this class into the versioned configuration class
-        self.__dict__ = config_class(config).__dict__        
+        self.__class__ = config_class
+        self.__dict__ = config_class(config).__dict__
+        self.version = config.get('configVersion', 'V1')
+        
     
     @classmethod
     def from_yaml_file(cls, path: str, encoding: str = 'utf-8') -> "BeetlConfig":
@@ -73,7 +75,7 @@ class BeetlConfig:
                 return cls(config)
         except FileNotFoundError as e:
             raise Exception(f"The configuration file was not found at the path specified ({path}).") from e
-    
+
     @classmethod
     def from_json_file(cls, path: str, encoding: str = 'utf-8') -> "BeetlConfig":
         """Import configuration from YAML file
@@ -106,10 +108,7 @@ class BeetlConfigV1(BeetlConfig):
         for source in config['sources']:
             name = source.pop('name')
             source_type = source.pop('type')
-            source_module = __import__('.'.join(self.__module__.split('.')[0:-1] + [f'sources.{source_type.lower()}']), fromlist=[''])
-
-            # source_module = __import__(f'beetl.sources.{source_type.lower()}', fromlist=[''])
-            
+            source_module = __import__('.'.join(self.__module__.split('.')[0:-1] + [f'sources.{source_type.lower()}']), fromlist=[''])          
             source_class = getattr(source_module, f'{source_type}Source')
             self.sources[name] = source_class(**source)
         

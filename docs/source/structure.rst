@@ -229,12 +229,13 @@ data in the destination. Given this example::
               separator: "@"
 
             # Join givenname and sn into displayname
-          - transformer: 
+          - transformer: "strings.join"
             config:
               inFields:
                 - "givenname"
                 - "sn"
               outField: "displayname"
+              separator: " "
           
           - transformer: "frames.clone_field"
             config:

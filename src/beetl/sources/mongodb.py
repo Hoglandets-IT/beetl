@@ -33,7 +33,7 @@ class MongoDBSource(SourceInterface):
     def _connect(self): pass
     def _disconnect(self): pass
     
-    def query(self, params = None) -> POLARS_DF: pass
+    def _query(self, params = None) -> POLARS_DF: pass
     
     def insert(self, data: POLARS_DF): pass
     

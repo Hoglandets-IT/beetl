@@ -33,17 +33,20 @@ class StaticSource(SourceInterface):
     def _connect(self): pass
     def _disconnect(self): pass
     
-    def query(self, params = None) -> POLARS_DF:
+    def _query(self, params = None) -> POLARS_DF:
         return self.connection_settings.data
     
     def insert(self, data: POLARS_DF):
         print("Inserting data into static source...")
         print(data)
+        return len(data)
     
     def update(self, data: POLARS_DF):
         print("Updating data in static source...")
         print(data)
+        return len(data)
     
     def delete(self, data: POLARS_DF):
         print("Deleting data from static source")
         print(data)    
+        return len(data)

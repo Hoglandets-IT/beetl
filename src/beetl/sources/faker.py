@@ -1,12 +1,15 @@
 from typing import List
+
 from polars import DataFrame as POLARS_DF
+
 from .interface import (
-    register_source,
-    SourceInterface,
     ColumnDefinition,
+    SourceInterface,
     SourceInterfaceConfiguration,
-    SourceInterfaceConnectionSettings
+    SourceInterfaceConnectionSettings,
+    register_source,
 )
+
 
 class FakerSourceConfiguration(SourceInterfaceConfiguration):
     """ The configuration class used for faker sources """
@@ -33,7 +36,7 @@ class FakerSource(SourceInterface):
     def _connect(self): pass
     def _disconnect(self): pass
     
-    def query(self, params = None) -> POLARS_DF:
+    def _query(self, params = None) -> POLARS_DF:
         return self.connection_settings.data
     
     def insert(self, data: POLARS_DF):
