@@ -51,7 +51,8 @@ func main() {
 	engine := sqle.NewDefault(
 		memory.NewDBProvider(
 			createTestSourceDatabase(ctx),
-		))
+		),
+	)
 	if err := enableUserAccounts(ctx, engine); err != nil {
 		panic(err)
 	}
@@ -69,34 +70,49 @@ func main() {
 	}
 }
 
+// func createTestDatabase(ctx *sql.Context) *memory.Database {
+// 	db := memory.NewDatabase("test")
+// 	db.EnablePrimaryKeyIndexes()
+
+// 	src_table := memory.NewTable("srctable", sql.NewPrimaryKeySchema(sql.Schema{
+// 		{Name: "id", Type: sql.Int32, Nullable: false, Source: "testtable", PrimaryKey: true},
+// 		{Name: "email", Type: sql.Text, Nullable: false, Source: "testtable"},
+
+// 	}))
+
+// }
+
 func createTestSourceDatabase(ctx *sql.Context) *memory.Database {
 	srcdb := memory.NewDatabase("testdb")
 	srcdb.EnablePrimaryKeyIndexes()
 
 	srctable := memory.NewTable("srctable", sql.NewPrimaryKeySchema(sql.Schema{
-		{Name: "id", Type: types.Int32, Nullable: false, Source: "testtable", PrimaryKey: true},
-		{Name: "name", Type: types.Text, Nullable: false, Source: "testtable", PrimaryKey: false},
-		{Name: "email", Type: types.Text, Nullable: false, Source: "testtable", PrimaryKey: false},
+		{Name: "id", Type: types.Int32, Nullable: false, Source: "srctable", PrimaryKey: true},
+		{Name: "name", Type: types.Text, Nullable: false, Source: "srctable"},
+		{Name: "email", Type: types.Text, Nullable: false, Source: "srctable"},
 	}), srcdb.GetForeignKeyCollection())
 
 	srcdb.AddTable("srctable", srctable)
 
 	dsttable := memory.NewTable("dsttable", sql.NewPrimaryKeySchema(sql.Schema{
-		{Name: "id", Type: types.Int32, Nullable: false, Source: "testtable", PrimaryKey: true},
-		{Name: "name", Type: types.Text, Nullable: false, Source: "testtable", PrimaryKey: false},
-		{Name: "email", Type: types.Text, Nullable: false, Source: "testtable", PrimaryKey: false},
+		{Name: "id", Type: types.Int32, Nullable: false, Source: "dsttable", PrimaryKey: true},
+		{Name: "name", Type: types.Text, Nullable: false, Source: "dsttable"},
+		{Name: "email", Type: types.Text, Nullable: false, Source: "dsttable"},
 	}), srcdb.GetForeignKeyCollection())
 
 	srcdb.AddTable("dsttable", dsttable)
 
-	_ = srctable.Insert(ctx, sql.NewRow(int32(1), "John", "john@test.com"))
-	_ = dsttable.Insert(ctx, sql.NewRow(int32(1), "John", "john@test.com"))
+	// Identical rows (no insert/update)
+	_ = srctable.Insert(ctx, sql.NewRow(int32(1), "IHaventBeenTouched", "unchanged@test.com"))
+	_ = dsttable.Insert(ctx, sql.NewRow(int32(1), "IHaventBeenTouched", "unchanged@test.com"))
 
-	_ = srctable.Insert(ctx, sql.NewRow(int32(2), "Jane", "jane@test.com"))
-	_ = dsttable.Insert(ctx, sql.NewRow(int32(4), "James", "james@test.com"))
+	// Differing rows (insert, delete)
+	_ = srctable.Insert(ctx, sql.NewRow(int32(2), "IHaveBeenCreated", "jane@test.com"))
+	_ = dsttable.Insert(ctx, sql.NewRow(int32(3), "IWillBeDeleted", "morgan@test.com"))
 
-	_ = srctable.Insert(ctx, sql.NewRow(int32(3), "Steffen", "steffen@test.com"))
-	_ = dsttable.Insert(ctx, sql.NewRow(int32(3), "Stephen", "stephen@test.com"))
+	// Differing rows (update)
+	_ = srctable.Insert(ctx, sql.NewRow(int32(4), "IHaveBeenUpdated", "steffen@test.com"))
+	_ = dsttable.Insert(ctx, sql.NewRow(int32(4), "IWillBeUpdated", "steffen@test.com"))
 
 	return srcdb
 }

@@ -113,6 +113,15 @@ class BeetlConfigV1(BeetlConfig):
             self.sources[name] = source_class(**source)
         
         for sync in config['sync']:
+            if ( not self.sources.get(sync['source'], False)
+                or not self.sources.get(sync['destination'], False)
+            ):
+                raise Exception("One of the source/destination names in "
+                                "the sync section does not match a source name "
+                                "in the sources section."
+                                "Please check your configuration.",        
+                )
+
             syncConfig = SyncConfiguration(
                     source = self.sources[sync['source']],
                     destination = self.sources[sync['destination']]

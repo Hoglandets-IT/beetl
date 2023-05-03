@@ -176,7 +176,7 @@ class TestMysqlSource(unittest.TestCase):
                         "name": "mysqlsrc",
                         "type": "Mysql",
                         "config": {
-                            "table": "testtable",
+                            "table": "srctable",
                             "columns": [
                                 {
                                     "name": "id",
@@ -200,15 +200,16 @@ class TestMysqlSource(unittest.TestCase):
                         },
                         "connection": {
                             "settings": {
-                            "connection_string": "mysql://root@localhost:3306/srcdb"    
+                            "connection_string": "mysql://root:password@10.167.100.222:3333/database"    
                             }
                             
                         }
                     },
                     {
-                        "name": "staticdst",
-                        "type": "Static",
+                        "name": "mysqldst",
+                        "type": "Mysql",
                         "config": {
+                            "table": "dsttable",
                             "columns": [
                                 {
                                     "name": "id",
@@ -231,43 +232,29 @@ class TestMysqlSource(unittest.TestCase):
                             ]
                         },
                         "connection": {
-                            "static": [
-                                {
-                                    "id": 1,
-                                    "name": "John",
-                                    "email": "john@test.com"
-                                },
-                                {
-                                    "id": 4,
-                                    "name": "James",
-                                    "email": "jane@test.com"
-                                },
-                                {
-                                    "id": 3,
-                                    "name": "Stephen",
-                                    "email": "stephen@test.com"
-                                }
-                            ]
+                            "settings": {
+                               "connection_string": "mysql://root:password@10.167.100.222:3333/database"
+                            }
                         }
                     }
                 ],
                 "sync": [
                     {
                         "source": "mysqlsrc",
-                        "destination": "staticdst",
+                        "destination": "mysqldst",
                         "fieldTransformers": [
                             {
                                 "transformer": "strings.lowercase",
                                 "config": {
                                     "inField": "name",
-                                    "outField": "nameL"
+                                    "outField": "nameLower"
                                 }
                             },
                             {
                                 "transformer": "strings.uppercase",
                                 "config": {
                                     "inField": "name",
-                                    "outField": "nameU"
+                                    "outField": "nameUpper"
                                 }
                             },
                             {
@@ -285,10 +272,10 @@ class TestMysqlSource(unittest.TestCase):
                                 "transformer": "strings.join",
                                 "config": {
                                     "inFields": [
-                                        "nameL",
-                                        "nameU"
+                                        "nameLower",
+                                        "nameUpper"
                                     ],
-                                    "outField": "name",
+                                    "outField": "displayName",
                                     "separator": " ^-^ "
                                 }
                             },
@@ -296,8 +283,8 @@ class TestMysqlSource(unittest.TestCase):
                                 "transformer": "frames.drop_columns",
                                 "config": {
                                     "columns": [
-                                        "nameL",
-                                        "nameU"
+                                        "nameLower",
+                                        "nameUpper"
                                     ]
                                 }
                             }
@@ -305,6 +292,12 @@ class TestMysqlSource(unittest.TestCase):
                     }
                 ]
             }
+    
+    def test_benchmark_mysql(self):
+        betl = beetl.Beetl(beetl.BeetlConfig(self.basicConfig))
+        amounts = betl.sync()
+        
+        print(amounts)
     
     def test_mysql(self):
         betl = beetl.Beetl(beetl.BeetlConfig(self.basicConfig))
@@ -314,8 +307,19 @@ class TestMysqlSource(unittest.TestCase):
             amounts,
             {
                 "inserts": 1,
-                "updates": 2,
+                "updates": 1,
                 "deletes": 1
+            }
+        )
+        
+        # When running again, the result should be 0, 0, 0
+        amountsTwo = beetl.sync()
+        self.assertEqual(
+            amountsTwo,
+            {
+                "inserts": 0,
+                "updates": 0,
+                "deletes": 0
             }
         )
         

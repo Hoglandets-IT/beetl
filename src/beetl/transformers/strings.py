@@ -8,7 +8,8 @@ class StringFieldTransformer(FieldTransformerInterface):
     @staticmethod
     @register_transformer('field', 'strings', 'lowercase')
     def lowercase(data: pl.DataFrame, inField: str, outField: str) -> pl.DataFrame:
-        """Transform all values in a column to lowercase and insert them into another (or the same) column
+        """ Transform all values in a column to lowercase and insert 
+            them into another (or the same) column
 
         Args:
             data (pl.DataFrame): The dataFrame to modify
@@ -18,13 +19,16 @@ class StringFieldTransformer(FieldTransformerInterface):
         Returns:
             pl.DataFrame: The resulting DataFrame
         """
+        __class__._validate_fields(data.columns, inField)
+        
         data = data.with_columns(data[inField].str.to_lowercase().alias(outField))
         return data
     
     @staticmethod
     @register_transformer('field', 'strings', 'uppercase')
     def uppercase(data: pl.DataFrame, inField: str, outField: str) -> pl.DataFrame:
-        """Transform all values in a column to uppercase and insert them into another (or the same) column
+        """ Transform all values in a column to uppercase 
+            and insert them into another (or the same) column
 
         Args:
             data (pl.DataFrame): The dataFrame to modify

@@ -1,6 +1,9 @@
-from typing import List
+from typing import List, Union
 from .config import BeetlConfig
 from polars import DataFrame as POLARS_DF
+from time import perf_counter
+
+BENCHMARK = []
 
 class Beetl:
     """The main class for BeETL. This class is responsible for orchestrating the ETL process."""
@@ -52,6 +55,13 @@ class Beetl:
         Returns:
             List[POLARS_DF]: A list of Polars Dataframes (Insert, Update, Delete) containing the differences between source and destination
         """
+        
+        if isinstance(source, Union[list, set, tuple]):
+            source = POLARS_DF(source)
+        
+        if isinstance(destination, Union[list, set, tuple]):
+            destination = POLARS_DF(destination)
+        
         # If source is empty, delete all in destination
         if len(source) == 0:
             return source, source, destination
@@ -60,8 +70,8 @@ class Beetl:
         if len(destination) == 0:
             return source, destination, destination
         
-        # Get all columns from source if none are specified
-        columns = source.columns if len(columns) == 0 else columns
+        # Get all columns from destination if none are specified
+        columns = destination.columns if len(columns) == 0 else columns
         
         # Get rows that only exist in source (Creates)
         create = source.join(destination, on=keys, how="anti")
@@ -72,7 +82,24 @@ class Beetl:
         # Get rows that only exist in destination (Deletes)
         delete = destination.join(source, on=keys, how="anti")
         
-        return create, update, delete
+        return (
+            create.select(keys + columns), 
+            update.select(keys + columns), 
+            delete.select(keys)
+        )
+    
+    def benchmark(self, text: str) -> None:
+        """Inserts a benchmark into the log"""
+        BENCHMARK.append({
+            "text": text,
+            "perf": perf_counter()
+        })
+
+        if len(BENCHMARK) > 1:
+            print(
+                BENCHMARK[-1]['text'] + 
+                ": " + 
+                str(round(BENCHMARK[-1]['perf'] - BENCHMARK[-2]['perf'], 5)))
     
     def sync(self) -> None:
         """Executes the ETL process. The following steps will be performed:
@@ -86,27 +113,54 @@ class Beetl:
         4. Execute the respective insert, update and delete queries
         
         """
+        self.benchmark("Starting sync and retrieving source data")
         for sync in self.config.sync_list:
             source_data = sync.source.query()
+            self.benchmark("Finished data retrieval from source")
             destination_data = sync.destination.query()
+            self.benchmark("Finished data retrieval from destination")
             
+            self.benchmark("Starting data transformation")
             transformedSource = source_data
             if sync.sourceTransformer:
                 transformedSource = sync.sourceTransformer.transform(source_data)
-
+            self.benchmark("Finished source data transformation")
+            
             if sync.fieldTransformers is not None:
                 for transformer in sync.fieldTransformers:
                     transformedSource = transformer.transform(transformedSource)
+            self.benchmark("Finished field data transformation")
                        
-            unique = [x.name for x in sync.destination.source_configuration.columns if x.unique == True]
-            columns = [x.name for x in sync.destination.source_configuration.columns if x.skip_update == False and x.unique == False]
-                        
-            create, update, delete = self.compare_datasets(transformedSource, destination_data, unique, columns)
+            unique = [
+                x.name for x in sync.destination.source_configuration.columns 
+                if x.unique is True
+            ]
+            columns = [
+                x.name for x in sync.destination.source_configuration.columns 
+                if (x.skip_update or x.unique) is False 
+            ]
+            
+            self.benchmark("Starting comparison")
+            create, update, delete = self.compare_datasets(
+                transformedSource, 
+                destination_data, 
+                unique, 
+                columns
+            )
+            self.benchmark("Successfully extracted operations from dataset")
             
             amount = {}
             
+            self.benchmark("Starting database operations")
             amount['inserts'] = sync.destination.insert(create)
+            self.benchmark("Finished inserts, starting updates")
             amount['updates'] = sync.destination.update(update)
+            self.benchmark("Finished updates, starting deletes")
             amount['deletes'] = sync.destination.delete(delete)
+            self.benchmark("Finished deletes, sync finished")
+            
+            print("Inserted: " + str(amount['inserts']))
+            print("Updated: " + str(amount['updates']))
+            print("Deleted: " + str(amount['deletes']))
             
             return amount
