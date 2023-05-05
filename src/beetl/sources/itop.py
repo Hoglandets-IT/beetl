@@ -1,31 +1,26 @@
+import os
 import polars as pl
-import sqlalchemy as sqla
-from typing import List
 from .interface import (
     register_source,
     SourceInterface,
-    ColumnDefinition,
     SourceInterfaceConfiguration,
     SourceInterfaceConnectionSettings
 )
 
-class MysqlSourceConfiguration(SourceInterfaceConfiguration):
+class ItopSourceConfiguration(SourceInterfaceConfiguration):
     """ The configuration class used for MySQL sources """
-    columns: List[ColumnDefinition]
-    table: str = None
-    query: str = None
+    dtype: str
 
-    def __init__(self, columns: list, table: str = None, query: str = None):
+    def __init__(self, columns: list, dtype: str):
         super().__init__(columns)
-        self.table = table
-        self.query = query
-        
+        self.dtype = dtype
 
-class MysqlSourceConnectionSettings(SourceInterfaceConnectionSettings):
+class ItopSourceConnectionSettings(SourceInterfaceConnectionSettings):
     """ The connection configuration class used for MySQL sources """
-    connection_string: str
-    query: str = None
-    table: str = None
+    host: str
+    username: str = None
+    password: str = None
+
     
     def __init__(self, settings: dict):
         if settings.get('connection_string', False):
@@ -37,14 +32,28 @@ class MysqlSourceConnectionSettings(SourceInterfaceConnectionSettings):
         f"@{settings['host']}:{settings['port']}/{settings['database']}"
         
 
-@register_source('mysql', MysqlSourceConfiguration, MysqlSourceConnectionSettings)
-class MysqlSource(SourceInterface):
-    ConnectionSettingsClass = MysqlSourceConnectionSettings
-    SourceConfigClass = MysqlSourceConfiguration
+@register_source('mysql', ItopSourceConfiguration, ItopSourceConnectionSettings)
+class ItopSource(SourceInterface):
+    ConnectionSettingsClass = ItopSourceConnectionSettings
+    SourceConfigClass = ItopSourceConfiguration
+    url: str = None
+    body_base: dict = None
+    header_base: dict = None
     
     """ A source for MySQL data """
     
-    def _configure(self): pass
+    def _configure(self):
+        self.body_base = {
+            "auth_user": self.connection_settings.username,
+            "auth_pwd": self.connection_settings.password
+        }
+        
+        self.url = os.path.join(
+            f'https://{self.connection_settings.host}',
+            'webservices',
+            'rest.php?version=1.3&login_mode=form'
+        )
+        
     def _connect(self): pass
     def _disconnect(self): pass
     

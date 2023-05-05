@@ -6,6 +6,9 @@ After building our 16th integration between the same two systems with another ma
 
 Note: Even though most of the configuration below is in YAML format, you can also use JSON or a python dictionary.
 
+## Todo:
+- [ ] Soft Delete/Hard Delete
+
 ## TOC
 - [Installation](#installation)
   - [From PyPi](#from-pypi)
