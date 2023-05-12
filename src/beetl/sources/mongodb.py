@@ -10,17 +10,11 @@ from .interface import (
 
 class MongoDBSourceConfiguration(SourceInterfaceConfiguration):
     """ The configuration class used for MongoDB sources """
-    columns: List[ColumnDefinition]
-
-    def __init__(self, columns: list):
-        super().__init__(columns)
+    pass
 
 class MongoDBSourceConnectionSettings(SourceInterfaceConnectionSettings):
     """ The connection configuration class used for MongoDB sources """
-    data: POLARS_DF
-    
-    def __init__(self, settings: dict):
-        pass
+    pass
 
 @register_source('mongodb', MongoDBSourceConfiguration, MongoDBSourceConnectionSettings)
 class MongoDBSource(SourceInterface):

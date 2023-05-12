@@ -12,6 +12,8 @@ from .interface import (
 class MysqlSourceConfiguration(SourceInterfaceConfiguration):
     """ The configuration class used for MySQL sources """
     columns: List[ColumnDefinition]
+    unique_columns: List[str] = None
+    skip_columns: List[str] = None
     table: str = None
     query: str = None
 

@@ -1,9 +1,5 @@
-from typing import List
-
 from polars import DataFrame as POLARS_DF
-
 from .interface import (
-    ColumnDefinition,
     SourceInterface,
     SourceInterfaceConfiguration,
     SourceInterfaceConnectionSettings,
@@ -12,11 +8,7 @@ from .interface import (
 
 
 class FakerSourceConfiguration(SourceInterfaceConfiguration):
-    """ The configuration class used for faker sources """
-    columns: List[ColumnDefinition]
-
-    def __init__(self, columns: list):
-        super().__init__(columns)
+    pass
 
 class FakerSourceConnectionSettings(SourceInterfaceConnectionSettings):
     """ The connection configuration class used for faker sources """

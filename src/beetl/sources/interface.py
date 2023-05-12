@@ -23,11 +23,13 @@ class ColumnDefinition:
     Type: Polars data type
     Unique: Whether it is unique
     Skip Update: Whether to skip updating this field when inserting/updating source
+    Custom Options: Custom options for some providers
     """
     name: str
     type: pl.DataType
     unique: bool = False
     skip_update: bool = False
+    custom_options: dict = None
     
     def __post_init__(self) -> None:
         """Get the actual data type from Polars"""
@@ -37,9 +39,15 @@ class ColumnDefinition:
 class SourceInterfaceConfiguration:
     """ The configuration class used for data sources, abstract"""
     columns: List[ColumnDefinition]
+    unique_columns: List[str] = None
+    comparison_columns: List[str] = None
+    skip_columns: List[str] = None
     
     def __init__(self, columns: list):
         self.columns = [ColumnDefinition(**col) for col in columns]
+        self.unique_columns = [col.name for col in self.columns if col.unique]
+        self.comparison_columns = [col.name for col in self.columns if (not col.unique and not col.skip_update)]
+        self.skip_columns = [col.name for col in self.columns if col.skip_update]
 
 @dataclass
 class SourceInterfaceConnectionSettings:
@@ -108,7 +116,8 @@ class SourceInterface:
         df = self._query(params)
         
         for col in self.source_configuration.columns:
-            df = df.with_columns(pl.col(col.name).cast(col.type))
+            if col.name in df.columns:
+                df = df.with_columns(pl.col(col.name).cast(col.type))
         
         return df
     

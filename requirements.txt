@@ -8,3 +8,4 @@ pymysql
 pyodbc
 pymssql
 mysql-connector-python
+alive-progress

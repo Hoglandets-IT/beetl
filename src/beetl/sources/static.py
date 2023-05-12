@@ -3,17 +3,13 @@ from polars import DataFrame as POLARS_DF
 from .interface import (
     register_source,
     SourceInterface,
-    ColumnDefinition,
     SourceInterfaceConfiguration,
     SourceInterfaceConnectionSettings
 )
 
 class StaticSourceConfiguration(SourceInterfaceConfiguration):
     """ The configuration class used for static sources """
-    columns: List[ColumnDefinition]
-
-    def __init__(self, columns: list):
-        super().__init__(columns)
+    pass
 
 class StaticSourceConnectionSettings(SourceInterfaceConnectionSettings):
     """ The connection configuration class used for static sources """

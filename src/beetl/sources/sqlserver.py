@@ -1,18 +1,16 @@
 import polars as pl
+import pandas as pd
 import sqlalchemy as sqla
 import pyodbc
-from typing import List
 from .interface import (
     register_source,
     SourceInterface,
-    ColumnDefinition,
     SourceInterfaceConfiguration,
     SourceInterfaceConnectionSettings
 )
 
 class SqlserverConfiguration(SourceInterfaceConfiguration):
     """ The configuration class used for SQLServer sources """
-    columns: List[ColumnDefinition]
     table: str = None
     query: str = None
 
@@ -97,10 +95,19 @@ class SqlserverSource(SourceInterface):
        
 
         if returnData:
-            return pl.read_sql(
-                query=query,
-                connection_uri=self.connection_settings.connection_string
+            pdd = pd.read_sql_query(
+                sql=query,
+                con=self.connection_settings.connection_string
             )
+            # pdd = pd.read_sql_query(
+            #     query=query,
+            #     connection_uri=self.connection_settings.connection_string
+            # )
+            return pl.from_pandas(pdd)
+            # return pl.read_sql(
+            #     query=query,
+            #     connection_uri=self.connection_settings.connection_string
+            # )
         with sqla.create_engine(
             self.connection_settings.connection_string
         ).connect() as con:
@@ -198,29 +205,5 @@ class SqlserverSource(SourceInterface):
         """
         
         self._query(customQuery=query, returnData=False)
-        
-        
-        # batch_size = 500
-        # batches = [data]
-        
-        # if len(data) > batch_size:
-        #     batches = []
-
-        #     for i in range(0, len(data), batch_size):
-        #         batches.append(data[i:i+batch_size])
-
-
-        # for batch in batches:
-        #     id_clause = " AND ".join((
-        #         f"`{fld.name}` IN ({','.join([str(x) for x in batch[fld.name].to_list()])})" 
-        #         for fld in self.source_configuration.columns if fld.unique
-        #     ))
-        
-        #     query = f"""
-        #         DELETE FROM {self.source_configuration.table}
-        #         WHERE {id_clause}
-        #     """
-
-        #     self._query(customQuery=query, returnData=False)
         
         return len(data)

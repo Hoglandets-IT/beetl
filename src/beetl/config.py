@@ -20,9 +20,11 @@ class SourceConfiguration:
     def __init__(self, name: str, source_type: str, connection: dict, config: dict) -> None:
         self.name, self.source_type = name, source_type
         source_class = __import__(f'beetl.sources.{source_type.lower()}')
+        
         self.connection = getattr(source_class, f'{source_type}SourceConnectionSettings')(
             **connection
         )
+        
         self.config = getattr(source_class, f'{source_type}SourceConfig')(
             **config
         )
@@ -32,8 +34,8 @@ class SyncConfiguration:
     """The configuration for a single sync between two sources"""
     source: SourceConfiguration
     destination: SourceConfiguration
-    sourceTransformer: TransformerConfiguration = None
-    fieldTransformers: List[TransformerConfiguration] = None
+    sourceTransformers: TransformerConfiguration = None
+    insertionTransformers: List[TransformerConfiguration] = None
 
 class BeetlConfig:
     """The configuration class for BeETL"""
@@ -129,11 +131,18 @@ class BeetlConfigV1(BeetlConfig):
             if sync.get('sourceTransformer', None):
                 syncConfig.sourceTransformer = TransformerConfiguration("source", sync['sourceTransformer'], {})
             
-            if sync.get('fieldTransformers', None) is not None:
-                syncConfig.fieldTransformers = []
-                for transformer in sync['fieldTransformers']:
-                    syncConfig.fieldTransformers.append(
-                        TransformerConfiguration("field", transformer.get('transformer'), transformer.get('config', None))
+            if sync.get('sourceTransformers', None) is not None:
+                syncConfig.sourceTransformers = []
+                for transformer in sync['sourceTransformers']:
+                    syncConfig.sourceTransformers.append(
+                        TransformerConfiguration(transformer.get('transformer'), transformer.get('config', None))
+                    )
+            
+            if sync.get('insertionTransformers', None) is not None:
+                syncConfig.insertionTransformers = []
+                for transformer in sync['insertionTransformers']:
+                    syncConfig.insertionTransformers.append(
+                        TransformerConfiguration(transformer.get('transformer'), transformer.get('config', None), transformer.get('include_sync', False))
                     )
             
             self.sync_list.append(syncConfig)
