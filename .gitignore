@@ -15,3 +15,6 @@ tests/*.json
 _build
 tests/test_production.py
 tests/__pycache__
+__pycache__
+localtest_*.py
+localtest_*.yml

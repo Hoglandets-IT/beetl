@@ -1,203 +1,52 @@
-from faker import Faker
-from src.beetl import beetl
-from random import randint, shuffle
+import statistics
 import pandas as pd
-from time import perf_counter
+from src.beetl import beetl
+from tests.benchmarks.mysql import MySQLBenchmark
+from tests.benchmarks.mssql import MsSQLBenchmark
 
-
-BASIC_CONFIG = {
-        "version": "V1",
-        "sources": [
-            {
-                "name": "mysqlsrc",
-                "type": "Mysql",
-                "config": {
-                    "table": "srctable",
-                    "columns": [
-                        {
-                            "name": "id",
-                            "type": "Utf8",
-                            "unique": True,
-                            "skip_update": True
-                        },
-                        {
-                            "name": "name",
-                            "type": "Utf8",
-                            "unique": False,
-                            "skip_update": False
-                        },
-                        {
-                            "name": "email",
-                            "type": "Utf8",
-                            "unique": False,
-                            "skip_update": False
-                        }
-                    ]
-                },
-                "connection": {
-                    "settings": {
-                    "connection_string": "mysql://root:password@10.167.100.222:3333/database"    
-                    }
-                    
-                }
-            },
-            {
-                "name": "mysqldst",
-                "type": "Mysql",
-                "config": {
-                    "table": "dsttable",
-                    "columns": [
-                        {
-                            "name": "id",
-                            "type": "Utf8",
-                            "unique": True,
-                            "skip_update": True
-                        },
-                        {
-                            "name": "name",
-                            "type": "Utf8",
-                            "unique": False,
-                            "skip_update": False
-                        },
-                        {
-                            "name": "email",
-                            "type": "Utf8",
-                            "unique": False,
-                            "skip_update": False
-                        }
-                    ]
-                },
-                "connection": {
-                    "settings": {
-                    "connection_string": "mysql://root:password@10.167.100.222:3333/database"
-                    }
-                }
-            }
-        ],
-        "sync": [
-            {
-                "source": "mysqlsrc",
-                "destination": "mysqldst",
-                "fieldTransformers": [
-                    {
-                        "transformer": "strings.lowercase",
-                        "config": {
-                            "inField": "name",
-                            "outField": "nameLower"
-                        }
-                    },
-                    {
-                        "transformer": "strings.uppercase",
-                        "config": {
-                            "inField": "name",
-                            "outField": "nameUpper"
-                        }
-                    },
-                    {
-                        "transformer": "strings.split",
-                        "config": {
-                            "inField": "email",
-                            "outFields": [
-                                "username",
-                                "domain"
-                            ],
-                            "separator": "@"
-                        }
-                    },
-                    {
-                        "transformer": "strings.join",
-                        "config": {
-                            "inFields": [
-                                "nameLower",
-                                "nameUpper"
-                            ],
-                            "outField": "displayName",
-                            "separator": " ^-^ "
-                        }
-                    },
-                    {
-                        "transformer": "frames.drop_columns",
-                        "config": {
-                            "columns": [
-                                "nameLower",
-                                "nameUpper"
-                            ]
-                        }
-                    }
-                ]
-            }
-        ]
-    }
-
-faker = Faker()
-def generateData(amount: int):
-    fakeSrc = []
-    fakeDst = []
-    
-    for i in range(amount):
-        obj = {
-            "id": i,
-            "name": faker.name(),
-            "email": faker.email()
-        }
-        
-        # Lower than 33: insert (remove from dst)
-        if i < amount//3:
-            fakeSrc.append(dict(obj))
-        elif i > (amount//3)*2:
-            fakeDst.append(dict(obj))
-        else:
-            fakeSrc.append(dict(obj))
-            fakeDst.append(dict(obj)) 
-    
-    # Updates
-    for i in range(0, amount//3):
-        if randint(0, 1) == 1:
-            fakeDst[i]["name"] = fakeDst[i]["name"][::-1]
-        if randint(0, 1) == 1:
-            fakeDst[i]["email"] = fakeDst[i]["email"][::-1]
-    
-    return pd.DataFrame(fakeSrc), pd.DataFrame(fakeDst)
-
-def runTestnum(amount: int, betl):
-    print("Starting test with {} rows".format(amount))
-    start_gen = perf_counter()
-    src, dst = generateData(amount)
-    
-    src.to_sql(
-            "srctable",
-            "mysql+pymysql://root:password@localhost:3333/database",
-            if_exists="replace"
-    )
-    
-    dst.to_sql(
-            "dsttable",
-            "mysql+pymysql://root:password@localhost:3333/database",
-            if_exists="replace"
-    )
-    fin = perf_counter() - start_gen
-    print(f"Finished generation and insertion in {fin}s")
-    
-    start = perf_counter()
-    amounts = betl.sync()
-    tim = perf_counter() - start
-    
-    print(f'Finished {amounts["inserts"]} inserts, {amounts["updates"]} updates and {amounts["deletes"]} deletes in {tim}s')   
-    
-
-if __name__ == '__main__':
+def runBenchmark(kind):
     amounts = [
-        # 100, 1-2s
-        # 1000, 2-3s
-        # 10000, ~20-40s
+        100, 
+        1000, 
+        10000, 
         20000,
         40000,
-        60000,
-        100000
+        # 60000,
+        # 100000,
+        # 150000,
+        # 200000,
+        # 300000
     ]
+    betl = beetl.Beetl(beetl.BeetlConfig(kind.BASIC_CONFIG))
+    times = []
     
-    betl = beetl.Beetl(beetl.BeetlConfig(BASIC_CONFIG))
-
     for amount in amounts:
-        runTestnum(amount, betl)
-        print()
+        avv = []
+        # for tr in range(0, 10):
+        amn = kind.runTestnum(amount, betl)
+        avv.append(amn)
+            
+        times.append({
+            "amount": amount,
+            "meanTime": round(statistics.mean(avv), 4),
+            "maxTime": round(max(avv), 4),
+            "minTime": round(min(avv), 4)
+        })
+        print(pd.DataFrame(times))
+    
+    print(pd.DataFrame(times))
+
+if __name__ == '__main__':
+    """
+    podman run --rm -it -e MARIADB_ROOT_PASSWORD=password \
+    -e MARIADB_DATABASE=database -p 3333:3306 mariadb:latest
+    
+    docker run --rm -it -e MARIADB_ROOT_PASSWORD=password \
+    -e MARIADB_DATABASE=database -p 3333:3306 mariadb:latest
+    """
+    # runBenchmark(MySQLBenchmark)
+    """
+    podman run --rm -it -e ACCEPT_EULA=Y -e SA_PASSWORD=Password123 \
+    -e DBNAME=database -p 3334:1433 mssql-server-test:latest
+    """
+    runBenchmark(MsSQLBenchmark)
