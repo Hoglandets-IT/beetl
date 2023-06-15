@@ -140,3 +140,66 @@ sync_config = {
     ]
 }
 ```
+
+### Secrets from Environment Variables
+In case you want to save your secrets in environment variables instead of in the yaml configuration file, you can save them as a json object to an environment variable and replace the "sources"-section with sourcesFromEnv setting.
+
+Note that the "sources" and "sourcesFromEnv" options are mutually exclusive.
+
+```python
+sync_config = {
+    # The version of the config file, currently V1
+    "version": "V1",
+
+    # Fetch source configuration from environment variable BEETL_SOURCES
+    "sourcesFromEnv": "BEETL_SOURCES",
+
+    # The datasources to move data between
+    "sync": [
+        .....
+```
+
+```yaml
+version: "V1"
+sourcesFromEnv: "BEETL_SOURCES"
+sync:
+  - ......
+```
+
+```json
+{
+    "version": "V1",
+    "sourcesFromEnv": "BEETL_SOURCES",
+    "sync": [
+        ......
+```
+
+The format of the sources configuration is the same as the one normally under the "sources"-section:
+
+```python
+[
+    {
+        # The identifier for the datasource
+        "name": "mysql_db",
+
+        # The type (ex. Sqlserver, Rest, Itop)
+        "type": "Mysql",
+
+        # The connection settings for the datasource (connection string or host/user/password)
+        "connection": {
+            "settings": {
+            "connection_string": "mysql://user:password@host:3306/database"
+            }
+        }
+    },
+    {
+        "name": "postgres_db",
+        "type": "Postgres",
+        "connection": {
+            "settings": {
+            "connection_string": "postgresql://user:password@host:5432/database"
+            }
+        }
+    }
+]
+```
