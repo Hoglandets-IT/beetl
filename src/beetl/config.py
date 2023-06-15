@@ -1,3 +1,4 @@
+import os
 import yaml
 import json
 from typing import List, Dict
@@ -122,10 +123,32 @@ class BeetlConfigV1(BeetlConfig):
     def __init__(self, config: dict):
         self.sources, self.sync_list = {}, []
 
-        if len(config.get("sources", "")) == 0 or len(config.get("sync", "")) == 0:
+        if len(config.get("sync", "")) == 0:
             raise Exception(
-                "The configuration file is missing the 'sources' or 'sync' section."
+                "The configuration file is missing the 'sync' section."
             )
+        
+        if len(config.get("sources", "")) == 0:
+            if config.get("sourcesFromEnv", "") in [None, ""]:
+                raise Exception(
+                    "The configuration file is missing the 'sources' section."
+                    "If you are using environment variables to configure your sources, "
+                    "please set the 'sourcesFromEnv' property to the name"
+                    "of the environment variable."
+                )
+            
+            sourcesFromEnv = config.pop("sourcesFromEnv")
+            envJson = os.environ.get(sourcesFromEnv)
+            try:
+                envConfig = json.loads(envJson)
+            except Exception as e:
+                raise Exception(
+                    "The environment variable specified in 'sourcesFromEnv' "
+                    "is not a valid JSON string or does not exist."
+                ) from e
+            
+            config["sources"] = envConfig
+            
 
         for source in config["sources"]:
             name = source.pop("name")
