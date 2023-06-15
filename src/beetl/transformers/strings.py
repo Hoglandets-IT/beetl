@@ -1,14 +1,16 @@
 import polars as pl
 from .interface import (
     TransformerInterface,
-    register_transformer
+    register_transformer,
+    register_transformer_class,
 )
 
+
+@register_transformer_class("strings")
 class StringTransformer(TransformerInterface):
     @staticmethod
-    @register_transformer('strings', 'staticfield')
     def staticfield(data: pl.DataFrame, field: str, value: str) -> pl.DataFrame:
-        """ Add a static field to the DataFrame
+        """Add a static field to the DataFrame
 
         Args:
             data (pl.DataFrame): The dataFrame to modify
@@ -22,9 +24,8 @@ class StringTransformer(TransformerInterface):
         return data
 
     @staticmethod
-    @register_transformer('strings', 'strip')
     def strip(data: pl.DataFrame, inField: str, stripChars: str) -> pl.DataFrame:
-        """ Strip all given characters from a column
+        """Strip all given characters from a column
 
         Args:
             data (pl.DataFrame): The dataFrame to modify
@@ -35,14 +36,13 @@ class StringTransformer(TransformerInterface):
             pl.DataFrame: The resulting DataFrame
         """
         __class__._validate_fields(data.columns, inField)
-        
+
         data = data.with_columns(data[inField].str.strip(stripChars))
         return data
-    
+
     @staticmethod
-    @register_transformer('strings', 'lowercase')
     def lowercase(data: pl.DataFrame, inField: str, outField: str) -> pl.DataFrame:
-        """ Transform all values in a column to lowercase and insert 
+        """Transform all values in a column to lowercase and insert
             them into another (or the same) column
 
         Args:
@@ -54,14 +54,13 @@ class StringTransformer(TransformerInterface):
             pl.DataFrame: The resulting DataFrame
         """
         __class__._validate_fields(data.columns, inField)
-        
+
         data = data.with_columns(data[inField].str.to_lowercase().alias(outField))
         return data
-    
+
     @staticmethod
-    @register_transformer('strings', 'uppercase')
     def uppercase(data: pl.DataFrame, inField: str, outField: str) -> pl.DataFrame:
-        """ Transform all values in a column to uppercase 
+        """Transform all values in a column to uppercase
             and insert them into another (or the same) column
 
         Args:
@@ -74,10 +73,11 @@ class StringTransformer(TransformerInterface):
         """
         data = data.with_columns(data[inField].str.to_uppercase().alias(outField))
         return data
-    
+
     @staticmethod
-    @register_transformer('strings', 'join')
-    def join(data: pl.DataFrame, inFields: list, outField: str, separator: str = '') -> pl.DataFrame:
+    def join(
+        data: pl.DataFrame, inFields: list, outField: str, separator: str = ""
+    ) -> pl.DataFrame:
         """Join multiple columns together
 
         Args:
@@ -94,8 +94,9 @@ class StringTransformer(TransformerInterface):
         return data.with_columns(nCol.alias(outField))
 
     @staticmethod
-    @register_transformer('strings', 'split')
-    def split(data: pl.DataFrame, inField: str, outFields: list, separator: str = '') -> pl.DataFrame:
+    def split(
+        data: pl.DataFrame, inField: str, outFields: list, separator: str = ""
+    ) -> pl.DataFrame:
         """Split a column into multiple fields
 
         Args:
@@ -112,8 +113,19 @@ class StringTransformer(TransformerInterface):
             data[inField]
             .str.splitn(separator, amount)
             .struct.unnest()
-            .rename({f'field_{i}': fld for i, fld in enumerate(outFields)})
+            .rename({f"field_{i}": fld for i, fld in enumerate(outFields)})
         )
 
         return data
-        
+
+    @staticmethod
+    def quote(data: pl.DataFrame, inField: str, outField: str = None, quote: str = "'"):
+        """Quotes the given column values"""
+
+        tmpData = StringTransformer.staticfield(data, "ccQuoteFld", quote)
+
+        new = StringTransformer.join(
+            tmpData, ["ccQuoteFld", inField, "ccQuoteFld"], outField, separator=""
+        )
+
+        return new

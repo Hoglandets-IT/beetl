@@ -14,7 +14,7 @@ Note: Even though most of the configuration below is in YAML format, you can als
   - [From PyPi](#from-pypi)
   - [From Source](#from-source)
 - [Quick Start](#quick-start)
-- [Documentation](https://beetl.readthedocs.io/en/latest/)
+- [Documentation](https://beetl.hoglan.dev/en/latest/)
 - [Source Code](https://github.com/hoglandets-it/beetl)
 
 ## Installation
@@ -27,4 +27,116 @@ pip3 install beetl
 ```bash
 git clone https://
 python3 setup.py install
+```
+
+## Quick Start
+The following is the minimum amount of configuration needed to get started with a simple sync
+
+```python
+from src.beetl.beetl import Beetl, BeetlConfig
+
+sync_config = {
+    # The version of the config file, currently V1
+    "version": "V1",
+    
+    # The datasources to move data between
+    "sources": [
+        {
+            # The identifier for the datasource
+            "name": "mysql_db",
+
+            # The type (ex. Sqlserver, Rest, Itop)
+            "type": "Mysql",
+
+            # The connection settings for the datasource (connection string or host/user/password)
+            "connection": {
+              "settings": {
+                "connection_string": "mysql://user:password@host:3306/database"
+              }
+            }
+        },
+        {
+            "name": "postgres_db",
+            "type": "Postgres",
+            "connection": {
+              "settings": {
+                "connection_string": "postgresql://user:password@host:5432/database"
+              }
+            }
+        }
+    ],
+    # The configuration for the sync(s) to run
+    "sync": [
+        {
+            # The source and destination identifiers
+            "source": "mysql_db",
+            "destination": "postgres_db",
+
+            # The configuration for source/destination
+            "sourceConfig": {
+                # The query with data to fetch
+                "query": "SELECT field1, field2, field3 FROM table1",
+                
+                # The column descriptions for the query
+                "columns": [
+                    {
+                        # The name of the column/field
+                        "name": "field1",
+
+                        # The data type
+                        "type": "Int32",
+
+                        # Whether the column is considered unique
+                        # (unique cols will be used for comparison)
+                        "unique": True
+                    },
+                    {
+                        "name": "field2",
+                        "type": "Utf8",
+                        "unique": False
+                    },
+                    {
+                        "name": "field3",
+                        "type": "Utf8",
+                        "unique": False
+                    }
+                ]
+            },
+            "destinationConfig": {
+                # The table to insert data into
+                "table": "table1",
+
+                # The columns to insert data into
+                "columns": [
+                    {
+                        # The name of the column/field
+                        "name": "field1",
+
+                        # The data type
+                        "type": "Int32",
+
+                        # Whether the column is considered unique
+                        # (unique cols will be used for comparison)
+                        "unique": True
+                    },
+                    {
+                        "name": "field2",
+                        "type": "Utf8",
+                        "unique": False
+                    },
+                    {
+                        "name": "field3",
+                        "type": "Utf8",
+                        "unique": False,
+                        
+                        # Will be created on insert, but not updated
+                        "skip_update": True
+                    }
+                ]
+            },
+            "sourceTransformers": {},
+            "insertionTransformers": {}
+        }
+    ]
+}
 ```
