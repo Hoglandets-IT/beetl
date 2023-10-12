@@ -9,7 +9,7 @@ __description__ = """
 
 # The version and build number
 # Without specifying a unique number, you cannot overwrite packages in the PyPi repo
-__version__ = os.getenv("github.env.release.name", "0.1.1" + os.getenv("GITHUB_RUN_ID", ""))
+__version__ = os.getenv("github.env.release.name", "0.2.1-" + os.getenv("GITHUB_RUN_ID", "devel"))
 
 # Author and license information
 __author__ = "Lars Scheibling"
