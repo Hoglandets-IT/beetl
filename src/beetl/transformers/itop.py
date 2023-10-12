@@ -1,4 +1,4 @@
-from src.beetl.transformers.interface import (
+from .interface import (
     register_transformer_class,
     TransformerInterface,
 )
