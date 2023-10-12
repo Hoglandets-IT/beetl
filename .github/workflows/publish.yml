@@ -60,4 +60,4 @@ jobs:
           context: .
           file: Dockerfile
           push: true
-          tags: ghcr.io/cloudynes/beetl:latest
+          tags: ghcr.io/hoglandets-it/beetl:latest
