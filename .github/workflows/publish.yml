@@ -2,7 +2,6 @@ name: "Publish Application"
 on:
   push:
     branches:
-      - main
       - develop
   release:
     types: [published]
@@ -10,7 +9,6 @@ on:
 jobs:
   package:
     runs-on: ubuntu-latest
-
     steps:
     - uses: actions/checkout@v2
 
@@ -27,7 +25,9 @@ jobs:
 
     - name: Build and publish
       env:
-        RELEASE_NAME: ${{ github.event.release.tag_name }} 
+        GHRUN: ${{ github.run_id }}
+        GHBRANCH: ${{ github.ref }}
+        GHRELEASE: ${{ github.event.release.tag_name }}
         TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
         TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
       run: |
@@ -60,4 +60,5 @@ jobs:
           context: docker
           file: docker/Dockerfile
           push: true
-          tags: ghcr.io/hoglandets-it/beetl:latest
+          # Push to latest on develop, otherwise push to the tag
+          tags: ghcr.io/hoglandets-it/beetl:${{ github.ref == 'refs/heads/develop' && 'latest' || github.ref }}
