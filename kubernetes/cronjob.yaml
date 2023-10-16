@@ -1,0 +1,23 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: beetl-run-sync
+spec:
+  schedule: "10 2 * * *"
+  jobTemplate:
+    spec:
+      volumes:
+      - name: config-volume
+        configMap:
+          name: beetl-test-configmap
+      template:
+        spec:
+          containers:
+          - name: beetl-runner
+            image: ghcr.io/hoglandets-it/beetl:latest
+            command:
+            - /mnt/sync.yaml
+          restartPolicy: OnFailure
+          volumeMounts:
+          - name: config-volume
+            mountPath: /mnt
