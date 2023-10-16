@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: beetl-test-configmap
+data:
+  sync.yaml: |-
+    version: V1
+    sources:
+      - name: source1
+        type: Sqlserver
+        .....
