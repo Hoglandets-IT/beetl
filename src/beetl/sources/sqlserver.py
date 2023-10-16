@@ -39,7 +39,9 @@ class SqlserverConnectionSettings(SourceInterfaceConnectionSettings):
                         "No ODBC drivers found for SQL Server/pyodbc. "
                         "Please make sure at least one is installed"
                     )
+                print("Found other ODBDC driver than the one provided, trying...\n")
                 for driver in pyodbc.drivers():
+                    print(f"Trying driver: {driver}")
                     if "SQL Server" in driver:
                         if "?" not in self.connection_string:
                             self.connection_string += f"?driver={driver}"
@@ -49,7 +51,7 @@ class SqlserverConnectionSettings(SourceInterfaceConnectionSettings):
 
                 if "driver" not in self.connection_string:
                     raise pyodbc.DatabaseError(
-                        "No ODBC drivers found for SQL Server/pyodbc. "
+                        "No working ODBC drivers found for SQL Server/pyodbc. "
                         "Please make sure at least one is installed"
                     )
 
