@@ -69,18 +69,19 @@ class Beetl:
 
         if isinstance(destination, Union[list, set, tuple]):
             destination = pl.DataFrame(destination)
-
-        # If source is empty, delete all in destination
-        if len(source) == 0:
-            return source, source, destination
-
-        # If destination is empty, create all from source
-        if len(destination) == 0:
-            return source, destination, destination
-
+        
         # Get all columns from destination if none are specified
         columns = destination.columns if len(columns) == 0 else columns
 
+        # If source is empty, delete all in destination
+        if len(source) == 0:
+            return source.select(keys + columns), source.select(keys + columns), destination.select(keys)
+
+        # If destination is empty, create all from source
+        if len(destination) == 0:
+            return source.select(keys + columns), destination.select(keys + columns), destination
+
+       
         try:
             # Get rows that only exist in source (Creates)
             create = source.join(destination, on=keys, how="anti")
@@ -101,7 +102,7 @@ class Beetl:
                 f"Comparison columns: {','.join(columns)} \n"
             ) from e
 
-        return (create, update.select(keys + columns), delete.select(keys))
+        return (create.select(keys + columns), update.select(keys + columns), delete.select(keys))
 
     def benchmark(self, text: str) -> None:
         """Inserts a benchmark into the log"""

@@ -17,7 +17,7 @@ class FrameTransformer(TransformerInterface):
             pl.DataFrame: DataFrame with renamed columns
         """
         for column in columns:
-            data.rename(column["from"], column["to"])
+            data = data.rename({column["from"]: column["to"]})
         return data
 
     @staticmethod

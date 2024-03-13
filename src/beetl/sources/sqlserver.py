@@ -1,6 +1,7 @@
 import polars as pl
 import pandas as pd
 import sqlalchemy as sqla
+from sqlalchemy.exc import ProgrammingError
 import pyodbc
 from .interface import (
     register_source,
@@ -15,11 +16,17 @@ class SqlserverConfiguration(SourceInterfaceConfiguration):
 
     table: str = None
     query: str = None
+    soft_delete: bool = False
+    deleted_field: str = None
+    deleted_value: str = "'true'"
 
-    def __init__(self, columns: list, table: str = None, query: str = None):
+    def __init__(self, columns: list, table: str = None, query: str = None, soft_delete: bool = False, deleted_field: str = None, deleted_value: str = "true"):
         super().__init__(columns)
         self.table = table
         self.query = query
+        self.soft_delete = soft_delete
+        self.deleted_field = deleted_field
+        self.deleted_value = deleted_value
 
 
 class SqlserverConnectionSettings(SourceInterfaceConnectionSettings):
@@ -101,15 +108,8 @@ class SqlserverSource(SourceInterface):
             pdd = pd.read_sql_query(
                 sql=query, con=self.connection_settings.connection_string
             )
-            # pdd = pd.read_sql_query(
-            #     query=query,
-            #     connection_uri=self.connection_settings.connection_string
-            # )
+            
             return pl.from_pandas(pdd)
-            # return pl.read_sql(
-            #     query=query,
-            #     connection_uri=self.connection_settings.connection_string
-            # )
         with sqla.create_engine(
             self.connection_settings.connection_string
         ).connect() as con:
@@ -120,37 +120,49 @@ class SqlserverSource(SourceInterface):
             con.commit()
 
     def _insert(
-        self, data: pl.DataFrame, table: str = None, connection_string: str = None
+        self, data: pl.DataFrame, table: str = None, connection_string: str = None, tempDB: bool = False
     ):
+        # Check for binary tables
+        for col in self.source_configuration.columns:
+            if col.type == pl.Binary:
+                data = data.with_columns(pl.col(col.name).apply(lambda x: bytes(x), return_dtype=pl.Binary))
+                # data[col.name] = data[col.name].apply(lambda x: bytes(x), return_dtype=pl.Binary)        
+
         if table is None:
             table = self.source_configuration.table
 
         if connection_string is None:
             connection_string = self.connection_settings.connection_string
-
+        
+        pand_df = data.to_pandas()
         try:
-            data.write_database(
-                table, self.connection_settings.connection_string, if_exists="append"
-            )
+            engine = sqla.create_engine(connection_string)
+            pand_df.to_sql(table, if_exists="append" if not tempDB else "replace", index=False, con=engine)
         except ModuleNotFoundError:
             data.write_database(
                 table,
                 self.connection_settings.connection_string.replace(
                     "mysql://", "mysql+pymysql://"
                 ),
-                if_exists="append",
+                if_exists="append" if not tempDB else "replace",
             )
 
         return len(data)
 
     def insert(self, data: pl.DataFrame):
+        if len(data) == 0:
+            return 0
+        
         return self._insert(data)
 
     def update(self, data: pl.DataFrame):
+        if len(data) == 0:
+            return 0
+        
         tempDB = "##" + self.source_configuration.table + "_udtemp"
 
         # Insert data into temporary table
-        self._insert(data, table=tempDB)
+        self._insert(data, table=tempDB, tempDB=True)
 
         field_spec = ", ".join(
             (
@@ -176,13 +188,16 @@ class SqlserverSource(SourceInterface):
         """
 
         self._query(customQuery=query, returnData=False)
-        # self._query(customQuery="DROP TABLE " + tempDB, returnData=False)
+        self._query(customQuery="DROP TABLE " + tempDB, returnData=False)
 
         return len(data)
 
     def delete(self, data: pl.DataFrame):
+        if len(data) == 0:
+            return 0
+        
         tempDB = "##" + self.source_configuration.table + "_ddtemp"
-        self._insert(data, table=tempDB)
+        self._insert(data, table=tempDB, tempDB=True)
 
         where_clause = " AND ".join(
             (
@@ -200,15 +215,32 @@ class SqlserverSource(SourceInterface):
             )
         )
 
-        query = f"""
-            DELETE TDEST
-            FROM {self.source_configuration.table} AS TDEST
-            WHERE EXISTS (
-                SELECT 1/0
-                FROM {tempDB} AS TTEMP
-                WHERE {where_clause}
-            ) 
-        """
+        if self.source_configuration.soft_delete:
+            if self.source_configuration.deleted_field is None or self.source_configuration.deleted_value is None:
+                raise Exception(
+                    "Deleted field and value must be specified when using soft delete"
+                )
+
+            query = f"""
+                UPDATE TDEST
+                SET {self.source_configuration.deleted_field} = {self.source_configuration.deleted_value}
+                FROM {self.source_configuration.table} AS TDEST
+                WHERE EXISTS (
+                    SELECT 1/0
+                    FROM {tempDB} AS TTEMP
+                    WHERE {where_clause}
+                ) 
+            """
+        else:
+            query = f"""
+                DELETE TDEST
+                FROM {self.source_configuration.table} AS TDEST
+                WHERE EXISTS (
+                    SELECT 1/0
+                    FROM {tempDB} AS TTEMP
+                    WHERE {where_clause}
+                ) 
+            """
 
         self._query(customQuery=query, returnData=False)
 

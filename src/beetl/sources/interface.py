@@ -17,6 +17,8 @@ CASTABLE = (
     pl.Boolean,
     pl.Utf8,
     pl.Object,
+    # Does not quite work
+    # pl.Binary,
 )
 
 
