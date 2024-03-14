@@ -18,3 +18,7 @@ tests/__pycache__
 __pycache__
 localtest_*.py
 localtest_*.yml
+.docs-old
+docs/.vitepress/dist
+docs/.vitepress/cache
+node_modules

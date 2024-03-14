@@ -24,6 +24,23 @@ class StringTransformer(TransformerInterface):
         return data
 
     @staticmethod
+    def set_default(data: pl.DataFrame, inField: str, defaultValue: str) -> pl.DataFrame:
+        """Set a default value for a column
+
+        Args:
+            data (pl.DataFrame): The dataFrame to modify
+            inField (str): The field to process
+            defaultValue (str): The default value
+
+        Returns:
+            pl.DataFrame: The resulting DataFrame
+        """
+        __class__._validate_fields(data.columns, inField)
+        
+        data = data.with_columns(data[inField].fill_null(defaultValue))
+        return data
+
+    @staticmethod
     def strip(data: pl.DataFrame, inField: str, stripChars: str) -> pl.DataFrame:
         """Strip all given characters from a column
 

@@ -1,8 +1,6 @@
 name: "Publish Application"
 on:
-  push:
-    branches:
-      - develop
+  workflow_dispatch:
   release:
     types: [published]
 
