@@ -3,7 +3,7 @@ name: Deploy VitePress site to Pages
 on:
   workflow_dispatch:
   push:
-    branches: [main]
+    branches: [main, develop]
 
 permissions:
   contents: read
@@ -15,7 +15,7 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  build:
+  builddoc:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -40,11 +40,11 @@ jobs:
         with:
           path: docs/.vitepress/dist
 
-  deploy:
+  deploydoc:
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
-    needs: build
+    needs: builddoc
     runs-on: ubuntu-latest
     name: Deploy
     steps:
