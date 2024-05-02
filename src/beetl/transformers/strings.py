@@ -25,7 +25,7 @@ class StringTransformer(TransformerInterface):
 
     @staticmethod
     def set_default(data: pl.DataFrame, inField: str, defaultValue: str) -> pl.DataFrame:
-        """Set a default value for a column
+        """Set a default value for a column if the current value is null
 
         Args:
             data (pl.DataFrame): The dataFrame to modify
@@ -58,7 +58,7 @@ class StringTransformer(TransformerInterface):
         return data
 
     @staticmethod
-    def lowercase(data: pl.DataFrame, inField: str, outField: str) -> pl.DataFrame:
+    def lowercase(data: pl.DataFrame, inField: str = "", outField: str = "", inOutMap: dict = {}) -> pl.DataFrame:
         """Transform all values in a column to lowercase and insert
             them into another (or the same) column
 
@@ -72,11 +72,16 @@ class StringTransformer(TransformerInterface):
         """
         __class__._validate_fields(data.columns, inField)
 
-        data = data.with_columns(data[inField].str.to_lowercase().alias(outField))
+        if len(inOutMap) == 0:
+            inOutMap = {inField: outField}
+        
+        for inf, outf in inOutMap.items():
+            data = data.with_columns(data[inf].str.to_lowercase().alias(outf))
+
         return data
 
     @staticmethod
-    def uppercase(data: pl.DataFrame, inField: str, outField: str) -> pl.DataFrame:
+    def uppercase(data: pl.DataFrame, inField: str = "", outField: str = "", inOutMap: dict = {}) -> pl.DataFrame:
         """Transform all values in a column to uppercase
             and insert them into another (or the same) column
 
@@ -88,7 +93,12 @@ class StringTransformer(TransformerInterface):
         Returns:
             pl.DataFrame: The resulting DataFrame
         """
-        data = data.with_columns(data[inField].str.to_uppercase().alias(outField))
+        if len(inOutMap) == 0:
+            inOutMap = {inField: outField}
+        
+        for inf, outf in inOutMap.items():
+            data = data.with_columns(data[inf].str.to_uppercase().alias(outf))
+        
         return data
 
     @staticmethod
@@ -109,6 +119,16 @@ class StringTransformer(TransformerInterface):
         nCol = pl.concat_str(data[inFields], separator=separator).alias(outField)
 
         return data.with_columns(nCol.alias(outField))
+    
+    @staticmethod
+    def join_listfield(
+        data: pl.DataFrame, inField: str, outField: str, separator: str = ","
+    ) -> pl.DataFrame:
+        
+        
+        data = data.with_columns(data[inField].arr.join(separator).alias(outField))
+        
+        return data
 
     @staticmethod
     def split(
@@ -146,3 +166,16 @@ class StringTransformer(TransformerInterface):
         )
 
         return new
+
+    @staticmethod
+    def replace(data: pl.DataFrame, search: str, replace: str, inField: str, outField: str = None):
+        """Replace a section in a string with another section"""
+
+        return data.with_columns(data[inField].str.replace(search, replace).alias(outField if outField is not None else inField))
+                                 
+    @staticmethod
+    def replace_all(data: pl.DataFrame, search: str, replace: str, inField: str, outField: str = None):
+        """Replace all matching sections in a string with another section"""
+
+        return data.with_columns(data[inField].str.replace_all(search, replace).alias(outField if outField is not None else inField))
+                                 

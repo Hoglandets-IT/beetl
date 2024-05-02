@@ -62,7 +62,7 @@ class Transformers:
                 f"The wrong arguments supplied for transformer {transformer}: {str(e)}"
             ) from e
         except KeyError as e:
-            raise KeyError(f"The transformer {transformer} does not exist") from e
+            raise KeyError(f"The transformer {transformer} does not exist or an error occured in the transformer") from e
         except Exception as e:
             raise Exception(
                 f"An error occurred while running transformer {transformer}: {str(e)}"
