@@ -12,23 +12,47 @@ export default defineConfig({
 
     sidebar: [
       {
-        text: 'Getting Started',
+        text: 'General',
         items: [
-          { text: 'Markdown Examples', link: '/getting-started' },
-          { text: 'Runtime API Examples', link: '/api-reference' }
+          { text: 'Quickstart', link: '/getting-started' },
+          { text: 'Column Specification', link: '/getting-started/columns' },
         ]
       },
       {
-        text: 'API Reference',
+        text: 'Sources',
         items: [
-          { text: 'Markdown Examples', link: '/getting-started' },
-          { text: 'Runtime API Examples', link: '/api-reference' }
+          { text: 'SQL Server', link: '/sources/sqlserver' },
+          { text: 'MySQL', link: '/sources/mysql' },
+          { text: 'iTop', link: '/sources/itop' },
+          { text: 'Postgres', link: '/sources/postgres' },
+          { text: 'MongoDB', link: '/sources/mongodb' },
+          { text: 'Rest API', link: '/sources/restapi' },
         ]
       },
+      {
+        text: 'Transformers',
+        items: [
+          { text: 'SQL Server', link: '/transformers/frames' },
+          { text: 'MySQL', link: '/transformers/itop' },
+          { text: 'iTop', link: '/transformers/misc' },
+          { text: 'Postgres', link: '/transformers/regex' },
+          { text: 'MongoDB', link: '/transformers/strings' },
+          { text: 'Rest API', link: '/transformers/structs' },
+        ]
+      },
+      {
+        text: 'Developer Reference',
+        items: [
+          { text: 'Extending BeETL', link: '/developer-reference/extending' },
+          { text: 'Creating a Source', link: '/developer-reference/creating-source' },
+          { text: 'Creating a Transformer', link: '/developer-reference/creating-transformer' },
+          { text: 'Submitting improvements', link: '/developer-reference/improvements' }
+        ]
+      }
     ],
 
     socialLinks: [
-      { icon: 'github', link: 'https://github.com/vuejs/vitepress' }
+      { icon: 'github', link: 'https://github.com/hoglandets-it/beetl' }
     ]
   }
 })

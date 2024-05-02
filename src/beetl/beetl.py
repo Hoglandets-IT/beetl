@@ -73,14 +73,28 @@ class Beetl:
         # Get all columns from destination if none are specified
         columns = destination.columns if len(columns) == 0 else columns
 
+        for column in columns:
+            
+            if column not in source.columns and column not in destination.columns:
+                raise Exception(f"Column {column} does not exist in any of the datasets")
+            
+            if column not in source.columns:
+                source = source.with_columns(pl.lit(None).alias(column).cast(source[column].dtype))
+            
+            if column not in destination.columns:
+                destination = destination.with_columns(pl.lit(None).alias(column).cast(source[column].dtype))
+
         # If source is empty, delete all in destination
         if len(source) == 0:
             return source.select(keys + columns), source.select(keys + columns), destination.select(keys)
 
         # If destination is empty, create all from source
         if len(destination) == 0:
-            return source.select(keys + columns), destination.select(keys + columns), destination
-
+            return (
+                source.select(keys + columns if keys != columns else keys),
+                destination.select(keys + columns if keys != columns else keys), 
+                destination
+            )
        
         try:
             # Get rows that only exist in source (Creates)
@@ -102,7 +116,11 @@ class Beetl:
                 f"Comparison columns: {','.join(columns)} \n"
             ) from e
 
-        return (create.select(keys + columns), update.select(keys + columns), delete.select(keys))
+        return (
+                create.select(keys + columns if keys != columns else keys),
+                update.select(keys + columns if keys != columns else keys), 
+                delete.select(keys)
+            )
 
     def benchmark(self, text: str) -> None:
         """Inserts a benchmark into the log"""

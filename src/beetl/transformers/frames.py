@@ -1,4 +1,5 @@
 from typing import List
+import json
 import polars as pl
 from .interface import TransformerInterface, register_transformer_class
 
@@ -48,3 +49,53 @@ class FrameTransformer(TransformerInterface):
             pl.DataFrame: The dataframe without the columns
         """
         return data.drop(columns)
+
+    @staticmethod
+    def extract_nested_rows(data: pl.DataFrame, iterField: str = "", fieldMap: dict = {}, colMap: dict = {}):
+        """
+        Convert each list item in a list column to a row
+
+        Args:
+            data (pl.DataFrame): Multiply rows in this database
+            inField (str): The list column to get values from
+            outField (str): The column in the result to put the iterated value in
+            column_path (str): The path in the list item to the value of the new column
+            includeColumns (List[str]): Columns to include in the result
+        """
+        new_obj = []
+        
+        def extract_field(data: dict, path: str):
+            splitPath = path.split(".")
+            for segment in splitPath:
+                try:
+                    iSegment = int(segment)
+                    if len(data) <= iSegment:
+                        return ""
+                    
+                    data = data[iSegment]
+                except Exception:
+                    try:
+                        data = data[segment]
+                    except Exception:
+                        return ""
+            
+            return data
+        
+        for row in data.iter_rows(named=True):
+            cData = row[iterField]
+            if isinstance(cData, str):
+                cData = json.loads(cData)
+            
+            for i in range(len(cData)):
+                new_row = {}
+                
+                for field, path in fieldMap.items():
+                    new_row[field] = extract_field(cData[i], path)
+                
+                for dst, src in colMap.items():
+                    new_row[dst] = row[src]
+            
+            
+                new_obj.append(new_row)
+        
+        return pl.DataFrame(new_obj)
