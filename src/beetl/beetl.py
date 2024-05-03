@@ -3,6 +3,7 @@ from .config import BeetlConfig, SyncConfiguration
 from .transformers.interface import TransformerConfiguration
 import polars as pl
 from time import perf_counter
+from tabulate import tabulate
 
 BENCHMARK = []
 
@@ -78,10 +79,10 @@ class Beetl:
             if column not in source.columns and column not in destination.columns:
                 raise Exception(f"Column {column} does not exist in any of the datasets")
             
-            if column not in source.columns:
+            if column not in source.columns and len(source) > 0:
                 source = source.with_columns(pl.lit(None).alias(column).cast(source[column].dtype))
             
-            if column not in destination.columns:
+            if column not in destination.columns and len(destination) > 0:
                 destination = destination.with_columns(pl.lit(None).alias(column).cast(source[column].dtype))
 
         # If source is empty, delete all in destination
@@ -92,7 +93,7 @@ class Beetl:
         if len(destination) == 0:
             return (
                 source.select(keys + columns if keys != columns else keys),
-                destination.select(keys + columns if keys != columns else keys), 
+                destination, 
                 destination
             )
        
@@ -164,6 +165,7 @@ class Beetl:
 
         """
         self.benchmark("Starting sync and retrieving source data")
+        allAmounts = []
         for i, sync in enumerate(self.config.sync_list, 1):
             if sync.name != "":
                 print(f"Starting sync: {sync.name}")
@@ -215,4 +217,7 @@ class Beetl:
             print("Updated: " + str(amount["updates"]))
             print("Deleted: " + str(amount["deletes"]))
 
-        return amount
+            allAmounts.append([sync.name, *amount.values()])
+        
+        print("\r\n\r\n" + tabulate(allAmounts, headers=["Sync", "Inserts", "Updates", "Deletes"]))
+        return allAmounts

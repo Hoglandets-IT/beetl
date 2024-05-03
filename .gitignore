@@ -22,3 +22,5 @@ localtest_*.yml
 docs/.vitepress/dist
 docs/.vitepress/cache
 node_modules
+/*.yaml
+!/.readthedocs.yaml

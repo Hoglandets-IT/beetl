@@ -46,6 +46,11 @@ class ItopSourceConfiguration(SourceInterfaceConfiguration):
             else comparison_columns
         )
         self.soft_delete = soft_delete
+        
+        for field in self.columns:
+            if field.custom_options is not None:
+                if field.custom_options.get("itop", {}).get("comparison_field", False):
+                    self.has_foreign = True
 
     def get_output_fields_for_request(self):
         output = []
