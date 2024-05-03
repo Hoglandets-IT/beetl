@@ -1,5 +1,5 @@
 requests
-polars[all]
+polars[all]==0.17.5
 sqlalchemy
 faker
 pandas
