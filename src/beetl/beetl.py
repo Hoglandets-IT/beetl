@@ -164,7 +164,11 @@ class Beetl:
 
         """
         self.benchmark("Starting sync and retrieving source data")
-        for sync in self.config.sync_list:
+        for i, sync in enumerate(self.config.sync_list, 1):
+            if sync.name != "":
+                print(f"Starting sync: {sync.name}")
+            else:
+                print(f"Starting sync {i}")
             source_data = sync.source.query(sync.sourceConfig)
             self.benchmark("Finished data retrieval from source")
 
