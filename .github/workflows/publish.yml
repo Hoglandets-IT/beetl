@@ -59,4 +59,4 @@ jobs:
           file: docker/Dockerfile
           push: true
           # Push to latest on develop, otherwise push to the tag
-          tags: ghcr.io/hoglandets-it/beetl:${{ github.ref == 'refs/heads/develop' && 'latest' || github.ref }}
+          tags: ghcr.io/hoglandets-it/beetl:${{ github.ref == 'refs/heads/develop' && 'latest' || github.event.release.tag_name }}
