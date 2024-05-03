@@ -124,9 +124,10 @@ class StringTransformer(TransformerInterface):
     def join_listfield(
         data: pl.DataFrame, inField: str, outField: str, separator: str = ","
     ) -> pl.DataFrame:
-        
-        
-        data = data.with_columns(data[inField].arr.join(separator).alias(outField))
+        try:
+            data = data.with_columns(data[inField].arr.join(separator).alias(outField))
+        except Exception:
+            data = data.with_columns(data[inField].cast(pl.List).arr.join(separator).alias(outField))
         
         return data
 
