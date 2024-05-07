@@ -41,7 +41,7 @@ class StringTransformer(TransformerInterface):
         return data
 
     @staticmethod
-    def strip(data: pl.DataFrame, inField: str, stripChars: str) -> pl.DataFrame:
+    def strip(data: pl.DataFrame, inField: str, stripChars: str, outField: str = None) -> pl.DataFrame:
         """Strip all given characters from a column
 
         Args:
@@ -54,7 +54,7 @@ class StringTransformer(TransformerInterface):
         """
         __class__._validate_fields(data.columns, inField)
 
-        data = data.with_columns(data[inField].str.strip(stripChars))
+        data = data.with_columns(data[inField].str.strip(stripChars).alias(outField if outField is not None else inField))
         return data
 
     @staticmethod
@@ -179,4 +179,11 @@ class StringTransformer(TransformerInterface):
         """Replace all matching sections in a string with another section"""
 
         return data.with_columns(data[inField].str.replace_all(search, replace).alias(outField if outField is not None else inField))
+
+    @staticmethod
+    def substring(data: pl.DataFrame, inField: str, outField: str = None, start: int = 0, length: int = None):
+        """Returns a substring of the given string column"""
+
+        return data.with_columns(data[inField].str.slice(start, length).alias(outField if outField is not None else inField))
+        
                                  

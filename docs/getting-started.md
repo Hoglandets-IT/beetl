@@ -211,7 +211,7 @@ BeETL will first apply all the source transformers, then run the data through a 
 
 ### Insertion Transformers
 
-This basic flow has no insertion transformers defined, since they are a more advanced feature. You can read more about them in the [insertion transformers documentation](/insertion-transformers)
+This basic flow has no insertion transformers defined, since they are a more advanced feature. You can read more about them in the insertion transformers documentation (/transformers/pre-insertion)
 
 ::: tip
 
