@@ -221,7 +221,14 @@ BeETL will run the insertion transformers when the changes have been determined,
 
 :::
 
-### Data Insertion
+### Data Insertion, Updates and Deletes
+
+When the transformation is finished, the insert, update and delete steps will be run according to the configuration for the source/destination pair.
+
+
+
+### Running this sync
+
 To run the sync, you can either use the CLI or the Python API. Here's an example of how to run the sync using the Python API.
 
 ```python

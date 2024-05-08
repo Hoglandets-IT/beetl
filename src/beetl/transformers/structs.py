@@ -47,10 +47,7 @@ class StructTransformers(TransformerInterface):
                 return fData
             except:
                 return defaultValue
-            
-
-            return "OK"
-        
+                    
         dCol = data[inField]
         outCol = []
         for i in range(len(dCol)):

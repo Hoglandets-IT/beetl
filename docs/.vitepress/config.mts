@@ -19,6 +19,12 @@ export default defineConfig({
         ]
       },
       {
+        text: 'Examples',
+        items: [
+          { text: 'Nutanix to SQL Server', link: '/examples/nutanix-to-sqlserver' },
+        ]
+      },
+      {
         text: 'Sources',
         items: [
           { text: 'SQL Server', link: '/sources/sqlserver' },
@@ -32,12 +38,13 @@ export default defineConfig({
       {
         text: 'Transformers',
         items: [
-          { text: 'SQL Server', link: '/transformers/frames' },
-          { text: 'MySQL', link: '/transformers/itop' },
-          { text: 'iTop', link: '/transformers/misc' },
-          { text: 'Postgres', link: '/transformers/regex' },
-          { text: 'MongoDB', link: '/transformers/strings' },
-          { text: 'Rest API', link: '/transformers/structs' },
+          { text: 'Frames', link: '/transformers/frames' },
+          { text: 'iTop', link: '/transformers/itop' },
+          { text: 'Miscellaneous', link: '/transformers/misc' },
+          { text: 'Regex', link: '/transformers/regex' },
+          { text: 'Strings', link: '/transformers/strings' },
+          { text: 'Structs', link: '/transformers/structs' },
+          { text: 'Integers', link: '/transformers/int' },
         ]
       },
       {

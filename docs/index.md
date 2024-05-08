@@ -14,6 +14,9 @@ hero:
       text: Getting Started
       link: /getting-started
     - theme: alt
+      text: Examples
+      link: /examples
+    - theme: alt
       text: API Reference
       link: /api-reference
 
