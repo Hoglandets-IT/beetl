@@ -16,4 +16,9 @@ hero:
     - theme: alt
       text: API Reference
       link: /api-reference
+
 ---
+
+## Introduction
+Beetl is a framework that was designed to simplify the transfer of data between structurally similar data sources (e.g. REST API to SQL Server, CSV to API, etc) by providing a simple and extensible way to define the data sources and the transformations that need to be applied to the data.
+

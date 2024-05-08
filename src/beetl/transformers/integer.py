@@ -22,3 +22,24 @@ class IntegerTransformer(TransformerInterface):
         data = data.with_columns((data[inField].cast(inType) / factor).round(0).cast(outType).alias(outField))
         
         return data
+    
+    @staticmethod
+    def fillna(data: pl.DataFrame, inField: str, outField: str = None, value: int = 0) -> pl.DataFrame:
+        """Fill the missing values in a given column with the given value
+
+        Args:
+            data (pl.DataFrame): The dataFrame to modify
+            inField (str): The field to process
+            outField (str): The field to put the output into
+            value (int): The value to fill
+
+        Returns:
+            pl.DataFrame: The resulting DataFrame
+        """
+        
+        try:
+            data = data.with_columns(data[inField].fill_nan(value).alias(outField or inField))
+        except Exception:
+            data = data.with_columns(data[inField].fill_null(value).alias(outField or inField))
+        
+        return data
