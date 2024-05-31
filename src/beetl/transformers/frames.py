@@ -7,6 +7,41 @@ from .interface import TransformerInterface, register_transformer_class
 @register_transformer_class("frames")
 class FrameTransformer(TransformerInterface):
     @staticmethod
+    def filter(data: pl.DataFrame, filter: dict):
+        """Filter a DataFrame
+
+        Args:
+            data (pl.DataFrame): The DataFrame to filter
+            filter (dict): The filter to apply
+
+        Returns:
+            pl.DataFrame: The filtered DataFrame
+        """
+        for key, value in filter.items():
+            data = data.filter(data[key] == value)
+        
+        return data
+    
+    @staticmethod
+    def conditional(data: pl.DataFrame, conditionField: str, ifTrue: str, ifFalse: str):
+        """Apply a conditional to a DataFrame
+
+        Args:
+            data (pl.DataFrame): The DataFrame to apply the conditional to
+            conditionField (str): The field to check
+            ifTrue (str): The value to set if the condition is true
+            ifFalse (str): The value to set if the condition is false
+
+        Returns:
+            pl.DataFrame: The DataFrame with the conditional applied
+        """
+        data = data.with_column(
+            pl.when(data[conditionField] == True).then(ifTrue).otherwise(ifFalse)
+        )
+        
+        return data
+    
+    @staticmethod
     def rename_columns(data: pl.DataFrame, columns: List[dict]):
         """Rename columns in the dataset
 
@@ -17,7 +52,17 @@ class FrameTransformer(TransformerInterface):
         Returns:
             pl.DataFrame: DataFrame with renamed columns
         """
-        for column in columns:
+        ncolumns = columns
+        
+        if isinstance(columns, dict):
+            ncolumns = []
+            for k, v in columns.items():
+                ncolumns.append({
+                    "from": k,
+                    "to": v
+                })
+        
+        for column in ncolumns:
             data = data.rename({column["from"]: column["to"]})
         return data
 
@@ -89,8 +134,15 @@ class FrameTransformer(TransformerInterface):
             for i in range(len(cData)):
                 new_row = {}
                 
-                for field, path in fieldMap.items():
-                    new_row[field] = extract_field(cData[i], path)
+                if fieldMap is None or len(fieldMap) == 0:
+                    new_row["value"] = cData[i]
+                
+                if isinstance(cData[i], str):
+                    if len(fieldMap) == 1:
+                        new_row[list(fieldMap.values())[0]] = cData[i]
+                else:
+                    for field, path in fieldMap.items():
+                        new_row[field] = extract_field(cData[i], path)
                 
                 for dst, src in colMap.items():
                     new_row[dst] = row[src]

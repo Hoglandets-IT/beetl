@@ -17,7 +17,7 @@ from .interface import (
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
-BULK_CUTOFF = 500
+BULK_CUTOFF = 250
 
 
 class ItopSourceConfiguration(SourceInterfaceConfiguration):

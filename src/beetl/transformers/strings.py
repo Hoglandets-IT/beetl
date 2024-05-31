@@ -186,4 +186,8 @@ class StringTransformer(TransformerInterface):
 
         return data.with_columns(data[inField].str.slice(start, length).alias(outField if outField is not None else inField))
         
-                                 
+    @staticmethod
+    def add_prefix(data: pl.DataFrame, inField: str, prefix: str, outField: str = None):
+        """Add a prefix to the given column"""
+
+        return data.with_columns(pl.concat_str(pl.Series("ccTempField", [prefix] * len(data)), data[inField]).alias(outField if outField is not None else inField))

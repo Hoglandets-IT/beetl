@@ -97,7 +97,19 @@ class SourceInterfaceConfiguration:
     skip_columns: List[str] = None
 
     def __init__(self, columns: list):
-        self.columns = [ColumnDefinition(**col) for col in columns]
+        ncolumns = columns
+        if isinstance(columns, dict):
+            ncolumns = []
+            for k, v in columns.items():
+                ncolumns.append({
+                    "name": k,
+                    "type": v,
+                    "unique": False
+                })
+            
+            ncolumns[0]["unique"] = True
+        
+        self.columns = [ColumnDefinition(**col) for col in ncolumns]
         self.unique_columns = [col.name for col in self.columns if col.unique]
         self.comparison_columns = [
             col.name for col in self.columns if (not col.unique and not col.skip_update)

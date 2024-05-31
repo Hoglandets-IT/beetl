@@ -142,3 +142,14 @@ Extracts a substring from a string
     start: 1
     # length: 5 (Optional, default is until end of string)
 ```
+
+## Add Prefix
+Adds a prefix to a string
+
+```yaml
+- transformer: strings.add_prefix
+  config:
+    inField: field_name
+    # outField: new_field (Optional, default is same as inField)
+    prefix: "prefix_"
+```

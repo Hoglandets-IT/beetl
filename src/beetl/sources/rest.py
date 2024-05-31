@@ -3,6 +3,7 @@ import pandas as pd
 from enum import Enum
 import sqlalchemy as sqla
 from typing import Dict, List
+from pyarrow.lib import ArrowInvalid
 from .interface import (
     register_source,
     SourceInterface,
@@ -28,16 +29,37 @@ class BodyOptions:
         self.accepts_multiple = accepts_multiple
         self.object_path = object_path
 
+class PaginationSettings:
+    enabled: bool = False
+    pageSize: int = 10
+    startPage: int = 0
+    pageSizeQuery: str = "pageSize"
+    pageQuery: str = "page"
+    totalQuery: str = "page.count"
+    queryIn: str = "query"
+    totalQueryIn: str = "body"
+    
+    def __init__(self, **kwargs):
+        self.enabled = kwargs.get("enabled", False)
+        self.pageSizeQuery = kwargs.get("pageSizeQuery", "pageSize")
+        self.pageSize = kwargs.get("pageSize", 10)
+        self.startPage = kwargs.get("startPage", 0)
+        self.pageQuery = kwargs.get("pageQuery", "page")
+        self.totalQuery = kwargs.get("totalQuery", "count")
+        self.queryIn = kwargs.get("queryIn", "query")
+    
 class RestRequest:
     path: str = None
+    query: dict = {}
     method: str = "GET"
+    pagination: PaginationSettings = None
     body_type: str = "application/json"
     body = None
     body_options: BodyOptions = None
     return_type: str = "application/json"
     response: RestResponse = None
     
-    def __init__(self, path: str = None, method: str = "GET", body_type: str = "application/json", body = None, body_options: dict = None, return_type: str = "application/json", response: dict = None):
+    def __init__(self, path: str = None, query: dict = {}, method: str = "GET", body_type: str = "application/json", body = None, body_options: dict = None, return_type: str = "application/json", response: dict = None, pagination: dict = None):
         self.path = path
         self.method = method
         self.body_type = body_type
@@ -45,7 +67,11 @@ class RestRequest:
         self.return_type = return_type
         if body_options is not None:
             self.body_options = BodyOptions(**body_options)
+        if pagination is not None:
+            self.pagination = PaginationSettings(**pagination)
         self.response = response
+        self.query = query
+        
         
 class RestSourceConfiguration(SourceInterfaceConfiguration):
     """The configuration class used for MySQL sources"""
@@ -61,6 +87,15 @@ class RestSourceConfiguration(SourceInterfaceConfiguration):
         self.updateRequest = RestRequest(**updateRequest if updateRequest is not None else {})
         self.deleteRequest = RestRequest(**deleteRequest if deleteRequest is not None else {})
 
+class Oauth2Settings:
+    def __init__(self, flow: str = "", token_url: str = "", authorization_url: str = "", token_body: dict = {}, token_path: str = "access_token", valid_to_path: str = "expires_on"):
+        self.flow = flow
+        self.token_url = token_url
+        self.authorization_url = authorization_url
+        self.token_body = token_body
+        self.token_path = token_path
+        self.valid_to_path = valid_to_path
+
 class RestAuthentication:
     basic: bool = False
     basic_user: str = None
@@ -68,16 +103,22 @@ class RestAuthentication:
     bearer: bool = False
     bearer_prefix: str = "Bearer"
     bearer_token: str = None
+    oauth2: bool = False
+    oauth2_settings: Oauth2Settings = None
 
     
-    def __init__(self, basic: bool = False, basic_user: str = None, basic_pass: str = None, bearer: bool = False, bearer_prefix: str = "Bearer", bearer_token: str = None, soft_delete: bool = False, delete_field: str = "deleted", deleted_value = None):
-        self.basic = basic
-        self.basic_user = basic_user
-        self.basic_pass = basic_pass
-        self.bearer = bearer
-        self.bearer_prefix = bearer_prefix
-        self.bearer_token = bearer_token
-     
+    # def __init__(self, basic: bool = False, basic_user: str = None, basic_pass: str = None, bearer: bool = False, bearer_prefix: str = "Bearer", bearer_token: str = None, soft_delete: bool = False, delete_field: str = "deleted", deleted_value = None):
+    def __init__(self, **kvargs):
+        self.basic = kvargs.get("basic", False)
+        self.basic_user = kvargs.get("basic_user", None)
+        self.basic_pass = kvargs.get("basic_pass", None)
+        self.bearer = kvargs.get("bearer", False)
+        self.bearer_prefix = kvargs.get("bearer_prefix", "Bearer")
+        self.bearer_token = kvargs.get("bearer_token", None)
+        self.oauth2 = kvargs.get("oauth2", False)
+        self.oauth2_settings = kvargs.get("oauth2_settings", {})
+        if self.oauth2:
+            self.oauth2_settings = Oauth2Settings(**kvargs["oauth2_settings"])
 
 class RestSourceConnectionSettings(SourceInterfaceConnectionSettings):
     """The connection configuration class used for MySQL sources"""
@@ -112,6 +153,8 @@ class RestSource(SourceInterface):
     source_configuration: RestSourceConfiguration
     connection_settings: RestSourceConnectionSettings
     client = None
+    authValidTo = None
+    
     """ A source for MySQL data """
 
     def _configure(self):
@@ -123,8 +166,28 @@ class RestSource(SourceInterface):
             if self.connection_settings.authentication.bearer:
                 self.client.headers.update({"Authorization": f"{self.connection_settings.authentication.bearer_prefix} {self.connection_settings.authentication.bearer_token}"})
 
+            if self.connection_settings.authentication.oauth2:
+                if self.connection_settings.authentication.oauth2_settings.flow == "client_credentials":
+                    response = self.client.post(
+                        self.connection_settings.authentication.oauth2_settings.token_url,
+                        data=self.connection_settings.authentication.oauth2_settings.token_body
+                    )
+                    if response.status_code != 200:
+                        raise Exception("Failed to authenticate: ", response.text)
+                    
+                    response_data = response.json()
+                    self.client.headers.update({"Authorization": f"{self.connection_settings.authentication.bearer_prefix} {response_data[self.connection_settings.authentication.oauth2_settings.token_path]}"})
+                    
+                    
+
     def _connect(self):
-        pass
+        if self.authValidTo is None:
+            return True
+        
+        if self.authValidTo < pd.Timestamp.now():
+            return self._configure()
+        
+        
 
     def _disconnect(self):
         pass
@@ -132,46 +195,108 @@ class RestSource(SourceInterface):
     def _query(
         self, params=None, customQuery: str = None, returnData: bool = True
     ) -> pl.DataFrame:
+        self._connect()
+        
+        lrSettings = self.source_configuration.listRequest
+        
         request = {
-            "method": self.source_configuration.listRequest.method,
-            "url": self.connection_settings.base_url + self.source_configuration.listRequest.path,
-            "headers": {"Content-Type": self.source_configuration.listRequest.body_type},
-            "verify": (not self.connection_settings.ignore_certificates)
+            "method": lrSettings.method,
+            "url": self.connection_settings.base_url + lrSettings.path,
+            "headers": {"Content-Type": lrSettings.body_type},
+            "verify": (not self.connection_settings.ignore_certificates),
+            "params": {}
         }
 
-        if self.source_configuration.listRequest.return_type != "":
-            request["headers"]["Accept"] = self.source_configuration.listRequest.return_type
+        if lrSettings.return_type != "":
+            request["headers"]["Accept"] = lrSettings.return_type
         
-        if self.source_configuration.listRequest.body_type == "application/json" and self.source_configuration.listRequest.body is not None:
-            request["json"] = self.source_configuration.listRequest.body
+        if lrSettings.body_type == "application/json" and lrSettings.body is not None:
+            request["json"] = lrSettings.body
+        
+        if lrSettings.query is not None:
+            request["params"] = lrSettings.query
         
         else:
-            request["data"] = self.source_configuration.listRequest.body
+            request["data"] = lrSettings.body
         
         
-        response = self.client.request(**request)
+        if lrSettings.pagination is not None and lrSettings.pagination.enabled:
+            response_data = []
+            page = lrSettings.pagination.startPage
+            pageSize = lrSettings.pagination.pageSize
+            total = 1
+            
+            while len(response_data) < total:
+                request["params"][lrSettings.pagination.pageQuery] = page
+                request["params"][lrSettings.pagination.pageSizeQuery] = pageSize
+                
+                response = self.client.request(**request)
+                if response.status_code != 200:
+                    if len(response_data) > 0:
+                        break
+                    raise Exception("Failed request")
+                
+                if lrSettings.return_type == "application/json":
+                    page_response_data = response.json()
+                else:
+                    raise Exception("Not implemented")
+                
+                if lrSettings.pagination.totalQueryIn != "":
+                    if lrSettings.pagination.totalQueryIn == "body":
+                        tq = page_response_data
+                        for key in lrSettings.pagination.totalQuery.split("."):
+                            tq = tq[key]
+                        
+                        if tq > total:
+                            total = tq
+                            
+                    elif lrSettings.pagination.totalQueryIn == "header":
+                        total = response.headers[lrSettings.pagination.totalQuery]
+                
+                if len(lrSettings.response["items"]) > 0:
+                    for key in lrSettings.response["items"].split("."):
+                        page_response_data = page_response_data[key]
+                
+                if len(response_data) == 0 and len(page_response_data) < pageSize:
+                    pageSize = len(page_response_data)
+                
+                response_data += page_response_data
+                page += 1
         
-        if response.status_code != 200:
-            raise Exception("Failed request")
-        
-        if self.source_configuration.listRequest.return_type == "application/json":
-            response_data = response.json()
         else:
-            raise Exception("Not implemented")
-        
-        if len(self.source_configuration.listRequest.response["items"]) > 0:
-            for key in self.source_configuration.listRequest.response["items"].split("."):
-                response_data = response_data[key]
+            response = self.client.request(**request)
+            
+            if response.status_code != 200:
+                raise Exception("Failed request")
+            
+            if self.source_configuration.listRequest.return_type == "application/json":
+                response_data = response.json()
+            else:
+                raise Exception("Not implemented")
+            
+            if len(self.source_configuration.listRequest.response["items"]) > 0:
+                for key in self.source_configuration.listRequest.response["items"].split("."):
+                    response_data = response_data[key]
 
-        if len(response_data) == 0:
-            return pl.DataFrame()
+            if len(response_data) == 0:
+                return pl.DataFrame()
 
         pd_df = pd.json_normalize(response_data)
-        return pl.from_pandas(pd_df)
+        
+        try:
+            return pl.from_pandas(pd_df)
+        except ArrowInvalid:
+            for col in pd_df.columns:
+                if pd_df[col].dtype == "object":
+                    pd_df[col] = pd_df[col].astype("string")
+
+            return pl.from_pandas(pd_df)
 
     def _insert(
         self, data: pl.DataFrame, 
     ):
+        self._connect()
+
         request = {
             "method": self.source_configuration.createRequest.method,
             "url": self.connection_settings.base_url + self.source_configuration.createRequest.path,

@@ -20,6 +20,16 @@ columns:
 There is work in progress on auto-discovery of source- and destination columns
 :::
 
+## Alternate column declaration
+If you do not need to set any special settings for the columns, you can use the alternate syntax for column declaration to speed things up. This will cause the first field in the list to be set as unique:
+
+```yaml
+columns:
+  uniqueField: Int32
+  fieldA: Utf8
+  fieldB: Int32
+```
+
 ## Source Columns
 The source columns are a representation of how the data should look when doing the comparison, meaning AFTER any source transformers have been applied.
 You can retrieve any number of columns not listed in the columns-section, but they will neither be used for comparison or insertion if they are not specified. You can use them for transformations, though.

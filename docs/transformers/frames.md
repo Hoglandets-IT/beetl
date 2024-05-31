@@ -27,6 +27,29 @@ The frames transformers will perform actions on the structure of the dataset, su
       - column_name
 ```
 
+## Filter
+Filter away rows that do not match the given condition.
+
+```yaml
+- transformer: frames.filter
+  config:
+    filter:
+      fieldA: valueA
+      fieldB: false
+```
+
+## Conditional
+Set a field to a value based on a condition (only boolean fields supported)
+
+```yaml
+- transformer: frames.conditional
+  config:
+    conditionField: field_name
+    ifTrue: value_if_true
+    ifFalse: value_if_false
+```
+
+
 ## Extract nested rows
 This is a more advanced feature that will extract nested rows into their own dataset. This is useful when you have a nested structure with sub-items that you might want to use as their own dataset.
 
@@ -77,14 +100,12 @@ sourceTransformers:
       iterField: disk_list
       # The fields to grab from the nested object
       fieldMap:
-        - from: name
-          to: disk_name
-        - from: size
-          to: disk_size
+        # output_field_name: search_field_name
+        disk_name: name
+        disk_size: size
       # The fields to copy from the parent object
       colMap:
-        - from: name
-          to: vm_name
+        name: vm_name
   - transformer: string.substring
     config:
       inField: disk_name
