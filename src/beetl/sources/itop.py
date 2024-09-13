@@ -17,7 +17,7 @@ from .interface import (
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
-BULK_CUTOFF = 250
+BULK_CUTOFF = 300
 
 
 class ItopSourceConfiguration(SourceInterfaceConfiguration):
@@ -27,6 +27,7 @@ class ItopSourceConfiguration(SourceInterfaceConfiguration):
     oql_key: str = None
     has_foreign: bool = None
     soft_delete: dict = None
+    are_link_cols: list = []
 
     def __init__(
         self,
@@ -35,6 +36,7 @@ class ItopSourceConfiguration(SourceInterfaceConfiguration):
         oql_key: str = None,
         soft_delete: dict = None,
         comparison_columns: list = None,
+        unique_columns: list = None,
     ):
         super().__init__(columns)
         self.datamodel = datamodel
@@ -45,12 +47,17 @@ class ItopSourceConfiguration(SourceInterfaceConfiguration):
             if comparison_columns is None
             else comparison_columns
         )
+        if unique_columns is not None and len(unique_columns) > 0:
+            self.unique_columns = unique_columns
+        
         self.soft_delete = soft_delete
         
         for field in self.columns:
             if field.custom_options is not None:
                 if field.custom_options.get("itop", {}).get("comparison_field", False):
                     self.has_foreign = True
+        
+        self.are_link_cols = [x.custom_options['itop']['comparison_field'] for x in self.columns if x.custom_options is not None and x.custom_options.get("itop", {}).get("comparison_field", False)]
 
     def get_output_fields_for_request(self):
         output = []
@@ -87,6 +94,7 @@ class ItopSource(SourceInterface):
     ConnectionSettingsClass = ItopSourceConnectionSettings
     SourceConfigClass = ItopSourceConfiguration
     auth_data: dict = None
+    
     """ A source for Combodo iTop Data data """
 
     def soft_delete_active(self) -> bool:
@@ -202,6 +210,8 @@ class ItopSource(SourceInterface):
             )
 
         re_obj = []
+        
+        all_cols = [x.name for x in self.source_configuration.columns]
 
         try:
             res_json = res.json()
@@ -209,7 +219,13 @@ class ItopSource(SourceInterface):
 
             if objects is not None:
                 for _, item in res_json.get("objects", {}).items():
-                    re_obj.append({"id": item["key"], **item["fields"]})
+                    if "id" in all_cols:
+                        re_obj.append({"id": item["key"], **item["fields"]})
+                    elif "key" in all_cols:
+                        re_obj.append({"key": item["key"], **item["fields"]})
+                    else:
+                        re_obj.append(item["fields"])
+
                 return pl.DataFrame(re_obj)
             return pl.DataFrame()
 
@@ -219,13 +235,15 @@ class ItopSource(SourceInterface):
             ) from e
 
     def create_item(self, type: str, data: dict, comment: str = ""):
+        
+
         body = self._create_body(
             "core/create",
             {
                 "comment": comment,
                 "class": type,
                 "output_fields": "*",
-                "fields": {x: y for x, y in data.items() if y is not None},
+                "fields": {x: y for x, y in data.items() if y is not None and x not in self.source_configuration.are_link_cols},
             },
         )
 
@@ -256,6 +274,13 @@ class ItopSource(SourceInterface):
         for k in tuple(data.keys()):
             if k in self.source_configuration.unique_columns:
                 identifiers[k] = data.pop(k)
+
+        if len(identifiers) == 0:
+            dKeys = tuple(data.keys())
+            for k in self.source_configuration.columns:
+                if k.unique and k.name in dKeys :
+                    identifiers[k.name] = data.pop(k.name)
+                    
 
         wh_string = " AND ".join(
             [f"{key} = '{value}'" for key, value in identifiers.items()]

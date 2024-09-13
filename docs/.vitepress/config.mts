@@ -22,6 +22,7 @@ export default defineConfig({
         text: 'Examples',
         items: [
           { text: 'Nutanix to SQL Server', link: '/examples/nutanix-to-sqlserver' },
+          { text: 'Rest API to iTop', link: '/examples/rest-api-to-itop' },
         ]
       },
       {

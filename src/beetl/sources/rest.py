@@ -267,7 +267,7 @@ class RestSource(SourceInterface):
             response = self.client.request(**request)
             
             if response.status_code != 200:
-                raise Exception("Failed request")
+                raise Exception("Failed request: ", response.text)
             
             if self.source_configuration.listRequest.return_type == "application/json":
                 response_data = response.json()

@@ -80,23 +80,25 @@ class Beetl:
                 raise Exception(f"Column {column} does not exist in any of the datasets")
             
             if column not in source.columns and len(source) > 0:
-                source = source.with_columns(pl.lit(None).alias(column).cast(source[column].dtype))
+                source = source.with_columns(pl.lit(None).alias(column).cast(destination[column].dtype))
             
             if column not in destination.columns and len(destination) > 0:
                 destination = destination.with_columns(pl.lit(None).alias(column).cast(source[column].dtype))
 
         # If source is empty, delete all in destination
         if len(source) == 0:
-            return source.select(keys + columns), source.select(keys + columns), destination.select(keys)
+            return source, source, destination.select(keys)
 
         # If destination is empty, create all from source
         if len(destination) == 0:
-            return (
-                source.select(keys + columns if keys != columns else keys),
-                destination, 
-                destination
-            )
-       
+            try:
+                return (
+                    source.select(set(keys + columns) if keys != columns else keys),
+                    destination, 
+                    destination
+                )
+            except pl.ColumnNotFoundError as e:
+                return source.select(columns), destination, destination
         try:
             # Get rows that only exist in source (Creates)
             create = source.join(destination, on=keys, how="anti")
@@ -118,8 +120,8 @@ class Beetl:
             ) from e
 
         return (
-                create.select(keys + columns if keys != columns else keys),
-                update.select(keys + columns if keys != columns else keys), 
+                create.select(set(keys + columns) if keys != columns else keys),
+                update.select(set(keys + columns) if keys != columns else keys), 
                 delete.select(keys)
             )
 
@@ -167,6 +169,7 @@ class Beetl:
         self.benchmark("Starting sync and retrieving source data")
         allAmounts = []
         for i, sync in enumerate(self.config.sync_list, 1):
+            start = perf_counter()
             if sync.name != "":
                 print(f"Starting sync: {sync.name}")
             else:
@@ -181,23 +184,31 @@ class Beetl:
             transformedSource = self.runTransformers(
                 source_data, sync.sourceTransformers, sync
             )
+            self.benchmark("Finished source data transformation, starting destination transformation")
+            transformedDestination = self.runTransformers(
+                destination_data, sync.destinationTransformers, sync
+            )           
+            
             self.benchmark("Finished data transformation before comparison")
 
             self.benchmark("Starting comparison")
             create, update, delete = self.compare_datasets(
                 transformedSource,
-                destination_data,
+                transformedDestination,
                 sync.destination.source_configuration.unique_columns,
                 sync.destination.source_configuration.comparison_columns,
             )
             self.benchmark("Successfully extracted operations from dataset")
+
+            load_and_compare = perf_counter() - start
+            print(f"Load and compare took {load_and_compare} seconds")
 
             amount = {}
 
             print(
                 f"Insert: {len(create)}, Update: {len(update)}, Delete: {len(delete)}"
             )
-
+            
             self.benchmark("Starting database operations")
             amount["inserts"] = sync.destination.insert(
                 self.runTransformers(create, sync.insertionTransformers, sync)

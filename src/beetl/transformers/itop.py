@@ -92,9 +92,14 @@ class ItopTransformer(TransformerInterface):
                     fk_def = fk_def.get("itop", None)
                     if fk_def is not None:
                         try:
+                            comparison = "="
+                            
+                            if fk_def.get('use_like'):
+                                comparison = "LIKE"
+                            
                             query = (
                                 f'SELECT {fk_def["target_class"]}'
-                                + f' WHERE {fk_def["reconciliation_key"]} = '
+                                + f' WHERE {fk_def["reconciliation_key"]} {comparison} '
                             )
 
                             transformed = transformed.with_columns(

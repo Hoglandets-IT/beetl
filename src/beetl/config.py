@@ -30,7 +30,15 @@ class SourceSettings:
         )(**connection)
 
         self.config = getattr(source_class, f"{source_type}SourceConfig")(**config)
+    
 
+@dataclass
+class ChangeDetectionConfig:
+    threshold: int = -1
+    stopSync: bool = False
+    webhook: str = None
+    webhookHeaders: Dict[str, str] = None
+    webhookPayload: Dict[str, str] = None
 
 @dataclass
 class SyncConfiguration:
@@ -41,7 +49,9 @@ class SyncConfiguration:
     destination: SourceSettings
     destinationConfig: SourceInterfaceConfiguration
     name: str = ""
+    changeDetection: ChangeDetectionConfig = None
     sourceTransformers: TransformerConfiguration = None
+    destinationTransformers: TransformerConfiguration = None
     insertionTransformers: List[TransformerConfiguration] = None
 
     def __post_init__(self) -> None:
@@ -226,6 +236,16 @@ class BeetlConfigV1(BeetlConfig):
                 syncConfig.sourceTransformers = []
                 for transformer in sync["sourceTransformers"]:
                     syncConfig.sourceTransformers.append(
+                        TransformerConfiguration(
+                            transformer.get("transformer"),
+                            transformer.get("config", None),
+                        )
+                    )
+            
+            if sync.get("destinationTransformers", None) is not None:
+                syncConfig.destinationTransformers = []
+                for transformer in sync["destinationTransformers"]:
+                    syncConfig.destinationTransformers.append(
                         TransformerConfiguration(
                             transformer.get("transformer"),
                             transformer.get("config", None),

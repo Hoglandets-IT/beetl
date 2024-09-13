@@ -73,7 +73,7 @@ class StringTransformer(TransformerInterface):
         __class__._validate_fields(data.columns, inField)
 
         if len(inOutMap) == 0:
-            inOutMap = {inField: outField}
+            inOutMap = {inField: outField if outField is not None and outField != "" else inField}
         
         for inf, outf in inOutMap.items():
             data = data.with_columns(data[inf].str.to_lowercase().alias(outf))
@@ -94,12 +94,25 @@ class StringTransformer(TransformerInterface):
             pl.DataFrame: The resulting DataFrame
         """
         if len(inOutMap) == 0:
-            inOutMap = {inField: outField}
+            inOutMap = {inField: outField if outField is not None and outField != "" else inField}
         
         for inf, outf in inOutMap.items():
             data = data.with_columns(data[inf].str.to_uppercase().alias(outf))
         
         return data
+
+    @staticmethod
+    def match_contains(data: pl.DataFrame, inField: str, match: str, outField: str = "") -> pl.DataFrame:
+        """Match a value in a column and insert a boolean value in another column
+        
+        Args:
+            data (pl.DataFrame): The dataFrame to modify
+            inField (str): The field to take in
+            matchValue (str): The value to match
+            outField (str): The field to put the result in
+        """
+        
+        return data.with_columns(data[inField].str.contains(match).alias(outField if outField is not None and outField != "" else inField))
 
     @staticmethod
     def join(
@@ -191,3 +204,21 @@ class StringTransformer(TransformerInterface):
         """Add a prefix to the given column"""
 
         return data.with_columns(pl.concat_str(pl.Series("ccTempField", [prefix] * len(data)), data[inField]).alias(outField if outField is not None else inField))
+    
+    @staticmethod
+    def cast(data: pl.DataFrame, inField: str, outField: str = ""):
+        """Cast a column to a different type"""
+
+        if outField == "":
+            outField = inField
+
+        return data.with_columns(data[inField].cast(pl.Utf8).alias(outField))
+
+    @staticmethod
+    def hash(data: pl.DataFrame, inField: str, outField: str = ""):
+        """Hash a column"""
+
+        if outField == "":
+            outField = inField
+
+        return data.with_columns(data[inField].hash().cast(pl.Utf8).alias(outField))

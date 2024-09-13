@@ -32,9 +32,9 @@ class TransformerInterface:
 
         if sum([1 for col in columns if col in fields]) == len(columns):
             raise KeyError(
-                f'The field(s) {",".join(fields)} are not present '
+                f'Some of the field(s) {",".join(fields)} are not present '
                 "in the dataset. Valid columns at this stage are:"
-                '{",".join(columns)}'
+                f'{",".join(columns)}'
             )
         return
 
@@ -62,7 +62,7 @@ class Transformers:
                 f"The wrong arguments supplied for transformer {transformer}: {str(e)}"
             ) from e
         except KeyError as e:
-            raise KeyError(f"The transformer {transformer} does not exist or an error occured in the transformer") from e
+            raise KeyError(f"The transformer {transformer} does not exist or an error occured in the transformer: ", str(e)) from e
         except Exception as e:
             raise Exception(
                 f"An error occurred while running transformer {transformer}: {str(e)}"

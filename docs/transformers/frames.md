@@ -28,7 +28,7 @@ The frames transformers will perform actions on the structure of the dataset, su
 ```
 
 ## Filter
-Filter away rows that do not match the given condition.
+Filter away rows that (do not) match the given condition. Use the "reverse: true" flag to remove fields that match the condition.
 
 ```yaml
 - transformer: frames.filter
