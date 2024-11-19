@@ -17,8 +17,10 @@ Note: Even though most of the configuration below is in YAML format, you can als
   - [From PyPi](#from-pypi)
   - [From Source](#from-source)
 - [Quick Start](#quick-start)
+- [Development Environment](#development-environment)
 - [Documentation](https://beetl.hoglan.dev/en/latest/)
 - [Source Code](https://github.com/hoglandets-it/beetl)
+
 
 ## Installation
 ### From PyPi
@@ -206,3 +208,21 @@ The format of the sources configuration is the same as the one normally under th
     }
 ]
 ```
+
+## Development Environment
+
+The easiest way to get started is to use the included devcontainer. 
+
+### Requirements
+- Docker
+- Visual Studio Code
+
+### Steps
+
+1. Clone the repository.
+1. Open the repository in Visual Studio Code.
+1. Install the recommended extensions.
+1. Using the command palette (`ctrl+shift+p`) search for `reopen in container` and run it.
+   - The devcontainer will now be provisioned in your local docker instance and vscode will automatically connect to it.
+1. You can now use the included launch profiles to either open the docs or run the tests file.
+1. You can also use the built-in test explorer to run the available test.

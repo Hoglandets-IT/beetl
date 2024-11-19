@@ -10,3 +10,4 @@ pymssql
 mysql-connector-python
 alive-progress
 tabulate
+testcontainers==4.8.2
