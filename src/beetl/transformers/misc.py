@@ -33,21 +33,3 @@ class MiscTransformer(TransformerInterface):
         )
 
         return data
-
-    @staticmethod
-    def divide(data: pl.DataFrame, inField: str, outField: str, factor: int) -> pl.DataFrame:
-        """Divide the numbers in a given column with the given factor
-
-        Args:
-            data (pl.DataFrame): The dataFrame to modify
-            inField (str): The field to process
-            outField (str): The field to put the output into
-            factor (int): The field to divide by
-
-        Returns:
-            pl.DataFrame: The resulting DataFrame
-        """
-        
-        data = data.with_columns((data[inField].cast(pl.Int64) / factor).alias(outField))
-        
-        return data

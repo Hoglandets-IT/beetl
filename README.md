@@ -8,6 +8,9 @@ Note: Even though most of the configuration below is in YAML format, you can als
 
 ## Todo:
 - [ ] Soft Delete/Hard Delete
+- [ ] Output table at end
+- [ ] Automatic column specification from data
+
 
 ## TOC
 - [Installation](#installation)

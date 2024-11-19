@@ -24,7 +24,7 @@ class ItopTransformer(TransformerInterface):
         """Takes a number of columns, joins them and hashes the result"""
 
         def make_code(st):
-            concat_and_sha("-", toplevel, *st.values())
+            return concat_and_sha("-", toplevel, *st.values())
 
         new = data.with_columns(pl.struct(inFields).apply(make_code).alias(outField))
 
@@ -84,7 +84,7 @@ class ItopTransformer(TransformerInterface):
                 "Error: include_sync option is not set for transformer itop.relations"
             )
 
-        if kwargs["sync"].destination.source_configuration.has_foreign:
+        if kwargs["sync"].destination.source_configuration.has_foreign and len(data.columns) > 1:
             transformed = data.clone()
             for field in kwargs["sync"].destination.source_configuration.columns:
                 fk_def = getattr(field, "custom_options", {})
@@ -92,9 +92,14 @@ class ItopTransformer(TransformerInterface):
                     fk_def = fk_def.get("itop", None)
                     if fk_def is not None:
                         try:
+                            comparison = "="
+                            
+                            if fk_def.get('use_like'):
+                                comparison = "LIKE"
+                            
                             query = (
                                 f'SELECT {fk_def["target_class"]}'
-                                + f' WHERE {fk_def["reconciliation_key"]} = '
+                                + f' WHERE {fk_def["reconciliation_key"]} {comparison} '
                             )
 
                             transformed = transformed.with_columns(

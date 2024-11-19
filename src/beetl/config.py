@@ -30,17 +30,28 @@ class SourceSettings:
         )(**connection)
 
         self.config = getattr(source_class, f"{source_type}SourceConfig")(**config)
+    
 
+@dataclass
+class ChangeDetectionConfig:
+    threshold: int = -1
+    stopSync: bool = False
+    webhook: str = None
+    webhookHeaders: Dict[str, str] = None
+    webhookPayload: Dict[str, str] = None
 
 @dataclass
 class SyncConfiguration:
     """The configuration for a single sync between two sources"""
-
+    
     source: SourceSettings
     sourceConfig: SourceInterfaceConfiguration
     destination: SourceSettings
     destinationConfig: SourceInterfaceConfiguration
+    name: str = ""
+    changeDetection: ChangeDetectionConfig = None
     sourceTransformers: TransformerConfiguration = None
+    destinationTransformers: TransformerConfiguration = None
     insertionTransformers: List[TransformerConfiguration] = None
 
     def __post_init__(self) -> None:
@@ -70,6 +81,20 @@ class BeetlConfig:
         self.__dict__ = config_class(config).__dict__
         self.version = config.get("configVersion", "V1")
 
+
+    @classmethod
+    def from_yaml(cls, yamlData: str) -> "BeetlConfig":
+        """Import configuration from a YAML string
+
+        Args:
+            yaml (str): The YAML string containing the configuration
+
+        Returns:
+            BeetlConfig: Beetl Configuration
+        """
+        config = yaml.safe_load(yamlData)
+        return cls(config)
+
     @classmethod
     def from_yaml_file(cls, path: str, encoding: str = "utf-8") -> "BeetlConfig":
         """Import configuration from YAML file
@@ -92,6 +117,19 @@ class BeetlConfig:
             raise Exception(
                 f"The configuration file was not found at the path specified ({path})."
             ) from e
+
+    @classmethod
+    def from_json(cls, jsonData: str) -> "BeetlConfig":
+        """Import configuration from a JSON string
+
+        Args:
+            jsonData (str): The JSON string containing the configuration
+
+        Returns:
+            BeetlConfig: Beetl Configuration
+        """
+        config = json.loads(jsonData)
+        return cls(config)
 
     @classmethod
     def from_json_file(cls, path: str, encoding: str = "utf-8") -> "BeetlConfig":
@@ -173,13 +211,14 @@ class BeetlConfigV1(BeetlConfig):
                     "in the sources section."
                     "Please check your configuration.",
                 )
-
+            
             tmpSource = copy.deepcopy(self.sources[sync["source"]])
             tmpSource.set_sourceconfig(sync["sourceConfig"])
             tmpDestination = copy.deepcopy(self.sources[sync["destination"]])
             tmpDestination.set_sourceconfig(sync["destinationConfig"])
 
             syncConfig = SyncConfiguration(
+                name=sync.get('name', ''),
                 source=tmpSource,
                 sourceConfig=sync["sourceConfig"],
                 destination=tmpDestination,
@@ -197,6 +236,16 @@ class BeetlConfigV1(BeetlConfig):
                 syncConfig.sourceTransformers = []
                 for transformer in sync["sourceTransformers"]:
                     syncConfig.sourceTransformers.append(
+                        TransformerConfiguration(
+                            transformer.get("transformer"),
+                            transformer.get("config", None),
+                        )
+                    )
+            
+            if sync.get("destinationTransformers", None) is not None:
+                syncConfig.destinationTransformers = []
+                for transformer in sync["destinationTransformers"]:
+                    syncConfig.destinationTransformers.append(
                         TransformerConfiguration(
                             transformer.get("transformer"),
                             transformer.get("config", None),

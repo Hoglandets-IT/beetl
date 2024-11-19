@@ -209,9 +209,46 @@ BeETL will first apply all the source transformers, then run the data through a 
           replace: "+1$1$2$3"
 ```
 
+### Destination Transformers
+Destination transformers work in the same way as source transformers, and can transform fields from the destination before comparison.
+This could be used in instances where you, for example, want to compare the data in a case-insensitive way by transforming both identifiers to upper- or lowercase.
+
+You could then via the insertion transformers transform the name_backup column back to the name column.
+
+::: warning
+If you use transformers that require the original data, for example the iTop relations transformer under insertions, make sure that you restore the fields to their original state before running that transformer transformers, like in the example below.
+
+```yaml
+    sourceTransformers:
+      - transformer: strings.copy
+        config:
+          inField: name
+          outField: name_backup
+      - transformer: strings.upper
+        config:
+          inField: name
+          outField: name
+
+    destinationTransformers:
+      - transformer: strings.upper
+        config:
+          inField: name
+          outField: name
+    
+    insertionTransformers:
+      - transformer: strings.copy
+        config:
+          inField: name_backup
+          outField: name
+      
+      - transformer: itop.relations
+        include_sync: true
+
+```
+
 ### Insertion Transformers
 
-This basic flow has no insertion transformers defined, since they are a more advanced feature. You can read more about them in the [insertion transformers documentation](/insertion-transformers)
+This basic flow has no insertion transformers defined, since they are a more advanced feature. You can read more about them in the insertion transformers documentation (/transformers/pre-insertion)
 
 ::: tip
 
@@ -221,7 +258,14 @@ BeETL will run the insertion transformers when the changes have been determined,
 
 :::
 
-### Data Insertion
+### Data Insertion, Updates and Deletes
+
+When the transformation is finished, the insert, update and delete steps will be run according to the configuration for the source/destination pair.
+
+
+
+### Running this sync
+
 To run the sync, you can either use the CLI or the Python API. Here's an example of how to run the sync using the Python API.
 
 ```python
