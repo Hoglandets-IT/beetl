@@ -20,35 +20,26 @@ class TestMysqlSource(unittest.TestCase):
             "version": "V1",
             "sources": [
                 {
-                    "name": "postgresqlsrc",
-                    "type": "PostgreSQL",
+                    "name": "database",
+                    "type": "Postgresql",
                     "connection": {
                         "settings": {
                             "connection_string": connectionString
                         }
 
                     }
-                },
-                {
-                    "name": "mysqldst",
-                    "type": "Mysql",
-                    "connection": {
-                        "settings": {
-                            "connection_string": connectionString
-                        }
-                    }
                 }
             ],
             "sync": [
                 {
-                    "source": "postgresqlsrc",
-                    "destination": "postgresqldst",
+                    "source": "database",
+                    "destination": "database",
                     "sourceConfig": {
                         "table": "srctable",
                         "columns": [
                             {
                                 "name": "id",
-                                "type": "Utf8",
+                                "type": "Int32",
                                 "unique": True,
                                 "skip_update": True
                             },
@@ -71,7 +62,7 @@ class TestMysqlSource(unittest.TestCase):
                         "columns": [
                             {
                                 "name": "id",
-                                "type": "Utf8",
+                                "type": "Int32",
                                 "unique": True,
                                 "skip_update": True
                             },
@@ -88,60 +79,13 @@ class TestMysqlSource(unittest.TestCase):
                                 "skip_update": False
                             }
                         ]
-                    },
-                    "destinationTransformers": [
-                        {
-                            "transformer": "strings.lowercase",
-                            "config": {
-                                "inField": "name",
-                                "outField": "nameLower"
-                            }
-                        },
-                        {
-                            "transformer": "strings.uppercase",
-                            "config": {
-                                "inField": "name",
-                                "outField": "nameUpper"
-                            }
-                        },
-                        {
-                            "transformer": "strings.split",
-                            "config": {
-                                "inField": "email",
-                                "outFields": [
-                                    "username",
-                                    "domain"
-                                ],
-                                "separator": "@"
-                            }
-                        },
-                        {
-                            "transformer": "strings.join",
-                            "config": {
-                                "inFields": [
-                                    "nameLower",
-                                    "nameUpper"
-                                ],
-                                "outField": "displayName",
-                                "separator": " ^-^ "
-                            }
-                        },
-                        {
-                            "transformer": "frames.drop_columns",
-                            "config": {
-                                "columns": [
-                                    "nameLower",
-                                    "nameUpper"
-                                ]
-                            }
-                        }
-                    ]
+                    }
                 }
             ]
         }
 
-    def insert_test_data(self, postgress: PostgresContainer) -> None:
-        connection_url = postgress.get_connection_url()
+    def insert_test_data(self, postgresql: PostgresContainer) -> None:
+        connection_url = postgresql.get_connection_url()
         with psycopg.connect(connection_url) as connection:
             with connection.cursor() as cursor:
                 cursor.execute(
@@ -151,21 +95,47 @@ class TestMysqlSource(unittest.TestCase):
                 cursor.execute(
                     "insert into srctable (id, name, email) values (1, 'John Doe', 'john@doe.com'),(2, 'Jane Doe', 'jane@doe.com'),(3, 'Joseph Doe', 'joseph@doe.com')")
 
+    def update_test_data(self, id: int, email: str, postgresql: PostgresContainer) -> None:
+        connection_url = postgresql.get_connection_url()
+        with psycopg.connect(connection_url) as connection:
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    f"update srctable set email = '{email}' where id = {id}")
+
+    def delete_test_data(self, id: int, postgresql: PostgresContainer) -> None:
+        connection_url = postgresql.get_connection_url()
+        with psycopg.connect(connection_url) as connection:
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    f"delete from srctable where id = {id}")
+
     def test_sync_between_two_postgresql_sources(self):
-        with PostgresContainer(driver=None) as postgress:
+        with PostgresContainer(driver=None) as postgresql:
             # Arrange
-            self.insert_test_data(postgress)
-            connection_string = postgress.get_connection_url()
-            config = self.buildConfig(connection_string)
+            self.insert_test_data(postgresql)
+            config = self.buildConfig(postgresql.get_connection_url())
             beetlInstance = beetl.Beetl(beetl.BeetlConfig(config))
 
             # Act
-            firstSyncResults = beetlInstance.sync()
-            secondSyncResults = beetlInstance.sync()
+            createResult = beetlInstance.sync()
+
+            noActionResult = beetlInstance.sync()
+
+            self.update_test_data(1, 'new@email.com', postgresql)
+            updateResult = beetlInstance.sync()
+
+            self.delete_test_data(1, postgresql)
+            deleteResult = beetlInstance.sync()
 
             # Assert
             allEntriesWereSynced = create_sync_result(3, 0, 0)
-            self.assertEqual(firstSyncResults, allEntriesWereSynced)
+            self.assertEqual(createResult, allEntriesWereSynced)
 
             nothingChanged = create_sync_result(0, 0, 0)
-            self.assertEqual(secondSyncResults, nothingChanged)
+            self.assertEqual(noActionResult, nothingChanged)
+
+            oneRecordWasUpdated = create_sync_result(0, 1, 0)
+            self.assertEqual(updateResult, oneRecordWasUpdated)
+
+            oneRecordWasDeleted = create_sync_result(0, 0, 1)
+            self.assertEqual(deleteResult, oneRecordWasDeleted)
