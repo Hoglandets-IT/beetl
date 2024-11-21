@@ -1,0 +1,31 @@
+{
+  "tasks": [
+    {
+      "label": "npm: docs:dev",
+      "dependsOn": "npm: install",
+      "type": "npm",
+      "script": "docs:dev",
+      "problemMatcher": [],
+    },
+    {
+      "label": "npm: docs:preview",
+      "dependsOn": "npm: docs:build",
+      "type": "npm",
+      "script": "docs:preview",
+      "problemMatcher": [],
+    },
+    {
+      "label": "npm: docs:build",
+      "dependsOn": "npm: install",
+      "type": "npm",
+      "script": "docs:build",
+      "problemMatcher": [],
+    },
+    {
+      "label": "npm: install",
+      "type": "npm",
+      "script": "install",
+      "problemMatcher": [],
+    }
+  ]
+}

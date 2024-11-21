@@ -7,6 +7,9 @@ from tests.helpers.sync_result import create_sync_result
 class TestMysqlSource(unittest.TestCase):
     """Basic functionality test for the MySQL source found in src/beetl/sources/mysql.py"""
 
+    def setUp(self):
+        pass
+
     def buildConfig(self, connectionString: str):
         if (not connectionString):
             raise Exception("Connection string is required")

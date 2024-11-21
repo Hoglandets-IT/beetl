@@ -2,7 +2,6 @@ ignore/
 fakedatadst.json
 fakedatasrc.json
 .venv
-.vscode
 mantest.py
 othertest
 gotest
