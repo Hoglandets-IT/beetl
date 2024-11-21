@@ -192,7 +192,7 @@ class MysqlSource(SourceInterface):
             batches = []
 
             for i in range(0, len(data), batch_size):
-                batches.append(data[i : i + batch_size])
+                batches.append(data[i: i + batch_size])
 
         for batch in batches:
             id_clause = " AND ".join(

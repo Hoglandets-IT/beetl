@@ -10,3 +10,6 @@ pymssql
 mysql-connector-python
 alive-progress
 tabulate
+testcontainers==4.8.2
+# Cryptography is a sub-dependency of sqlalchemy when establishing a connection to the testcontainer provided database
+cryptography

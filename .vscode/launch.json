@@ -1,0 +1,24 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "docs: build and preview",
+      "type": "node",
+      "request": "launch",
+      "preLaunchTask": "npm: docs:build",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "docs:preview"],
+      "serverReadyAction": {
+        "action": "openExternally",
+        "pattern": "4173",
+        "uriFormat": "http://localhost:4173"
+      },
+    },
+    {
+      "name": "beetl: debug tests",
+      "type": "debugpy",
+      "program": "${workspaceFolder}/tests.py",
+      "request": "launch"
+    }
+  ]
+}
