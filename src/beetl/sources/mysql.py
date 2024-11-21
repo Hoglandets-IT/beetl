@@ -185,6 +185,9 @@ class MysqlSource(SourceInterface):
         return len(data)
 
     def delete(self, data: pl.DataFrame):
+        if (not len(data)):
+            return 0
+
         batch_size = 500
         batches = [data]
 
@@ -192,7 +195,7 @@ class MysqlSource(SourceInterface):
             batches = []
 
             for i in range(0, len(data), batch_size):
-                batches.append(data[i : i + batch_size])
+                batches.append(data[i: i + batch_size])
 
         for batch in batches:
             id_clause = " AND ".join(
