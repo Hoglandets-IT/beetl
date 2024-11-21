@@ -70,20 +70,23 @@ class Beetl:
 
         if isinstance(destination, Union[list, set, tuple]):
             destination = pl.DataFrame(destination)
-        
+
         # Get all columns from destination if none are specified
         columns = destination.columns if len(columns) == 0 else columns
 
         for column in columns:
-            
+
             if column not in source.columns and column not in destination.columns:
-                raise Exception(f"Column {column} does not exist in any of the datasets")
-            
+                raise Exception(
+                    f"Column {column} does not exist in any of the datasets")
+
             if column not in source.columns and len(source) > 0:
-                source = source.with_columns(pl.lit(None).alias(column).cast(destination[column].dtype))
-            
+                source = source.with_columns(pl.lit(None).alias(
+                    column).cast(destination[column].dtype))
+
             if column not in destination.columns and len(destination) > 0:
-                destination = destination.with_columns(pl.lit(None).alias(column).cast(source[column].dtype))
+                destination = destination.with_columns(
+                    pl.lit(None).alias(column).cast(source[column].dtype))
 
         # If source is empty, delete all in destination
         if len(source) == 0:
@@ -93,8 +96,9 @@ class Beetl:
         if len(destination) == 0:
             try:
                 return (
-                    source.select(set(keys + columns) if keys != columns else keys),
-                    destination, 
+                    source.select(set(keys + columns)
+                                  if keys != columns else keys),
+                    destination,
                     destination
                 )
             except pl.ColumnNotFoundError as e:
@@ -120,10 +124,10 @@ class Beetl:
             ) from e
 
         return (
-                create.select(set(keys + columns) if keys != columns else keys),
-                update.select(set(keys + columns) if keys != columns else keys), 
-                delete.select(keys)
-            )
+            create.select(set(keys + columns) if keys != columns else keys),
+            update.select(set(keys + columns) if keys != columns else keys),
+            delete.select(keys)
+        )
 
     def benchmark(self, text: str) -> None:
         """Inserts a benchmark into the log"""
@@ -184,11 +188,12 @@ class Beetl:
             transformedSource = self.runTransformers(
                 source_data, sync.sourceTransformers, sync
             )
-            self.benchmark("Finished source data transformation, starting destination transformation")
+            self.benchmark(
+                "Finished source data transformation, starting destination transformation")
             transformedDestination = self.runTransformers(
                 destination_data, sync.destinationTransformers, sync
-            )           
-            
+            )
+
             self.benchmark("Finished data transformation before comparison")
 
             self.benchmark("Starting comparison")
@@ -208,19 +213,27 @@ class Beetl:
             print(
                 f"Insert: {len(create)}, Update: {len(update)}, Delete: {len(delete)}"
             )
-            
+
             self.benchmark("Starting database operations")
-            amount["inserts"] = sync.destination.insert(
-                self.runTransformers(create, sync.insertionTransformers, sync)
-            )
+            amount["inserts"] = 0
+            if len(create):
+                amount["inserts"] = sync.destination.insert(
+                    self.runTransformers(
+                        create, sync.insertionTransformers, sync)
+                )
 
             self.benchmark("Finished inserts, starting updates")
-            amount["updates"] = sync.destination.update(
-                self.runTransformers(update, sync.insertionTransformers, sync)
-            )
+            amount["updates"] = 0
+            if len(update):
+                amount["updates"] = sync.destination.update(
+                    self.runTransformers(
+                        update, sync.insertionTransformers, sync)
+                )
 
             self.benchmark("Finished updates, starting deletes")
-            amount["deletes"] = sync.destination.delete(delete)
+            amount["deletes"] = 0
+            if len(delete):
+                amount["deletes"] = sync.destination.delete(delete)
 
             self.benchmark("Finished deletes, sync finished")
 
@@ -229,6 +242,7 @@ class Beetl:
             print("Deleted: " + str(amount["deletes"]))
 
             allAmounts.append([sync.name, *amount.values()])
-        
-        print("\r\n\r\n" + tabulate(allAmounts, headers=["Sync", "Inserts", "Updates", "Deletes"]))
+
+        print("\r\n\r\n" + tabulate(allAmounts,
+              headers=["Sync", "Inserts", "Updates", "Deletes"]))
         return allAmounts

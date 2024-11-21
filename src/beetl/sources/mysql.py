@@ -185,9 +185,6 @@ class MysqlSource(SourceInterface):
         return len(data)
 
     def delete(self, data: pl.DataFrame):
-        if (not len(data)):
-            return 0
-
         batch_size = 500
         batches = [data]
 
