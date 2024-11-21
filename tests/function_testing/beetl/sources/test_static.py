@@ -1,6 +1,7 @@
 import unittest
 from src.beetl import beetl
 from tests import configurations
+from tests.helpers.sync_result import create_sync_result
 
 
 class TestStaticSource(unittest.TestCase):
@@ -15,9 +16,5 @@ class TestStaticSource(unittest.TestCase):
 
         self.assertEqual(
             amounts,
-            {
-                "inserts": 1,
-                "updates": 2,
-                "deletes": 1
-            }
+            create_sync_result(1, 1, 1)
         )

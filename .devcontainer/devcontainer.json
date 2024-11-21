@@ -8,7 +8,8 @@
 	// Features to add to the dev container. More info: https://containers.dev/features.
 	"features": {
 		"node": "20",
-		"ghcr.io/devcontainers/features/docker-outside-of-docker:1": { }
+		"ghcr.io/devcontainers/features/docker-in-docker": {}
+		// "ghcr.io/devcontainers/features/docker-outside-of-docker:1": { }
 	},
 
 	// Use 'forwardPorts' to make a list of ports inside the container available locally.

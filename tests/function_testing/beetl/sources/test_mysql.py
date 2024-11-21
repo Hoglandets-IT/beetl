@@ -1,6 +1,7 @@
 import unittest
 from src.beetl import beetl
 from testcontainers.mysql import MySqlContainer
+from tests.helpers.sync_result import create_sync_result
 
 
 class TestMysqlSource(unittest.TestCase):
@@ -135,7 +136,7 @@ class TestMysqlSource(unittest.TestCase):
         }
 
     def test_benchmark_mysql(self):
-        with MySqlContainer('mysql:5.7.17') as mysql:
+        with MySqlContainer("mysql:latest") as mysql:
             connection_string = mysql.get_connection_url()
             config = self.buildConfig(connection_string)
             betl = beetl.Beetl(beetl.BeetlConfig(config))
@@ -149,20 +150,12 @@ class TestMysqlSource(unittest.TestCase):
 
         self.assertEqual(
             amounts,
-            {
-                "inserts": 1,
-                "updates": 1,
-                "deletes": 1
-            }
+            create_sync_result(1, 1, 1)
         )
 
         # When running again, the result should be 0, 0, 0
         amountsTwo = beetl.sync()
         self.assertEqual(
             amountsTwo,
-            {
-                "inserts": 0,
-                "updates": 0,
-                "deletes": 0
-            }
+            create_sync_result(0, 0, 0)
         )
