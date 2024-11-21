@@ -2,17 +2,19 @@ import os
 import json
 import yaml
 import unittest
+from copy import deepcopy
 from polars import DataFrame
 from src.beetl import beetl, config
 from src.beetl.sources import interface as src_if
-from tests import configurations
+from tests.configurations import generate_from_static_to_static
 
 
 class TestBeetlFunctions(unittest.TestCase):
     """Basic functionality test for functions in src/beetl/beetl.py"""
 
-    def setUp(self):
-        self.basicConfig = configurations.from_static_to_static
+    @classmethod
+    def setUpClass(self):
+        self.basicConfig = generate_from_static_to_static()
 
         if not os.path.isdir('/tmp/beetl'):
             os.mkdir('/tmp/beetl')
@@ -24,7 +26,7 @@ class TestBeetlFunctions(unittest.TestCase):
             json.dump(self.basicConfig, f)
 
     def assertConfig(self, beetl_config: config.BeetlConfig):
-        direct_config = config.BeetlConfig(self.basicConfig)
+        direct_config = config.BeetlConfig(deepcopy(self.basicConfig))
 
         self.assertIsInstance(beetl_config, config.BeetlConfigV1)
         self.assertEqual(beetl_config.version, 'V1')

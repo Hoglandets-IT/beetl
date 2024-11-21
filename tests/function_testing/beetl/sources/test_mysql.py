@@ -1,6 +1,8 @@
 import unittest
+import sqlalchemy
 from src.beetl import beetl
 from testcontainers.mysql import MySqlContainer
+from tests.helpers.mysql_testcontainer import to_connection_string
 from tests.helpers.sync_result import create_sync_result
 
 
@@ -20,29 +22,6 @@ class TestMysqlSource(unittest.TestCase):
                 {
                     "name": "mysqlsrc",
                     "type": "Mysql",
-                    "config": {
-                            "table": "srctable",
-                            "columns": [
-                                {
-                                    "name": "id",
-                                    "type": "Utf8",
-                                    "unique": True,
-                                    "skip_update": True
-                                },
-                                {
-                                    "name": "name",
-                                    "type": "Utf8",
-                                    "unique": False,
-                                    "skip_update": False
-                                },
-                                {
-                                    "name": "email",
-                                    "type": "Utf8",
-                                    "unique": False,
-                                    "skip_update": False
-                                }
-                            ]
-                    },
                     "connection": {
                         "settings": {
                             "connection_string": connectionString
@@ -53,29 +32,6 @@ class TestMysqlSource(unittest.TestCase):
                 {
                     "name": "mysqldst",
                     "type": "Mysql",
-                    "config": {
-                            "table": "dsttable",
-                            "columns": [
-                                {
-                                    "name": "id",
-                                    "type": "Utf8",
-                                    "unique": True,
-                                    "skip_update": True
-                                },
-                                {
-                                    "name": "name",
-                                    "type": "Utf8",
-                                    "unique": False,
-                                    "skip_update": False
-                                },
-                                {
-                                    "name": "email",
-                                    "type": "Utf8",
-                                    "unique": False,
-                                    "skip_update": False
-                                }
-                            ]
-                    },
                     "connection": {
                         "settings": {
                             "connection_string": connectionString
@@ -87,7 +43,53 @@ class TestMysqlSource(unittest.TestCase):
                 {
                     "source": "mysqlsrc",
                     "destination": "mysqldst",
-                    "fieldTransformers": [
+                    "sourceConfig": {
+                        "table": "srctable",
+                        "columns": [
+                            {
+                                "name": "id",
+                                "type": "Utf8",
+                                "unique": True,
+                                "skip_update": True
+                            },
+                            {
+                                "name": "name",
+                                "type": "Utf8",
+                                "unique": False,
+                                "skip_update": False
+                            },
+                            {
+                                "name": "email",
+                                "type": "Utf8",
+                                "unique": False,
+                                "skip_update": False
+                            }
+                        ]
+                    },
+                    "destinationConfig": {
+                        "table": "dsttable",
+                        "columns": [
+                            {
+                                "name": "id",
+                                "type": "Utf8",
+                                "unique": True,
+                                "skip_update": True
+                            },
+                            {
+                                "name": "name",
+                                "type": "Utf8",
+                                "unique": False,
+                                "skip_update": False
+                            },
+                            {
+                                "name": "email",
+                                "type": "Utf8",
+                                "unique": False,
+                                "skip_update": False
+                            }
+                        ]
+                    },
+                    "destinationTransformers": [
                         {
                             "transformer": "strings.lowercase",
                             "config": {
@@ -138,27 +140,32 @@ class TestMysqlSource(unittest.TestCase):
             ]
         }
 
-    def test_benchmark_mysql(self):
+    def insert_test_data(self, mysql: MySqlContainer) -> None:
+        engine = sqlalchemy.create_engine(mysql.get_connection_url())
+        with engine.begin() as connection:
+            connection.execute(
+                sqlalchemy.text("create table srctable (id int primary key, name varchar(255), email varchar(255))"))
+            connection.execute(
+                sqlalchemy.text("create table dsttable (id int primary key, name varchar(255), email varchar(255))"))
+            connection.execute(sqlalchemy.text(
+                "insert into srctable (id, name, email) values (1, 'John Doe', 'john@doe.com'),(2, 'Jane Doe', 'jane@doe.com'),(3, 'Joseph Doe', 'joseph@doe.com')"))
+
+    def test_sync_between_two_mysql_sources(self):
         with MySqlContainer("mysql:latest") as mysql:
-            connection_string = mysql.get_connection_url()
+            # Arrange
+            self.insert_test_data(mysql)
+            connection_string = to_connection_string(
+                mysql.get_connection_url())
             config = self.buildConfig(connection_string)
-            betl = beetl.Beetl(beetl.BeetlConfig(config))
-            amounts = betl.sync()
+            beetlInstance = beetl.Beetl(beetl.BeetlConfig(config))
 
-        print(amounts)
+            # Act
+            firstSyncResults = beetlInstance.sync()
+            secondSyncResults = beetlInstance.sync()
 
-    def test_mysql(self):
-        betl = beetl.Beetl(beetl.BeetlConfig(self.basicConfig))
-        amounts = betl.sync()
+            # Assert
+            allEntriesWereSynced = create_sync_result(3, 0, 0)
+            self.assertEqual(firstSyncResults, allEntriesWereSynced)
 
-        self.assertEqual(
-            amounts,
-            create_sync_result(1, 1, 1)
-        )
-
-        # When running again, the result should be 0, 0, 0
-        amountsTwo = beetl.sync()
-        self.assertEqual(
-            amountsTwo,
-            create_sync_result(0, 0, 0)
-        )
+            nothingChanged = create_sync_result(0, 0, 0)
+            self.assertEqual(secondSyncResults, nothingChanged)

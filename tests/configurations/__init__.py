@@ -1,4 +1,11 @@
-from_static_to_static = {
+from copy import deepcopy
+
+
+def generate_from_static_to_static() -> dict:
+    return deepcopy(_from_static_to_static)
+
+
+_from_static_to_static = {
     "version": "V1",
     "sources": [
         {
