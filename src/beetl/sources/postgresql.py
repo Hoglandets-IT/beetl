@@ -111,8 +111,9 @@ class PostgresqlSource(SourceInterface):
         with psycopg.connect(self.connection_settings.connection_string) as connection:
             with connection.cursor() as cursor:
                 cursor.execute(f"DROP TABLE IF EXISTS {tempDB}")
+                create_temp_table_with_same_structure_as_destination = f"CREATE TEMPORARY TABLE {tempDB} AS SELECT * FROM {self.source_configuration.table} where 1=0"
                 cursor.execute(
-                    f"CREATE TEMPORARY TABLE {tempDB} {self.source_configuration.table}")
+                    create_temp_table_with_same_structure_as_destination)
 
         # Insert data into temporary table
         self._insert(data, table=tempDB)
@@ -124,6 +125,8 @@ class PostgresqlSource(SourceInterface):
                 if (not fld.skip_update or fld.unique)
             )
         )
+
+        # replace via select and key on all unique keys
 
         query = f"""
             REPLACE INTO {self.source_configuration.table} ({field_spec})
