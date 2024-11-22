@@ -150,6 +150,18 @@ class TestMysqlSource(unittest.TestCase):
             connection.execute(sqlalchemy.text(
                 "insert into srctable (id, name, email) values (1, 'John Doe', 'john@doe.com'),(2, 'Jane Doe', 'jane@doe.com'),(3, 'Joseph Doe', 'joseph@doe.com')"))
 
+    def update_test_data(self, id: int, email: str, mysql: MySqlContainer) -> None:
+        engine = sqlalchemy.create_engine(mysql.get_connection_url())
+        with engine.begin() as connection:
+            connection.execute(sqlalchemy.text(
+                "update srctable set email = :email where id = :id"), {"email": email, "id": id})
+
+    def remove_test_data(self, id: int, mysql: MySqlContainer) -> None:
+        engine = sqlalchemy.create_engine(mysql.get_connection_url())
+        with engine.begin() as connection:
+            connection.execute(sqlalchemy.text(
+                "delete from srctable where id = :id"), {"id": id})
+
     def test_sync_between_two_mysql_sources(self):
         with MySqlContainer("mysql:latest") as mysql:
             # Arrange
@@ -160,12 +172,24 @@ class TestMysqlSource(unittest.TestCase):
             beetlInstance = beetl.Beetl(beetl.BeetlConfig(config))
 
             # Act
-            firstSyncResults = beetlInstance.sync()
-            secondSyncResults = beetlInstance.sync()
+            createdResults = beetlInstance.sync()
+            nothingChangedResults = beetlInstance.sync()
+
+            self.update_test_data(1, "new@email.com", mysql)
+            updateResults = beetlInstance.sync()
+
+            self.remove_test_data(1, mysql)
+            deleteResults = beetlInstance.sync()
 
             # Assert
             allEntriesWereSynced = create_sync_result(3, 0, 0)
-            self.assertEqual(firstSyncResults, allEntriesWereSynced)
+            self.assertEqual(createdResults, allEntriesWereSynced)
 
             nothingChanged = create_sync_result(0, 0, 0)
-            self.assertEqual(secondSyncResults, nothingChanged)
+            self.assertEqual(nothingChangedResults, nothingChanged)
+
+            oneEntryUpdated = create_sync_result(0, 1, 0)
+            self.assertEqual(updateResults, oneEntryUpdated)
+
+            oneEntryDeleted = create_sync_result(0, 0, 1)
+            self.assertEqual(deleteResults, oneEntryDeleted)
