@@ -40,14 +40,9 @@ class BenchmarkPostgresqlTest(unittest.TestCase):
             result = beetl_instance.sync()
             tim = perf_counter() - start
 
-            amounts = result[0]
-            inserts = amounts[1]
-            updates = amounts[2]
-            deletes = amounts[3]
-
-            print(f'Finished {inserts} inserts,'
-                  f' {updates} updates'
-                  f' and {deletes} deletes in {tim}s')
+            print(f'Finished {result.inserts} inserts,'
+                  f' {result.updates} updates'
+                  f' and {result.deletes} deletes in {tim}s')
 
             self.assertLessEqual(
                 tim, BENCHMARK_THRESHOLDS_IN_SECONDS[AMOUNT_OF_ROWS_PER_BENCHMARK])

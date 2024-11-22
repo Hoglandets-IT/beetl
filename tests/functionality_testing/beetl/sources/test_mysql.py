@@ -2,8 +2,8 @@ import unittest
 import sqlalchemy
 from src.beetl import beetl
 from testcontainers.mysql import MySqlContainer
+from tests.helpers.manual_result import ManualResult
 from tests.helpers.mysql_testcontainer import to_connection_string
-from tests.helpers.sync_result import create_sync_result
 
 
 class TestMysqlSource(unittest.TestCase):
@@ -182,14 +182,14 @@ class TestMysqlSource(unittest.TestCase):
             deleteResults = beetlInstance.sync()
 
             # Assert
-            allEntriesWereSynced = create_sync_result(3, 0, 0)
+            allEntriesWereSynced = ManualResult(3, 0, 0)
             self.assertEqual(createdResults, allEntriesWereSynced)
 
-            nothingChanged = create_sync_result(0, 0, 0)
+            nothingChanged = ManualResult(0, 0, 0)
             self.assertEqual(nothingChangedResults, nothingChanged)
 
-            oneEntryUpdated = create_sync_result(0, 1, 0)
+            oneEntryUpdated = ManualResult(0, 1, 0)
             self.assertEqual(updateResults, oneEntryUpdated)
 
-            oneEntryDeleted = create_sync_result(0, 0, 1)
+            oneEntryDeleted = ManualResult(0, 0, 1)
             self.assertEqual(deleteResults, oneEntryDeleted)

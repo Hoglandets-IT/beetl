@@ -3,7 +3,7 @@ import psycopg
 from src.beetl import beetl
 from testcontainers.postgres import PostgresContainer
 from tests.configurations import generate_from_postgres_to_postgres
-from tests.helpers.sync_result import create_sync_result
+from tests.helpers.manual_result import ManualResult
 
 
 class TestPostgresqlSource(unittest.TestCase):
@@ -58,14 +58,14 @@ class TestPostgresqlSource(unittest.TestCase):
             deleteResult = beetlInstance.sync()
 
             # Assert
-            allEntriesWereSynced = create_sync_result(3, 0, 0)
+            allEntriesWereSynced = ManualResult(3, 0, 0)
             self.assertEqual(createResult, allEntriesWereSynced)
 
-            nothingChanged = create_sync_result(0, 0, 0)
+            nothingChanged = ManualResult(0, 0, 0)
             self.assertEqual(noActionResult, nothingChanged)
 
-            oneRecordWasUpdated = create_sync_result(0, 1, 0)
+            oneRecordWasUpdated = ManualResult(0, 1, 0)
             self.assertEqual(updateResult, oneRecordWasUpdated)
 
-            oneRecordWasDeleted = create_sync_result(0, 0, 1)
+            oneRecordWasDeleted = ManualResult(0, 0, 1)
             self.assertEqual(deleteResult, oneRecordWasDeleted)
