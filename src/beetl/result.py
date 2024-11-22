@@ -8,6 +8,9 @@ class Result:
     deletes = 0
     names = []
 
+    def __str__(self) -> str:
+        return f"Result: {self.inserts} inserts, {self.updates} updates, {self.deletes} deletes across {len(self.names)} syncs"
+
     def __eq__(self, other) -> bool:
         if not issubclass(type(other), Result):
             return NotImplemented
