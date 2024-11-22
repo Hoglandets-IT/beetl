@@ -12,6 +12,7 @@ class BenchmarkPostgresqlTest(BenchmarkBase):
     name = "PostgreSQL"
 
     def run_for_amount(self, amount) -> float:
+        """ This method is run through the base class"""
         with PostgresContainer(driver=None) as postgresql:
             config = generate_from_postgres_to_postgres(
                 postgresql.get_connection_url())

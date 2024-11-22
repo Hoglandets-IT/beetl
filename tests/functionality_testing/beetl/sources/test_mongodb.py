@@ -1,45 +1,46 @@
 import unittest
 import psycopg
 from src.beetl import beetl
-from testcontainers.postgres import PostgresContainer
+from testcontainers.mongodb import MongoDbContainer
 from tests.configurations import generate_from_postgres_to_postgres
 from tests.helpers.manual_result import ManualResult
 
 
-class TestPostgresqlSource(unittest.TestCase):
-    """Basic functionality test for the PostgreSQl source found in src/beetl/sources/postgresql.py"""
+class TestMongodbSource(unittest.TestCase):
+    """Basic functionality test for the MongoDB source found in src/beetl/sources/mongodb.py"""
 
-    def insert_test_data(self, postgresql: PostgresContainer) -> None:
-        connection_url = postgresql.get_connection_url()
-        with psycopg.connect(connection_url) as connection:
-            with connection.cursor() as cursor:
-                cursor.execute(
-                    "create table srctable (id int primary key, name varchar(255), email varchar(255))")
-                cursor.execute(
-                    "create table dsttable (id int primary key, name varchar(255), email varchar(255))")
-                cursor.execute(
-                    "insert into srctable (id, name, email) values (1, 'John Doe', 'john@doe.com'),(2, 'Jane Doe', 'jane@doe.com'),(3, 'Joseph Doe', 'joseph@doe.com')")
+    def insert_test_data(self, mongodb: MongoDbContainer) -> None:
+        db = mongodb.get_connection_client().test
+        db.srctable.insert_many([
+            {"id": 1, "name": "John Doe", "email": "john@doe.com"},
+            {"id": 2, "name": "Jane Doe", "email": "jane@doe.com"},
+            {"id": 3, "name": "Joseph Doe", "email": "joseph@doe.com"}
+        ])
 
-    def update_test_data(self, id: int, email: str, postgresql: PostgresContainer) -> None:
+    # TODO: Adjust for mongodb
+
+    def update_test_data(self, id: int, email: str, postgresql: MongoDbContainer) -> None:
         connection_url = postgresql.get_connection_url()
         with psycopg.connect(connection_url) as connection:
             with connection.cursor() as cursor:
                 cursor.execute(
                     f"update srctable set email = '{email}' where id = {id}")
 
-    def delete_test_data(self, id: int, postgresql: PostgresContainer) -> None:
+    # TODO: Adjust for mongodb
+    def delete_test_data(self, id: int, postgresql: MongoDbContainer) -> None:
         connection_url = postgresql.get_connection_url()
         with psycopg.connect(connection_url) as connection:
             with connection.cursor() as cursor:
                 cursor.execute(
                     f"delete from srctable where id = {id}")
 
-    def test_sync_between_two_postgresql_sources(self):
-        with PostgresContainer(driver=None) as postgresql:
+    # TODO: Adjust for mongodb
+    def test_sync_between_two_mongodb_sources(self):
+        with MongoDbContainer() as mongodb:
             # Arrange
-            self.insert_test_data(postgresql)
+            self.insert_test_data(mongodb)
             config = generate_from_postgres_to_postgres(
-                postgresql.get_connection_url())
+                mongodb.get_connection_url())
             beetlInstance = beetl.Beetl(beetl.BeetlConfig(config))
 
             # Act
@@ -47,10 +48,10 @@ class TestPostgresqlSource(unittest.TestCase):
 
             noActionResult = beetlInstance.sync()
 
-            self.update_test_data(1, 'new@email.com', postgresql)
+            self.update_test_data(1, 'new@email.com', mongodb)
             updateResult = beetlInstance.sync()
 
-            self.delete_test_data(1, postgresql)
+            self.delete_test_data(1, mongodb)
             deleteResult = beetlInstance.sync()
 
             # Assert

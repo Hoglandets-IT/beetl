@@ -12,7 +12,8 @@ mysql-connector-python
 alive-progress
 tabulate
 testcontainers==4.8.2
-
+pymongo==4.10.1
+pymongoarrow==1.6.0
 # Cryptography is a sub-dependency of sqlalchemy when establishing a connection to the testcontainer provided database
 cryptography
 # Phycopg2 is a sub-dependency of sqlalchemy when establishing a connection postgresql

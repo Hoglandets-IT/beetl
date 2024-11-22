@@ -35,6 +35,8 @@ class MongoDBSource(SourceInterface):
     def _disconnect(self):
         pass
 
+    # Perhaps we can use https://www.mongodb.com/docs/languages/python/pymongo-arrow-driver/current/
+    # to return a polars dataframe
     def _query(self, params=None) -> POLARS_DF:
         pass
 
