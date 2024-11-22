@@ -7,5 +7,6 @@
     "*.py"
   ],
   "python.testing.autoTestDiscoverOnSaveEnabled": true,
-  "python.testing.unittestEnabled": true
+  "python.testing.unittestEnabled": true,
+  "files.eol": "\n"
 }

@@ -1,16 +1,49 @@
+import unittest
+import sqlalchemy
+from src.beetl import beetl
+from testcontainers.mysql import MySqlContainer
+from tests.helpers.manual_result import ManualResult
+from tests.helpers.mysql_testcontainer import to_connection_string
 
-from time import perf_counter
-from .data import BenchmarkData
 
-class MySQLBenchmark:
+class TestMysqlSource(unittest.TestCase):
+    """Basic functionality test for the MySQL source found in src/beetl/sources/mysql.py"""
 
-    BASIC_CONFIG = {
+    def setUp(self):
+        pass
+
+    def buildConfig(self, connectionString: str):
+        if (not connectionString):
+            raise Exception("Connection string is required")
+
+        return {
             "version": "V1",
             "sources": [
                 {
                     "name": "mysqlsrc",
                     "type": "Mysql",
-                    "config": {
+                    "connection": {
+                        "settings": {
+                            "connection_string": connectionString
+                        }
+
+                    }
+                },
+                {
+                    "name": "mysqldst",
+                    "type": "Mysql",
+                    "connection": {
+                        "settings": {
+                            "connection_string": connectionString
+                        }
+                    }
+                }
+            ],
+            "sync": [
+                {
+                    "source": "mysqlsrc",
+                    "destination": "mysqldst",
+                    "sourceConfig": {
                         "table": "srctable",
                         "columns": [
                             {
@@ -33,17 +66,7 @@ class MySQLBenchmark:
                             }
                         ]
                     },
-                    "connection": {
-                        "settings": {
-                        "connection_string": "mysql://root:password@localhost:3333/database"    
-                        }
-                        
-                    }
-                },
-                {
-                    "name": "mysqldst",
-                    "type": "Mysql",
-                    "config": {
+                    "destinationConfig": {
                         "table": "dsttable",
                         "columns": [
                             {
@@ -66,18 +89,7 @@ class MySQLBenchmark:
                             }
                         ]
                     },
-                    "connection": {
-                        "settings": {
-                        "connection_string": "mysql://root:password@localhost:3333/database"
-                        }
-                    }
-                }
-            ],
-            "sync": [
-                {
-                    "source": "mysqlsrc",
-                    "destination": "mysqldst",
-                    "fieldTransformers": [
+                    "destinationTransformers": [
                         {
                             "transformer": "strings.lowercase",
                             "config": {
@@ -128,35 +140,56 @@ class MySQLBenchmark:
             ]
         }
 
-   
-    @staticmethod
-    def runTestnum(amount: int, betl):
-        print("Starting test with {} rows".format(amount))
-        start_gen = perf_counter()
-        src, dst = BenchmarkData.generateData(amount)
-        
-        src.to_sql(
-                "srctable",
-                "mysql+pymysql://root:password@localhost:3333/database",
-                if_exists="replace"
-        )
-        
-        dst.to_sql(
-                "dsttable",
-                "mysql+pymysql://root:password@localhost:3333/database",
-                if_exists="replace"
-        )
-        fin = perf_counter() - start_gen
-        print(f"Finished generation and insertion in {fin}s")
-        
-        start = perf_counter()
-        amounts = betl.sync()
-        tim = perf_counter() - start
-        
-        print(f'Finished {amounts["inserts"]} inserts,'
-              f'{amounts["updates"]} updates'
-              f'and {amounts["deletes"]} deletes in {tim}s')
-        
-        return tim
-    
+    def insert_test_data(self, mysql: MySqlContainer) -> None:
+        engine = sqlalchemy.create_engine(mysql.get_connection_url())
+        with engine.begin() as connection:
+            connection.execute(
+                sqlalchemy.text("create table srctable (id int primary key, name varchar(255), email varchar(255))"))
+            connection.execute(
+                sqlalchemy.text("create table dsttable (id int primary key, name varchar(255), email varchar(255))"))
+            connection.execute(sqlalchemy.text(
+                "insert into srctable (id, name, email) values (1, 'John Doe', 'john@doe.com'),(2, 'Jane Doe', 'jane@doe.com'),(3, 'Joseph Doe', 'joseph@doe.com')"))
 
+    def update_test_data(self, id: int, email: str, mysql: MySqlContainer) -> None:
+        engine = sqlalchemy.create_engine(mysql.get_connection_url())
+        with engine.begin() as connection:
+            connection.execute(sqlalchemy.text(
+                "update srctable set email = :email where id = :id"), {"email": email, "id": id})
+
+    def remove_test_data(self, id: int, mysql: MySqlContainer) -> None:
+        engine = sqlalchemy.create_engine(mysql.get_connection_url())
+        with engine.begin() as connection:
+            connection.execute(sqlalchemy.text(
+                "delete from srctable where id = :id"), {"id": id})
+
+    def test_sync_between_two_mysql_sources(self):
+        with MySqlContainer("mysql:latest") as mysql:
+            # Arrange
+            self.insert_test_data(mysql)
+            connection_string = to_connection_string(
+                mysql.get_connection_url())
+            config = self.buildConfig(connection_string)
+            beetlInstance = beetl.Beetl(beetl.BeetlConfig(config))
+
+            # Act
+            createdResults = beetlInstance.sync()
+            nothingChangedResults = beetlInstance.sync()
+
+            self.update_test_data(1, "new@email.com", mysql)
+            updateResults = beetlInstance.sync()
+
+            self.remove_test_data(1, mysql)
+            deleteResults = beetlInstance.sync()
+
+            # Assert
+            allEntriesWereSynced = ManualResult(3, 0, 0)
+            self.assertEqual(createdResults, allEntriesWereSynced)
+
+            nothingChanged = ManualResult(0, 0, 0)
+            self.assertEqual(nothingChangedResults, nothingChanged)
+
+            oneEntryUpdated = ManualResult(0, 1, 0)
+            self.assertEqual(updateResults, oneEntryUpdated)
+
+            oneEntryDeleted = ManualResult(0, 0, 1)
+            self.assertEqual(deleteResults, oneEntryDeleted)

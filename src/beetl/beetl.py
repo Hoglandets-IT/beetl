@@ -1,4 +1,6 @@
 from typing import List, Union
+
+from src.beetl.result import Result, SyncResult
 from .config import BeetlConfig, SyncConfiguration
 from .transformers.interface import TransformerConfiguration
 import polars as pl
@@ -158,7 +160,7 @@ class Beetl:
 
         return transformed
 
-    def sync(self) -> None:
+    def sync(self) -> Result:
         """Executes the ETL process. The following steps will be performed:
 
         1. Load source and destination data
@@ -245,4 +247,5 @@ class Beetl:
 
         print("\r\n\r\n" + tabulate(allAmounts,
               headers=["Sync", "Inserts", "Updates", "Deletes"]))
-        return allAmounts
+
+        return SyncResult(allAmounts)
