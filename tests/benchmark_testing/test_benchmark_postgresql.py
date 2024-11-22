@@ -5,11 +5,12 @@ from src.beetl import beetl
 from tests.benchmark_testing.tools.data import BenchmarkData
 from testcontainers.postgres import PostgresContainer
 
+from tests.benchmark_testing.tools.settings import AMOUNT_OF_ROWS_PER_BENCHMARK
+from tests.benchmark_testing.tools.thresholds import BENCHMARK_THRESHOLDS_IN_SECONDS
 from tests.configurations import generate_from_postgres_to_postgres
 
 
 class BenchmarkPostgresqlTest(unittest.TestCase):
-    amount = 40000
 
     def test_benchmark(self):
         with PostgresContainer(driver=None) as postgresql:
@@ -17,9 +18,9 @@ class BenchmarkPostgresqlTest(unittest.TestCase):
                 postgresql.get_connection_url())
             beetl_instance = beetl.Beetl(beetl.BeetlConfig(config))
             print("Starting benchmark of PostgreSQL")
-            print(f"Running test with {self.amount} rows")
+            print(f"Running test with {AMOUNT_OF_ROWS_PER_BENCHMARK} rows")
             start_gen = perf_counter()
-            src, dst = BenchmarkData.generateData(self.amount)
+            src, dst = BenchmarkData.generateData(AMOUNT_OF_ROWS_PER_BENCHMARK)
 
             src.to_sql(
                 "srctable",
@@ -47,5 +48,8 @@ class BenchmarkPostgresqlTest(unittest.TestCase):
             print(f'Finished {inserts} inserts,'
                   f' {updates} updates'
                   f' and {deletes} deletes in {tim}s')
+
+            self.assertLessEqual(
+                tim, BENCHMARK_THRESHOLDS_IN_SECONDS[AMOUNT_OF_ROWS_PER_BENCHMARK])
 
             return tim
