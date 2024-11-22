@@ -1,3 +1,4 @@
+import uuid
 import polars as pl
 from typing import List
 
@@ -107,35 +108,51 @@ class PostgresqlSource(SourceInterface):
         return self._insert(data)
 
     def update(self, data: pl.DataFrame):
-        tempDB = self.source_configuration.table + "_udTemp"
-        with psycopg.connect(self.connection_settings.connection_string) as connection:
-            with connection.cursor() as cursor:
-                cursor.execute(f"DROP TABLE IF EXISTS {tempDB}")
-                create_temp_table_with_same_structure_as_destination = f"CREATE TEMPORARY TABLE {tempDB} AS SELECT * FROM {self.source_configuration.table} where 1=0"
-                cursor.execute(
-                    create_temp_table_with_same_structure_as_destination)
+        temp_table_name = self.source_configuration.table + \
+            "_udTemp_" + str(uuid.uuid4()).replace("-", "")
 
-        # Insert data into temporary table
-        self._insert(data, table=tempDB)
+        try:
+            with psycopg.connect(self.connection_settings.connection_string) as connection:
+                with connection.cursor() as cursor:
+                    create_temp_table_with_same_structure_as_destination = f"CREATE TABLE {temp_table_name} AS SELECT * FROM {self.source_configuration.table} where 1=0"
+                    cursor.execute(
+                        create_temp_table_with_same_structure_as_destination)
 
-        field_spec = ", ".join(
-            (
-                f"`{fld.name}`"
-                for fld in self.source_configuration.columns
-                if (not fld.skip_update or fld.unique)
+            self._insert(data, table=temp_table_name)
+
+            source_table_name = temp_table_name
+            destination_table_name = self.source_configuration.table
+
+            set_values_of_comparison_columns = "SET " + ", ".join(
+                (
+                    f"{column.name} = {source_table_name}.{column.name}"
+                    for column in self.source_configuration.columns
+                    if (not column.unique and not column.skip_update)
+                )
             )
-        )
 
-        # replace via select and key on all unique keys
+            where_unique_columns_are_matching = "WHERE " + " AND ".join(
+                (
+                    f"{destination_table_name}.{column.name} = {source_table_name}.{column.name}"
+                    for column in self.source_configuration.columns
+                    if column.unique
+                )
+            )
 
-        query = f"""
-            REPLACE INTO {self.source_configuration.table} ({field_spec})
-            SELECT {field_spec} FROM {tempDB}
-        """
+            query = f"""
+                UPDATE {self.source_configuration.table} AS {destination_table_name}
+                {set_values_of_comparison_columns}
+                FROM {temp_table_name} AS {source_table_name}
+                {where_unique_columns_are_matching}
+            """
 
-        self._query(customQuery=query, returnData=False)
+            self._query(customQuery=query, returnData=False)
 
-        return len(data)
+            return len(data)
+        finally:
+            with psycopg.connect(self.connection_settings.connection_string) as connection:
+                with connection.cursor() as cursor:
+                    cursor.execute(f"DROP TABLE IF EXISTS {temp_table_name}")
 
     def delete(self, data: pl.DataFrame):
         batch_size = 500
@@ -150,7 +167,7 @@ class PostgresqlSource(SourceInterface):
         for batch in batches:
             id_clause = " AND ".join(
                 (
-                    f"`{fld.name}` IN ({','.join([str(x) for x in batch[fld.name].to_list()])})"
+                    f"{fld.name} IN ({','.join([str(x) for x in batch[fld.name].to_list()])})"
                     for fld in self.source_configuration.columns
                     if fld.unique
                 )

@@ -5,7 +5,7 @@ from testcontainers.postgres import PostgresContainer
 from tests.helpers.sync_result import create_sync_result
 
 
-class TestMysqlSource(unittest.TestCase):
+class TestPostgresqlSource(unittest.TestCase):
     """Basic functionality test for the PostgreSQl source found in src/beetl/sources/postgresql.py"""
 
     @classmethod
