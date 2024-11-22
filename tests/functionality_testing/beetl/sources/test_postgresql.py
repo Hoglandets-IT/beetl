@@ -2,6 +2,7 @@ import unittest
 import psycopg
 from src.beetl import beetl
 from testcontainers.postgres import PostgresContainer
+from tests.configurations import generate_from_postgres_to_postgres
 from tests.helpers.sync_result import create_sync_result
 
 
@@ -11,78 +12,6 @@ class TestPostgresqlSource(unittest.TestCase):
     @classmethod
     def setUpClass(self):
         pass
-
-    def buildConfig(self, connectionString: str):
-        if (not connectionString):
-            raise Exception("Connection string is required")
-
-        return {
-            "version": "V1",
-            "sources": [
-                {
-                    "name": "database",
-                    "type": "Postgresql",
-                    "connection": {
-                        "settings": {
-                            "connection_string": connectionString
-                        }
-
-                    }
-                }
-            ],
-            "sync": [
-                {
-                    "source": "database",
-                    "destination": "database",
-                    "sourceConfig": {
-                        "table": "srctable",
-                        "columns": [
-                            {
-                                "name": "id",
-                                "type": "Int32",
-                                "unique": True,
-                                "skip_update": True
-                            },
-                            {
-                                "name": "name",
-                                "type": "Utf8",
-                                "unique": False,
-                                "skip_update": False
-                            },
-                            {
-                                "name": "email",
-                                "type": "Utf8",
-                                "unique": False,
-                                "skip_update": False
-                            }
-                        ]
-                    },
-                    "destinationConfig": {
-                        "table": "dsttable",
-                        "columns": [
-                            {
-                                "name": "id",
-                                "type": "Int32",
-                                "unique": True,
-                                "skip_update": True
-                            },
-                            {
-                                "name": "name",
-                                "type": "Utf8",
-                                "unique": False,
-                                "skip_update": False
-                            },
-                            {
-                                "name": "email",
-                                "type": "Utf8",
-                                "unique": False,
-                                "skip_update": False
-                            }
-                        ]
-                    }
-                }
-            ]
-        }
 
     def insert_test_data(self, postgresql: PostgresContainer) -> None:
         connection_url = postgresql.get_connection_url()
@@ -113,7 +42,8 @@ class TestPostgresqlSource(unittest.TestCase):
         with PostgresContainer(driver=None) as postgresql:
             # Arrange
             self.insert_test_data(postgresql)
-            config = self.buildConfig(postgresql.get_connection_url())
+            config = generate_from_postgres_to_postgres(
+                postgresql.get_connection_url())
             beetlInstance = beetl.Beetl(beetl.BeetlConfig(config))
 
             # Act
