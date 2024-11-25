@@ -6,7 +6,7 @@ from tests.configurations import generate_from_mongodb_to_mongodb
 from tests.helpers.manual_result import ManualResult
 
 DATABASE_NAME = "test"
-SOURCE_TABLE_NAME = "srctable"
+SOURCE_TABLE_NAME = "src"
 
 
 class TestMongodbSource(unittest.TestCase):
@@ -16,8 +16,10 @@ class TestMongodbSource(unittest.TestCase):
         with mongodb.get_connection_client() as client:
             collection = client[DATABASE_NAME][SOURCE_TABLE_NAME]
             result = collection.insert_many([
-                {"id": 1, "name": "John Doe", "email": "john@doe.com"},
-                {"id": 2, "name": "Jane Doe", "email": "jane@doe.com"},
+                {"id": 1, "name": "John Doe", "email": "john@doe.com",
+                    "children": [{"name": "Alice"}, {"name": "Bob"}]},
+                {"id": 2, "name": "Jane Doe", "email": "jane@doe.com",
+                    "address": {"city": "New York", "state": "NY"}},
                 {"id": 3, "name": "Joseph Doe", "email": "joseph@doe.com"}
             ])
             self.assertEqual(len(result.inserted_ids), 3)

@@ -207,8 +207,14 @@ def generate_from_mongodb_to_mongodb(connectionString: str):
                 "source": "database",
                 "destination": "database",
                 "sourceConfig": {
-                    "table": "srctable",
+                    "collection": "src",
                     "columns": [
+                        {
+                            "name": "_id",
+                            "type": "Binary",
+                            "unique": False,
+                            "skip_update": True
+                        },
                         {
                             "name": "id",
                             "type": "Int32",
@@ -230,8 +236,14 @@ def generate_from_mongodb_to_mongodb(connectionString: str):
                     ]
                 },
                 "destinationConfig": {
-                    "table": "dsttable",
+                    "collection": "dst",
                     "columns": [
+                        {
+                            "name": "_id",
+                            "type": "Binary",
+                            "unique": False,
+                            "skip_update": True
+                        },
                         {
                             "name": "id",
                             "type": "Int32",
