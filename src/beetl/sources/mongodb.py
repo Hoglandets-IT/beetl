@@ -1,7 +1,5 @@
 from typing import List
-from bson import ObjectId
-import pandas
-from polars import DataFrame, from_pandas, from_dict
+from polars import DataFrame
 from .interface import (
     ColumnDefinition,
     register_source,
@@ -9,10 +7,8 @@ from .interface import (
     SourceInterfaceConfiguration,
     SourceInterfaceConnectionSettings,
 )
-from pymongoarrow.schema import Schema
-from pymongoarrow.api import find_polars_all, find_pandas_all, find_arrow_all
+from pymongoarrow.api import find_arrow_all
 from pymongo import MongoClient
-from pandas import json_normalize
 import polars
 
 
@@ -83,12 +79,16 @@ class MongodbSource(SourceInterface):
             with MongoClient(self.connection_settings.connection_string) as client:
                 db = client[self.connection_settings.database]
                 collection = db[self.source_configuration.collection]
+                # TODO: convert _id to str, drop the to_pydict and use polars.from_arrow
                 flattened_data = find_arrow_all(
                     collection, filter, projection=projection).flatten().to_pydict()
                 return polars.from_dict(flattened_data)
 
         # TODO: Figure out where and how this is used
-        find_arrow_all(collection, filter, projection=projection)
+        with MongoClient(self.connection_settings.connection_string) as client:
+            db = client[self.connection_settings.database]
+            collection = db[self.source_configuration.collection]
+            find_arrow_all(collection, filter, projection=projection)
 
     def insert(self, data: DataFrame):
         pass
