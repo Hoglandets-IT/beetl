@@ -81,9 +81,9 @@ class PostgresqlSource(SourceInterface):
                 query = f"SELECT {cols} FROM {self.source_configuration.table}"
 
         if returnData:
-            return pl.read_sql(
+            return pl.read_database_uri(
                 query=query,
-                connection_uri=self.connection_settings.connection_string,
+                uri=self.connection_settings.connection_string,
             )
 
         with psycopg.connect(self.connection_settings.connection_string) as connection:
@@ -99,7 +99,7 @@ class PostgresqlSource(SourceInterface):
             connection_string = self.connection_settings.connection_string
 
         data.write_database(
-            table, self.connection_settings.connection_string, if_exists="append"
+            table, self.connection_settings.connection_string, if_table_exists="append"
         )
 
         return len(data)

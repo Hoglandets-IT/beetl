@@ -79,14 +79,14 @@ class MysqlSource(SourceInterface):
 
         if returnData:
             try:
-                df = pl.read_sql(
+                df = pl.read_database_uri(
                     query=query,
-                    connection_uri=self.connection_settings.connection_string,
+                    uri=self.connection_settings.connection_string,
                 )
             except ModuleNotFoundError:
-                df = pl.read_sql(
+                df = pl.read_database_uri(
                     query=query,
-                    connection_uri=self.connection_settings.connection_string.replace(
+                    uri=self.connection_settings.connection_string.replace(
                         "mysql://", "mysql+pymysql://"
                     ),
                 )
@@ -118,7 +118,7 @@ class MysqlSource(SourceInterface):
 
         try:
             data.write_database(
-                table, self.connection_settings.connection_string, if_exists="append"
+                table, self.connection_settings.connection_string, if_table_exists="append"
             )
         except ModuleNotFoundError:
             data.write_database(
@@ -126,7 +126,7 @@ class MysqlSource(SourceInterface):
                 self.connection_settings.connection_string.replace(
                     "mysql://", "mysql+pymysql://"
                 ),
-                if_exists="append",
+                if_table_exists="append",
             )
 
         return len(data)

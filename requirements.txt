@@ -1,8 +1,8 @@
 requests
-polars[all]==0.17.5
+polars[all]==1.14.0
 sqlalchemy
 faker
-pandas
+pandas==2.2.3
 psycopg
 pyyaml
 pymysql
