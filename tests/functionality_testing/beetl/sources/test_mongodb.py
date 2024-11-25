@@ -2,44 +2,44 @@ import unittest
 import psycopg
 from src.beetl import beetl
 from testcontainers.mongodb import MongoDbContainer
-from tests.configurations import generate_from_postgres_to_postgres
+from tests.configurations import generate_from_mongodb_to_mongodb
 from tests.helpers.manual_result import ManualResult
+
+DATABASE_NAME = "test"
+SOURCE_TABLE_NAME = "srctable"
 
 
 class TestMongodbSource(unittest.TestCase):
     """Basic functionality test for the MongoDB source found in src/beetl/sources/mongodb.py"""
 
     def insert_test_data(self, mongodb: MongoDbContainer) -> None:
-        db = mongodb.get_connection_client().test
-        db.srctable.insert_many([
-            {"id": 1, "name": "John Doe", "email": "john@doe.com"},
-            {"id": 2, "name": "Jane Doe", "email": "jane@doe.com"},
-            {"id": 3, "name": "Joseph Doe", "email": "joseph@doe.com"}
-        ])
+        with mongodb.get_connection_client() as client:
+            collection = client[DATABASE_NAME][SOURCE_TABLE_NAME]
+            result = collection.insert_many([
+                {"id": 1, "name": "John Doe", "email": "john@doe.com"},
+                {"id": 2, "name": "Jane Doe", "email": "jane@doe.com"},
+                {"id": 3, "name": "Joseph Doe", "email": "joseph@doe.com"}
+            ])
+            self.assertEqual(len(result.inserted_ids), 3)
 
-    # TODO: Adjust for mongodb
+    def update_test_data(self, id: int, email: str, mongodb: MongoDbContainer) -> None:
+        with mongodb.get_connection_client() as client:
+            collection = client[DATABASE_NAME][SOURCE_TABLE_NAME]
+            result = collection.update_one(
+                {"id": id}, {"$set": {"email": email}})
+            self.assertEqual(result.modified_count, 1)
 
-    def update_test_data(self, id: int, email: str, postgresql: MongoDbContainer) -> None:
-        connection_url = postgresql.get_connection_url()
-        with psycopg.connect(connection_url) as connection:
-            with connection.cursor() as cursor:
-                cursor.execute(
-                    f"update srctable set email = '{email}' where id = {id}")
+    def delete_test_data(self, id: int, mongodb: MongoDbContainer) -> None:
+        with mongodb.get_connection_client() as client:
+            collection = client[DATABASE_NAME][SOURCE_TABLE_NAME]
+            result = collection.delete_one({"id": id})
+            self.assertEqual(result.deleted_count, 1)
 
-    # TODO: Adjust for mongodb
-    def delete_test_data(self, id: int, postgresql: MongoDbContainer) -> None:
-        connection_url = postgresql.get_connection_url()
-        with psycopg.connect(connection_url) as connection:
-            with connection.cursor() as cursor:
-                cursor.execute(
-                    f"delete from srctable where id = {id}")
-
-    # TODO: Adjust for mongodb
     def test_sync_between_two_mongodb_sources(self):
         with MongoDbContainer() as mongodb:
             # Arrange
             self.insert_test_data(mongodb)
-            config = generate_from_postgres_to_postgres(
+            config = generate_from_mongodb_to_mongodb(
                 mongodb.get_connection_url())
             beetlInstance = beetl.Beetl(beetl.BeetlConfig(config))
 
