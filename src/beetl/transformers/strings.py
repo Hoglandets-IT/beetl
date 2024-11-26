@@ -1,5 +1,3 @@
-from codecs import encode
-import codecs
 import polars as pl
 from .interface import (
     TransformerInterface,
