@@ -23,6 +23,6 @@ class SyncResult(Result):
         super().__init__()
         for result in results:
             self.names.append(result[0])
-            self.inserts += result[1]
-            self.updates += result[2]
-            self.deletes += result[3]
+            self.inserts += result[1] or 0
+            self.updates += result[2] or 0
+            self.deletes += result[3] or 0

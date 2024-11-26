@@ -2,7 +2,7 @@ import unittest
 import psycopg
 from src.beetl import beetl
 from testcontainers.mongodb import MongoDbContainer
-from tests.configurations import generate_from_mongodb_to_mongodb, generate_from_mongodb_to_mongodb_no_transformation
+from tests.configurations import generate_from_mongodb_to_mongodb_no_transformation
 from tests.helpers.manual_result import ManualResult
 
 DATABASE_NAME = "test"

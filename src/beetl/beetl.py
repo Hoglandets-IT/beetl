@@ -97,9 +97,10 @@ class Beetl:
         # If destination is empty, create all from source
         if len(destination) == 0:
             try:
+                columns_to_insert = set(
+                    keys or [] + columns or []) if keys != columns else keys
                 return (
-                    source.select(set(keys + columns)
-                                  if keys != columns else keys),
+                    source.select(columns_to_insert),
                     destination,
                     destination
                 )

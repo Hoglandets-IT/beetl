@@ -89,11 +89,11 @@ class MongodbSource(SourceInterface):
             find_polars_all(collection, self.source_configuration.filter,
                             projection=self.source_configuration.projection)
 
-    def insert(self, data: DataFrame):
-        pass
+    def insert(self, data: DataFrame) -> int:
+        return 0
 
-    def update(self, data: DataFrame):
-        pass
+    def update(self, data: DataFrame) -> int:
+        return 0
 
-    def delete(self, data: DataFrame):
-        pass
+    def delete(self, data: DataFrame) -> int:
+        return 0
