@@ -1,9 +1,12 @@
+from codecs import encode
+import codecs
 import polars as pl
 from .interface import (
     TransformerInterface,
     register_transformer,
     register_transformer_class,
 )
+from bson import ObjectId
 
 
 @register_transformer_class("strings")
@@ -36,7 +39,7 @@ class StringTransformer(TransformerInterface):
             pl.DataFrame: The resulting DataFrame
         """
         __class__._validate_fields(data.columns, inField)
-        
+
         data = data.with_columns(data[inField].fill_null(defaultValue))
         return data
 
@@ -54,7 +57,8 @@ class StringTransformer(TransformerInterface):
         """
         __class__._validate_fields(data.columns, inField)
 
-        data = data.with_columns(data[inField].str.strip(stripChars).alias(outField if outField is not None else inField))
+        data = data.with_columns(data[inField].str.strip(stripChars).alias(
+            outField if outField is not None else inField))
         return data
 
     @staticmethod
@@ -73,8 +77,9 @@ class StringTransformer(TransformerInterface):
         __class__._validate_fields(data.columns, inField)
 
         if len(inOutMap) == 0:
-            inOutMap = {inField: outField if outField is not None and outField != "" else inField}
-        
+            inOutMap = {
+                inField: outField if outField is not None and outField != "" else inField}
+
         for inf, outf in inOutMap.items():
             data = data.with_columns(data[inf].str.to_lowercase().alias(outf))
 
@@ -94,24 +99,25 @@ class StringTransformer(TransformerInterface):
             pl.DataFrame: The resulting DataFrame
         """
         if len(inOutMap) == 0:
-            inOutMap = {inField: outField if outField is not None and outField != "" else inField}
-        
+            inOutMap = {
+                inField: outField if outField is not None and outField != "" else inField}
+
         for inf, outf in inOutMap.items():
             data = data.with_columns(data[inf].str.to_uppercase().alias(outf))
-        
+
         return data
 
     @staticmethod
     def match_contains(data: pl.DataFrame, inField: str, match: str, outField: str = "") -> pl.DataFrame:
         """Match a value in a column and insert a boolean value in another column
-        
+
         Args:
             data (pl.DataFrame): The dataFrame to modify
             inField (str): The field to take in
             matchValue (str): The value to match
             outField (str): The field to put the result in
         """
-        
+
         return data.with_columns(data[inField].str.contains(match).alias(outField if outField is not None and outField != "" else inField))
 
     @staticmethod
@@ -129,19 +135,22 @@ class StringTransformer(TransformerInterface):
         Returns:
             pl.DataFrame: The resulting DataFrame
         """
-        nCol = pl.concat_str(data[inFields], separator=separator).alias(outField)
+        nCol = pl.concat_str(
+            data[inFields], separator=separator).alias(outField)
 
         return data.with_columns(nCol.alias(outField))
-    
+
     @staticmethod
     def join_listfield(
         data: pl.DataFrame, inField: str, outField: str, separator: str = ","
     ) -> pl.DataFrame:
         try:
-            data = data.with_columns(data[inField].arr.join(separator).alias(outField))
+            data = data.with_columns(
+                data[inField].arr.join(separator).alias(outField))
         except Exception:
-            data = data.with_columns(data[inField].cast(pl.List).arr.join(separator).alias(outField))
-        
+            data = data.with_columns(data[inField].cast(
+                pl.List).arr.join(separator).alias(outField))
+
         return data
 
     @staticmethod
@@ -186,7 +195,7 @@ class StringTransformer(TransformerInterface):
         """Replace a section in a string with another section"""
 
         return data.with_columns(data[inField].str.replace(search, replace).alias(outField if outField is not None else inField))
-                                 
+
     @staticmethod
     def replace_all(data: pl.DataFrame, search: str, replace: str, inField: str, outField: str = None):
         """Replace all matching sections in a string with another section"""
@@ -198,13 +207,13 @@ class StringTransformer(TransformerInterface):
         """Returns a substring of the given string column"""
 
         return data.with_columns(data[inField].str.slice(start, length).alias(outField if outField is not None else inField))
-        
+
     @staticmethod
     def add_prefix(data: pl.DataFrame, inField: str, prefix: str, outField: str = None):
         """Add a prefix to the given column"""
 
         return data.with_columns(pl.concat_str(pl.Series("ccTempField", [prefix] * len(data)), data[inField]).alias(outField if outField is not None else inField))
-    
+
     @staticmethod
     def cast(data: pl.DataFrame, inField: str, outField: str = ""):
         """Cast a column to a different type"""
@@ -222,3 +231,20 @@ class StringTransformer(TransformerInterface):
             outField = inField
 
         return data.with_columns(data[inField].hash().cast(pl.Utf8).alias(outField))
+
+    @staticmethod
+    def to_object_id(data: pl.DataFrame, inField: str) -> pl.DataFrame:
+        """Convert the given field to a bson.ObjectId
+
+        Args:
+            data (pl.DataFrame): The dataFrame to modify
+            inField (str): The field to convert
+
+        Returns:
+            pl.DataFrame: The resulting DataFrame
+        """
+
+        data = data.with_columns(
+            data[inField].map_elements(lambda oid: ObjectId(oid)))
+
+        return data

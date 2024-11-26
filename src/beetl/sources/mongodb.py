@@ -1,5 +1,5 @@
 from typing import List
-from polars import DataFrame
+from polars import DataFrame, Object
 from .interface import (
     ColumnDefinition,
     register_source,
@@ -7,9 +7,7 @@ from .interface import (
     SourceInterfaceConfiguration,
     SourceInterfaceConnectionSettings,
 )
-from pymongoarrow.api import find_polars_all
-from pymongo import MongoClient
-import polars
+from pymongo import MongoClient, UpdateOne, DeleteOne
 
 
 class MongoDBSourceConfiguration(SourceInterfaceConfiguration):
@@ -73,27 +71,64 @@ class MongodbSource(SourceInterface):
     def _disconnect(self):
         pass
 
+    # TODO: Figure out where and how these params are used
     def _query(self, params=None, customQuery: str = None, returnData: bool = True) -> DataFrame:
-        # TODO: See how this is used from other places to see how to implement this
 
         if returnData:
             with MongoClient(self.connection_settings.connection_string) as client:
                 db = client[self.connection_settings.database]
                 collection = db[self.source_configuration.collection]
-                return find_polars_all(collection, self.source_configuration.filter, projection=self.source_configuration.projection)
+                polar = DataFrame(collection.find(
+                    self.source_configuration.filter, projection=self.source_configuration.projection))
+                if "_id" in polar.columns and polar["_id"].dtype == Object:
+                    polar = polar.with_columns(
+                        polar["_id"].map_elements(lambda oid: str(oid)))
+                return polar
 
-        # TODO: Figure out where and how this is used
+        # TODO: Figure out where and how this is used, if not, remove it
         with MongoClient(self.connection_settings.connection_string) as client:
             db = client[self.connection_settings.database]
             collection = db[self.source_configuration.collection]
-            find_polars_all(collection, self.source_configuration.filter,
-                            projection=self.source_configuration.projection)
+            collection.find(
+                self.source_configuration.filter, projection=self.source_configuration.projection)
 
     def insert(self, data: DataFrame) -> int:
-        return 0
+        with MongoClient(self.connection_settings.connection_string) as client:
+            db = client[self.connection_settings.database]
+            collection = db[self.source_configuration.collection]
+            result = collection.insert_many(data.to_dicts())
+
+        return len(result.inserted_ids)
 
     def update(self, data: DataFrame) -> int:
-        return 0
+        updates = []
+        for row in data.to_dicts():
+            filter = {key: row[key]
+                      for key in self.source_configuration.unique_columns}
+            for key in self.source_configuration.unique_columns:
+                del row[key]
+            updates.append(UpdateOne(filter, {"$set": row}))
+
+        if not len(updates):
+            return 0
+
+        with MongoClient(self.connection_settings.connection_string) as client:
+            db = client[self.connection_settings.database]
+            collection = db[self.source_configuration.collection]
+            result = collection.bulk_write(updates)
+
+        return result.modified_count
 
     def delete(self, data: DataFrame) -> int:
-        return 0
+        deletes = []
+        for row in data.to_dicts():
+            filter = {key: row[key]
+                      for key in self.source_configuration.unique_columns}
+            deletes.append(DeleteOne(filter))
+
+        with MongoClient(self.connection_settings.connection_string) as client:
+            db = client[self.connection_settings.database]
+            collection = db[self.source_configuration.collection]
+            result = collection.bulk_write(deletes)
+
+        return result.deleted_count

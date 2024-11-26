@@ -1,8 +1,7 @@
 import unittest
-import psycopg
 from src.beetl import beetl
 from testcontainers.mongodb import MongoDbContainer
-from tests.configurations import generate_from_mongodb_to_mongodb_no_transformation
+from tests.configurations.mongodb import to_mongodb_with_object_id_as_identifier
 from tests.helpers.manual_result import ManualResult
 
 DATABASE_NAME = "test"
@@ -41,7 +40,7 @@ class TestMongodbSource(unittest.TestCase):
         with MongoDbContainer() as mongodb:
             # Arrange
             self.insert_test_data(mongodb)
-            config = generate_from_mongodb_to_mongodb_no_transformation(
+            config = to_mongodb_with_object_id_as_identifier(
                 mongodb.get_connection_url())
             beetlInstance = beetl.Beetl(beetl.BeetlConfig(config))
 

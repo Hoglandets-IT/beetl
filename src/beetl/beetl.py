@@ -96,16 +96,11 @@ class Beetl:
 
         # If destination is empty, create all from source
         if len(destination) == 0:
-            try:
-                columns_to_insert = set(
-                    keys or [] + columns or []) if keys != columns else keys
-                return (
-                    source.select(columns_to_insert),
-                    destination,
-                    destination
-                )
-            except pl.ColumnNotFoundError as e:
-                return source.select(columns), destination, destination
+            return (
+                source,
+                destination,
+                destination
+            )
         try:
             # Get rows that only exist in source (Creates)
             create = source.join(destination, on=keys, how="anti")
@@ -236,7 +231,11 @@ class Beetl:
             self.benchmark("Finished updates, starting deletes")
             amount["deletes"] = 0
             if len(delete):
-                amount["deletes"] = sync.destination.delete(delete)
+
+                amount["deletes"] = sync.destination.delete(
+                    self.runTransformers(
+                        delete, sync.deletionTransformers, sync)
+                )
 
             self.benchmark("Finished deletes, sync finished")
 

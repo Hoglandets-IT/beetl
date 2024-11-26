@@ -2,7 +2,7 @@ import unittest
 import psycopg
 from src.beetl import beetl
 from testcontainers.postgres import PostgresContainer
-from tests.configurations import generate_from_postgres_to_postgres
+from tests.configurations.postgresql import to_postgres
 from tests.helpers.manual_result import ManualResult
 
 
@@ -38,7 +38,7 @@ class TestPostgresqlSource(unittest.TestCase):
         with PostgresContainer(driver=None) as postgresql:
             # Arrange
             self.insert_test_data(postgresql)
-            config = generate_from_postgres_to_postgres(
+            config = to_postgres(
                 postgresql.get_connection_url())
             beetlInstance = beetl.Beetl(beetl.BeetlConfig(config))
 
