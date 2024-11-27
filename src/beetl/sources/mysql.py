@@ -197,7 +197,7 @@ class MysqlSource(SourceInterface):
         for batch in batches:
             id_clause = " AND ".join(
                 (
-                    f"`{fld.name}` IN ({','.join([str(x) for x in batch[fld.name].to_list()])})"
+                    f"`{fld.name}` IN ({','.join([self._quote_if_needed(x) for x in batch[fld.name].to_list()])})"
                     for fld in self.source_configuration.columns
                     if fld.unique
                 )
@@ -211,3 +211,8 @@ class MysqlSource(SourceInterface):
             self._query(customQuery=query, returnData=False)
 
         return len(data)
+
+    def _quote_if_needed(self, id: any) -> str:
+        if isinstance(id, str):
+            return f"'{id}'"
+        return str(id)
