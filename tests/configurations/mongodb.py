@@ -250,7 +250,6 @@ def to_mysql_with_object_id_as_identifier(mongodb_connection_string: str, mysql_
                         }
                     }
                 ]
-
             }
         ]
     }
