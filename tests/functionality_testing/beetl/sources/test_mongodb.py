@@ -141,6 +141,8 @@ class TestMongodbSource(unittest.TestCase):
         - The sources _id is an ObjectId, which is not supported by MySQL, the mongodb source will transform this to a string but we need to use the rename transformer to match the column name in the MySQL source
         - The children field is an array of documents, we want to extract the name field from each document and concatenate them into a single string separated by a comma. This requires a jsonpath transformer to extract the name field from each child document and a string join transformer to concatenate the names into a single string.
 
+        See the configuration for more details.
+
         """
         with MongoDbContainer() as mongodb:
             with MySqlContainer("mysql:latest", ) as mysql:
