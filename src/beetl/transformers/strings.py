@@ -143,13 +143,20 @@ class StringTransformer(TransformerInterface):
         data: pl.DataFrame, inField: str, outField: str, separator: str = ","
     ) -> pl.DataFrame:
         try:
+            if isinstance(type(data[inField].dtype), type(pl.List)):
+                data = data.with_columns(
+                    data[inField].list.join(separator).alias(outField))
+                return data
+
             data = data.with_columns(
                 data[inField].arr.join(separator).alias(outField))
+            return data
+
         except Exception:
             data = data.with_columns(data[inField].cast(
                 pl.List).arr.join(separator).alias(outField))
 
-        return data
+            return data
 
     @staticmethod
     def split(
