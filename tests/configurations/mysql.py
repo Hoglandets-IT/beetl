@@ -32,11 +32,12 @@ def to_mongodb_with_object_id_as_identifier(mysql_connection_string: str, mongod
                 "source": "srcdb",
                 "destination": "dstdb",
                 "sourceConfig": {
-                    "table": "dst",
+                    "table": "srctable",
+                    "query": "SELECT * FROM srctable",
                     "columns": [
                         {
                             "name": "id",
-                            "type": "Utf8",
+                            "type": "Int32",
                             "unique": True,
                         },
                         {
@@ -47,13 +48,13 @@ def to_mongodb_with_object_id_as_identifier(mysql_connection_string: str, mongod
                     ]
                 },
                 "destinationConfig": {
-                    "collection": "src",
-                    "unique_columns": ["_id"],
-                    "comparison_columns": ["_id", "email"],
+                    "collection": "dstcollection",
+                    "unique_columns": ["id"],
+                    "comparison_columns": ["id", "email"],
                     "columns": [
                         {
                             "name": "id",
-                            "type": "Utf8",
+                            "type": "Int32",
                             "unique": True,
                         },
                         {
@@ -64,7 +65,14 @@ def to_mongodb_with_object_id_as_identifier(mysql_connection_string: str, mongod
                     ]
                 },
                 "sourceTransformers": [
-                    # TODO: transform dest
+                    {
+                        "transformer": "int.to_int64",
+                        "config": {
+                            "inField": "id"
+                        }
+                    }
+                ],
+                "destinationTransformers": [
                     {
                         "transformer": "frames.rename_columns",
                         "config": {
@@ -75,38 +83,71 @@ def to_mongodb_with_object_id_as_identifier(mysql_connection_string: str, mongod
                     },
                     {
                         "transformer": "structs.jsonpath",
+                        "inField": "address",
+                        "outField": "city",
                         "config": {
-                            "jsonPath": "$.*.name",
-                            "inField": "children",
-                            "outField": "children_concatinated",
+                            "jsonPath": "$.city"
                         }
                     },
                     {
-                        "transformer": "frames.drop_columns",
+                        "transformer": "structs.jsonpath",
+                        "inField": "children",
+                        "outField": "children",
                         "config": {
-                            "columns": ["children"]
+                            "jsonPath": "$.*.name"
                         }
                     },
                     {
                         "transformer": "strings.join_listfield",
                         "config": {
-                            "inField": "children_concatinated",
+                            "inField": "children",
                             "outField": "children",
-                            "separator": ", "
-                        }
-                    },
-                    {
-                        "transformer": "structs.jsonpath",
-                        "config": {
-                            "jsonPath": "$.city",
-                            "inField": "address",
-                            "outField": "city",
+                            "separator": ","
                         }
                     },
                     {
                         "transformer": "frames.project_columns",
                         "config": {
-                            "columns": ["id", "name", "email", "city", "children"]
+                            "columns": [
+                                ["id", "name", "email", "city", "children"]
+                            ]
+                        }
+                    }
+                ],
+                "insertionTransformers": [
+                    {
+                        "transformer": "frames.rename_columns",
+                        "config": {
+                            "columns": [
+                                {"from": "id", "to": "_id"}
+                            ]
+                        }
+                    },
+                    {
+                        "transformer": "strings.split_into_listfield",
+                        "config": {
+                            "separator": ",",
+                            "inField": "children",
+                        }
+                    },
+                    {
+                        "transformer": "structs.compose_list_of_struct",
+                        "config": {
+                            "map": {"name": "children"},
+                            "outField": "address"
+                        }
+                    },
+                    {
+                        "transformer": "structs.compose_struct",
+                        "config": {
+                            "map": {"city": "city"},
+                            "outField": "address"
+                        }
+                    },
+                    {
+                        "transformer": "frames.project_columns",
+                        "config": {
+                            "columns": ["_id", "name", "email", "address", "first_child", "second_child"]
                         }
                     }
                 ]
