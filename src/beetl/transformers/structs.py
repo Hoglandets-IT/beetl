@@ -66,3 +66,33 @@ class StructTransformers(TransformerInterface):
         data = data.with_columns(pl.Series(outField, outCol))
 
         return data
+
+    @staticmethod
+    def compose_struct(data: pl.DataFrame, map: str, outField: str):
+        """Compose a struct from other columns as a new column in the DataFrame
+
+        Given a DataFrame with the columns `age` containing `30` and `name` containing `John`. Providing the map `{"name": "name", "age", "age"}` with outField `person` will result in a new column `person` with the value `{"name": "John", "age": 30}`
+
+        Args:
+            data (pl.DataFrame): The dataFrame to modify
+            map (dict): Dict of fields to compose the struct fromt
+            outField (str): Name of the column to add
+
+        Returns:
+            pl.DataFrame: The resulting DataFrame
+
+
+        """
+        fields = list(map.keys())
+        __class__._validate_fields(data, fields)
+
+        rows = len(data)
+        newStructs = []
+        for i in range(rows):
+            newStructs.append({name: data[field][i]
+                              for name, field in map.items()})
+
+        series = pl.Series(outField, newStructs)
+        data = data.with_columns(series)
+
+        return data
