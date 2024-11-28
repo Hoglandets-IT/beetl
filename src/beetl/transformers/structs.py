@@ -75,16 +75,50 @@ class StructTransformers(TransformerInterface):
 
         Args:
             data (pl.DataFrame): The dataFrame to modify
-            map (dict): Dict of fields to compose the struct fromt
+            map (dict): Dict of fields to compose the struct from, {"name_of_field_in_struct": "name_of_column"}.
             outField (str): Name of the column to add
 
         Returns:
             pl.DataFrame: The resulting DataFrame
-
-
         """
         fields = list(map.keys())
-        __class__._validate_fields(data, fields)
+        __class__._validate_fields(data.columns, fields)
+
+        rows = len(data)
+        newStructs = []
+        for i in range(rows):
+            newStructs.append({name: data[field][i]
+                              for name, field in map.items()})
+
+        series = pl.Series(outField, newStructs)
+        data = data.with_columns(series)
+
+        return data
+
+    @staticmethod
+    def compose_list_of_struct(data: pl.DataFrame, map: str, outField: str):
+        # TODO: Docstring
+        field_names = list(map.keys())
+        __class__._validate_fields(data.columns, field_names)
+
+        field_series = [data[series] for series in field_names]
+        field_values = []
+        for series in field_series:
+            if series.dtype == pl.List:
+                field_values.append(series)
+            else:
+                field_values.append([series])
+        # figure out longest list
+        # fill shorter lists with None
+        # zip lists together into structs
+
+        field_types = [data[field].dtype for field in field_names]
+        any_field_is_list = any(
+            [field_type == pl.List for field_type in field_types])
+
+        if any_field_is_list:
+
+            return data
 
         rows = len(data)
         newStructs = []

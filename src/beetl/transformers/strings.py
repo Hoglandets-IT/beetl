@@ -184,6 +184,28 @@ class StringTransformer(TransformerInterface):
         return data
 
     @staticmethod
+    def split_into_listfield(
+        data: pl.DataFrame, inField: str, outField: str = None, separator: str = ""
+    ) -> pl.DataFrame:
+        """Split a column into list field
+
+        Args:
+            data (pl.DataFrame): The dataFrame to modify
+            inField (str): The field to split
+            outField (str): The field to put the result into
+            separator (str, optional): The separator to use. Defaults to ''.
+
+        Returns:
+            pl.DataFrame: The resulting DataFrame
+        """
+        old_column = data[inField]
+        new_column = old_column.str.split(separator).alias(outField or inField)
+
+        data = data.with_columns(new_column)
+
+        return data
+
+    @staticmethod
     def quote(data: pl.DataFrame, inField: str, outField: str = None, quote: str = "'"):
         """Quotes the given column values"""
 
