@@ -1,4 +1,4 @@
-from typing import Any, List
+from typing import Any, Dict
 import polars as pl
 from .interface import TransformerInterface, register_transformer_class
 import json
@@ -96,37 +96,40 @@ class StructTransformers(TransformerInterface):
         return data
 
     @staticmethod
-    def compose_list_of_struct(data: pl.DataFrame, map: str, outField: str):
+    def compose_list_of_struct(data: pl.DataFrame, map: Dict[str, Any], outField: str):
         # TODO: Docstring
-        field_names = list(map.keys())
+        field_names = list(map.values())
         __class__._validate_fields(data.columns, field_names)
 
-        field_series = [data[series] for series in field_names]
-        field_values = []
-        for series in field_series:
-            if series.dtype == pl.List:
-                field_values.append(series)
-            else:
-                field_values.append([series])
-        # figure out longest list
-        # fill shorter lists with None
-        # zip lists together into structs
+        field_names.append("test")
+        data = data.with_columns(pl.Series("test", [["test"]] * len(data)))
+        row_count = len(data)
 
-        field_types = [data[field].dtype for field in field_names]
-        any_field_is_list = any(
-            [field_type == pl.List for field_type in field_types])
+        dataframe_to_map = data.select(field_names)
 
-        if any_field_is_list:
+        longest_series_row = 0
+        for series in dataframe_to_map:
+            for row in series:
+                if len(row) > longest_series_row:
+                    longest_series_row = len(row)
 
-            return data
+        new_series = None
+        for row_index in range(row_count):
+            new_structs = []
+            for i in range(longest_series_row):
+                new_struct = {}
+                for name, series in map.items():
+                    try:
+                        new_struct[name] = dataframe_to_map[series][row_index][i]
+                    except IndexError:
+                        new_struct[name] = None
 
-        rows = len(data)
-        newStructs = []
-        for i in range(rows):
-            newStructs.append({name: data[field][i]
-                              for name, field in map.items()})
+                new_structs.append(new_struct)
+            if new_series is None:
+                new_series = pl.Series([new_structs])
+                continue
+            new_series.append(pl.Series([new_structs]))
 
-        series = pl.Series(outField, newStructs)
-        data = data.with_columns(series)
+        data.with_columns(new_series.alias(outField))
 
         return data

@@ -134,7 +134,7 @@ def to_mongodb_with_object_id_as_identifier(mysql_connection_string: str, mongod
                         "transformer": "structs.compose_list_of_struct",
                         "config": {
                             "map": {"name": "children"},
-                            "outField": "address"
+                            "outField": "children"
                         }
                     },
                     {
@@ -147,7 +147,7 @@ def to_mongodb_with_object_id_as_identifier(mysql_connection_string: str, mongod
                     {
                         "transformer": "frames.project_columns",
                         "config": {
-                            "columns": ["_id", "name", "email", "address", "first_child", "second_child"]
+                            "columns": ["_id", "name", "email", "address", "children"]
                         }
                     }
                 ]
