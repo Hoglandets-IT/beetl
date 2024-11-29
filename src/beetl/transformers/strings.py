@@ -198,6 +198,8 @@ class StringTransformer(TransformerInterface):
         Returns:
             pl.DataFrame: The resulting DataFrame
         """
+        __class__._validate_fields(data.columns, [inField])
+
         old_column = data[inField]
         new_column = old_column.str.split(separator).alias(outField or inField)
 
