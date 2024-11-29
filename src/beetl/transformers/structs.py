@@ -101,10 +101,6 @@ class StructTransformers(TransformerInterface):
         field_names = list(map.values())
         __class__._validate_fields(data.columns, field_names)
 
-        field_names.append("test")
-        data = data.with_columns(pl.Series("test", [["test"]] * len(data)))
-        row_count = len(data)
-
         dataframe_to_map = data.select(field_names)
 
         longest_series_row = 0
@@ -114,6 +110,7 @@ class StructTransformers(TransformerInterface):
                     longest_series_row = len(row)
 
         new_series = None
+        row_count = len(data)
         for row_index in range(row_count):
             new_structs = []
             for i in range(longest_series_row):
@@ -130,6 +127,6 @@ class StructTransformers(TransformerInterface):
                 continue
             new_series.append(pl.Series([new_structs]))
 
-        data.with_columns(new_series.alias(outField))
+        data = data.with_columns(new_series.alias(outField))
 
         return data
