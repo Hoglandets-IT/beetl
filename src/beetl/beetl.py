@@ -92,7 +92,7 @@ class Beetl:
 
         # If source is empty, delete all in destination
         if len(source) == 0:
-            return source, source, destination.select(keys)
+            return source, source, destination
 
         # If destination is empty, create all from source
         if len(destination) == 0:
@@ -121,10 +121,12 @@ class Beetl:
                 f"Comparison columns: {','.join(columns)} \n"
             ) from e
 
+
+
         return (
-            create.select(set(keys + columns) if keys != columns else keys),
-            update.select(set(keys + columns) if keys != columns else keys),
-            delete.select(keys)
+            create.select(source.columns),
+            update.select(source.columns),
+            delete.select(source.columns)
         )
 
     def benchmark(self, text: str) -> None:

@@ -13,22 +13,15 @@ from pymongo import MongoClient, UpdateOne, DeleteOne
 class MongoDBSourceConfiguration(SourceInterfaceConfiguration):
     """The configuration class used for MongoDB sources"""
     columns: List[ColumnDefinition]
-    unique_columns: List[str] = None
-    skip_columns: List[str] = None
     collection: str = None
     filter: str = None
     projection: dict = None
-    comparison_columns: List[str] = None
-    unique_columns: List[str] = None
 
-    def __init__(self, columns: list, collection: str = None, filter: dict = {}, projection: dict = {}, comparison_columns: list = None,
-                 unique_columns: list = None):
+    def __init__(self, columns: list, collection: str = None, filter: dict = {}, projection: dict = {}):
         super().__init__(columns)
         self.collection = collection
         self.filter = filter
         self.projection = projection
-        self.comparison_columns = comparison_columns
-        self.unique_columns = unique_columns
 
 
 class MongoDBSourceConnectionSettings(SourceInterfaceConnectionSettings):

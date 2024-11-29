@@ -71,11 +71,7 @@ class MysqlSource(SourceInterface):
                 if self.source_configuration.table is None:
                     raise Exception("No query or table specified")
 
-                cols = ",".join(
-                    ["`" + col.name + "`" for col in self.source_configuration.columns]
-                )
-
-                query = f"SELECT {cols} FROM {self.source_configuration.table}"
+                query = f"SELECT * FROM {self.source_configuration.table}"
 
         if returnData:
             try:

@@ -49,8 +49,6 @@ def to_mongodb_with_object_id_as_identifier(mysql_connection_string: str, mongod
                 },
                 "destinationConfig": {
                     "collection": "dstcollection",
-                    "unique_columns": ["id"],
-                    "comparison_columns": ["id", "email"],
                     "columns": [
                         {
                             "name": "id",

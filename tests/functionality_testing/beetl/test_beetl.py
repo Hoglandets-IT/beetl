@@ -100,6 +100,8 @@ class TestBeetlFunctions(unittest.TestCase):
         self.assertEqual(
             delete.to_dict(as_series=False),
             {
-                'id': [4]
+                'id': [4],
+                'name': ['James'],
+                'email': ['jane@test.com']
             }
         )

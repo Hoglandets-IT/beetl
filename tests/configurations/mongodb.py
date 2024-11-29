@@ -23,8 +23,6 @@ def to_mongodb_with_object_id_as_identifier(connectionString: str):
                 "destination": "database",
                 "sourceConfig": {
                     "collection": "src",
-                    "unique_columns": ["_id"],
-                    "comparison_columns": ["_id", "email"],
                     "columns": [
                         {
                             "name": "_id",
@@ -40,8 +38,6 @@ def to_mongodb_with_object_id_as_identifier(connectionString: str):
                 },
                 "destinationConfig": {
                     "collection": "dst",
-                    "unique_columns": ["_id"],
-                    "comparison_columns": ["_id", "email"],
                     "columns": [
                         {
                             "name": "_id",
@@ -101,8 +97,6 @@ def to_mongodb_with_int_as_identifier(connectionString: str):
                 "destination": "database",
                 "sourceConfig": {
                     "collection": "src",
-                    "unique_columns": ["_id"],
-                    "comparison_columns": ["_id", "email"],
                     "columns": [
                         {
                             "name": "_id",
@@ -118,8 +112,6 @@ def to_mongodb_with_int_as_identifier(connectionString: str):
                 },
                 "destinationConfig": {
                     "collection": "dst",
-                    "unique_columns": ["_id"],
-                    "comparison_columns": ["_id", "email"],
                     "columns": [
                         {
                             "name": "_id",
@@ -174,11 +166,9 @@ def to_mysql_with_object_id_as_identifier(mongodb_connection_string: str, mysql_
                 "destination": "dstdb",
                 "sourceConfig": {
                     "collection": "src",
-                    "unique_columns": ["_id"],
-                    "comparison_columns": ["_id", "email"],
                     "columns": [
                         {
-                            "name": "id",
+                            "name": "_id",
                             "type": "Utf8",
                             "unique": True,
                         },
