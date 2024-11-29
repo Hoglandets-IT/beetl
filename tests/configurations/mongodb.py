@@ -38,6 +38,7 @@ def to_mongodb_with_object_id_as_identifier(connectionString: str):
                 },
                 "destinationConfig": {
                     "collection": "dst",
+                    "unique_fields": ["_id"],
                     "columns": [
                         {
                             "name": "_id",
@@ -112,6 +113,7 @@ def to_mongodb_with_int_as_identifier(connectionString: str):
                 },
                 "destinationConfig": {
                     "collection": "dst",
+                    "unique_fields": ["_id"],
                     "columns": [
                         {
                             "name": "_id",

@@ -12,16 +12,17 @@ from pymongo import MongoClient, UpdateOne, DeleteOne
 
 class MongoDBSourceConfiguration(SourceInterfaceConfiguration):
     """The configuration class used for MongoDB sources"""
-    columns: List[ColumnDefinition]
     collection: str = None
     filter: str = None
     projection: dict = None
+    unique_fields: List[str] = None
 
-    def __init__(self, columns: list, collection: str = None, filter: dict = {}, projection: dict = {}):
+    def __init__(self, columns: list, collection: str = None, filter: dict = {}, projection: dict = {}, unique_fields: List[str] = []):
         super().__init__(columns)
         self.collection = collection
         self.filter = filter
         self.projection = projection
+        self.unique_fields = unique_fields
 
 
 class MongoDBSourceConnectionSettings(SourceInterfaceConnectionSettings):
@@ -96,10 +97,10 @@ class MongodbSource(SourceInterface):
     def update(self, data: DataFrame) -> int:
         updates = []
         for row in data.to_dicts():
-            filter = {key: row[key]
-                      for key in self.source_configuration.unique_columns}
-            for key in self.source_configuration.unique_columns:
-                del row[key]
+            filter = {field_name: row[field_name]
+                      for field_name in self.source_configuration.unique_fields} 
+            for field_name in self.source_configuration.unique_fields:
+                del row[field_name]
             updates.append(UpdateOne(filter, {"$set": row}))
 
         if not len(updates):
@@ -115,8 +116,8 @@ class MongodbSource(SourceInterface):
     def delete(self, data: DataFrame) -> int:
         deletes = []
         for row in data.to_dicts():
-            filter = {key: row[key]
-                      for key in self.source_configuration.unique_columns}
+            filter = {field_name: row[field_name]
+                      for field_name in self.source_configuration.unique_fields}
             deletes.append(DeleteOne(filter))
 
         with MongoClient(self.connection_settings.connection_string) as client:
