@@ -83,18 +83,18 @@ def to_mongodb_with_object_id_as_identifier(mysql_connection_string: str, mongod
                     },
                     {
                         "transformer": "structs.jsonpath",
-                        "inField": "address",
-                        "outField": "city",
                         "config": {
-                            "jsonPath": "$.city"
+                            "jsonPath": "$.city",
+                            "inField": "address",
+                            "outField": "city",
                         }
                     },
                     {
                         "transformer": "structs.jsonpath",
-                        "inField": "children",
-                        "outField": "children",
                         "config": {
-                            "jsonPath": "$.*.name"
+                            "jsonPath": "$.*.name",
+                            "inField": "children",
+                            "outField": "children",
                         }
                     },
                     {
@@ -108,9 +108,8 @@ def to_mongodb_with_object_id_as_identifier(mysql_connection_string: str, mongod
                     {
                         "transformer": "frames.project_columns",
                         "config": {
-                            "columns": [
+                            "columns":
                                 ["id", "name", "email", "city", "children"]
-                            ]
                         }
                     }
                 ],
