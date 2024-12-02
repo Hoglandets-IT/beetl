@@ -3,7 +3,7 @@
 ## WIP: 0.5.0
 
 ### Breaking changes
-- MySQL source defaults to selecting all columns from the target table `SELECT * FROM <table>`.
+- MySQL source now defaults to selecting all columns from the target table `SELECT * FROM <table>`.
   - Previously if no query was specified, the source composed a query based on the sync columns. This is now being removed, see information about ongoing changes to sync columns below. 
   - If you were using this automatic fallback functionality you will now have to provide a query in the source configuration.
 
