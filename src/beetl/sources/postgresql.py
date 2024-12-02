@@ -31,8 +31,6 @@ class PostgresqlSourceConnectionSettings(SourceInterfaceConnectionSettings):
     """The connection configuration class used for Postgresql sources"""
 
     connection_string: str
-    query: str = None
-    table: str = None
 
     def __init__(self, settings: dict):
         if settings.get("connection_string", False):
