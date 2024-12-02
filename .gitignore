@@ -1,7 +1,7 @@
 ignore/
 fakedatadst.json
 fakedatasrc.json
-.venv
+*venv
 mantest.py
 othertest
 gotest
