@@ -13,7 +13,7 @@ sources:
       settings:
         # connection_string, <string>, (optional*)
         # Mandatory if [host, port, username, password, database] aren't specified.
-        # If provided it takes precidence over [host, port, username, password, database]
+        # If provided it takes precedence over [host, port, username, password, database]
         connection_string: "postgresql://[username]:[password]@[host]:[port]/[database]"
         # host: <string>, (optional)
         # Can be ip-address or hostname
