@@ -39,6 +39,7 @@ export default defineConfig({
       {
         text: 'Transformers',
         items: [
+          { text: 'Using Transformers', link: '/transformers/using-transformers' },
           { text: 'Frames', link: '/transformers/frames' },
           { text: 'iTop', link: '/transformers/itop' },
           { text: 'Miscellaneous', link: '/transformers/misc' },
