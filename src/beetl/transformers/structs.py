@@ -68,7 +68,7 @@ class StructTransformers(TransformerInterface):
         return data
 
     @staticmethod
-    def compose_struct(data: pl.DataFrame, map: str, outField: str):
+    def compose_struct(data: pl.DataFrame, map: Dict[str, str], outField: str):
         """Compose a struct from other columns as a new column in the DataFrame
 
         Given a DataFrame with the columns `age` containing `30` and `name` containing `John`. Providing the map `{"name": "name", "age", "age"}` with outField `person` will result in a new column `person` with the value `{"name": "John", "age": 30}`
@@ -96,8 +96,41 @@ class StructTransformers(TransformerInterface):
         return data
 
     @staticmethod
-    def compose_list_of_structs(data: pl.DataFrame, map: Dict[str, Any], outField: str):
-        # TODO: Docstring
+    def compose_list_of_structs(data: pl.DataFrame, map: Dict[str, str], outField: str):
+        """Compose a list of structs from other columns as a new column in the DataFrame
+
+        All source columns must be lists. If the lists are of different lengths, the resulting list will be the length of the longest list with None as the value for missing elements.
+        table
+
+        Args:
+            data (pl.DataFrame): The dataFrame to modify.
+            map (dict): Dict of fields to compose the struct from, {"name_of_field_in_struct": "name_of_column"}.
+            outField (str): Name of the column to add.
+
+        Returns:
+            pl.DataFrame: The resulting DataFrame.
+
+        Example:
+            The source dataframe
+
+            +----+----------------------------+----------+----------+
+            | id | names                      | ages     | city     |
+            +----+----------------------------+----------+----------+
+            | 1  | ["John", "Mary", "Sam"]    | [30, 40] | New York |
+            +----+----------------------------+----------+----------+
+
+            Transformed with this configuration
+
+            `compose_list_of_structs(data, {"name": "names", "age": "ages"}, "people")`
+
+            Will result in a people column composed of the folowing list
+
+            [
+                {"name": "John", "age": 30},
+                {"name": "Mary", "age": 40},
+                {"name": "Sam", "age": None}
+            ]
+        """
         field_names = list(map.values())
         __class__._validate_fields(data.columns, field_names)
 
