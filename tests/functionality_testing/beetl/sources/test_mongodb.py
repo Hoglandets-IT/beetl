@@ -149,9 +149,10 @@ class TestMongodbSource(unittest.TestCase):
                 # Arrange
                 engine = sqlalchemy.create_engine(mysql.get_connection_url())
                 with engine.begin() as connection:
-                    command = f"""
+                    create_destination_table_command = f"""
                         create table dst (id varchar({len(str(ObjectId()))}) primary key, name varchar(255), email varchar(255), city varchar(255), children varchar(255));"""
-                    connection.execute(sqlalchemy.text(command))
+                    connection.execute(sqlalchemy.text(
+                        create_destination_table_command))
 
                 inserted_ids = self.insert_test_data(3, "object_id", mongodb)
                 config = to_mysql_with_object_id_as_identifier(
