@@ -17,7 +17,7 @@
 - strings.to_object_id transformer
 - structs.jsonpath support for * selector to get values nestled in lists
 - structs.compose_struct
-- structs.compose_list_of_structs
+- structs.compose_list_of_structss
 
 
 ### Changed features

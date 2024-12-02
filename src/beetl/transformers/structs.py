@@ -96,7 +96,7 @@ class StructTransformers(TransformerInterface):
         return data
 
     @staticmethod
-    def compose_list_of_struct(data: pl.DataFrame, map: Dict[str, Any], outField: str):
+    def compose_list_of_structs(data: pl.DataFrame, map: Dict[str, Any], outField: str):
         # TODO: Docstring
         field_names = list(map.values())
         __class__._validate_fields(data.columns, field_names)

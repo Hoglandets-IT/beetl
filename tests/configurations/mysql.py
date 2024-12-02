@@ -128,7 +128,7 @@ def to_mongodb_with_object_id_as_identifier(mysql_connection_string: str, mongod
                         }
                     },
                     {
-                        "transformer": "structs.compose_list_of_struct",
+                        "transformer": "structs.compose_list_of_structs",
                         "config": {
                             "map": {"name": "children"},
                             "outField": "children"
