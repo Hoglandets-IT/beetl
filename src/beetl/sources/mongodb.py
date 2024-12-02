@@ -31,7 +31,22 @@ class MongoDBSourceConnectionSettings(SourceInterfaceConnectionSettings):
     query: str = None
     database: str = None
 
+    def get_connection_string_components(self, settings: dict):
+        config = {
+            "host": settings.get("host", None),
+            "port":  settings.get("post", None),
+            "username":  settings.get("username", None),
+            "password":  settings.get("password", None),
+        }
+        for _, value in config.items():
+            if not value:
+                return None
+
+        return config
+
     def __init__(self, settings: dict):
+        self.projection = settings.get("projection", {})
+
         if not settings.get("database", None):
             raise Exception("Database name in connection settings is required")
 
@@ -39,14 +54,13 @@ class MongoDBSourceConnectionSettings(SourceInterfaceConnectionSettings):
 
         if settings.get("connection_string", False):
             self.connection_string = settings["connection_string"]
-            return
-
-        self.connection_string = "mongodb://"
-        f"{settings['username']}:{settings['password']}"
-        f"@{settings['host']}:{settings['port']}"
-
-        self.projection = settings["projection"] if settings.get(
-            "projection", False) else {}
+        else:
+            connection_string_components = self.get_connection_string_components(
+                settings)
+            if not connection_string_components:
+                raise Exception(
+                    "Connection string or host, port, username, and password are required")
+            self.connection_string = f"mongodb://{connection_string_components['username']}:{connection_string_components['password']}@{connection_string_components['host']}:{connection_string_components['port']}/"
 
 
 @register_source("mongodb", MongoDBSourceConfiguration, MongoDBSourceConnectionSettings)
@@ -65,26 +79,16 @@ class MongodbSource(SourceInterface):
     def _disconnect(self):
         pass
 
-    # TODO: Figure out where and how these params are used
-    def _query(self, params=None, customQuery: str = None, returnData: bool = True) -> DataFrame:
-
-        if returnData:
-            with MongoClient(self.connection_settings.connection_string) as client:
-                db = client[self.connection_settings.database]
-                collection = db[self.source_configuration.collection]
-                polar = DataFrame(collection.find(
-                    self.source_configuration.filter, projection=self.source_configuration.projection))
-                if "_id" in polar.columns and polar["_id"].dtype == Object:
-                    polar = polar.with_columns(
-                        polar["_id"].map_elements(lambda oid: str(oid)))
-                return polar
-
-        # TODO: Figure out where and how this is used, if not, remove it
+    def _query(self, params=None) -> DataFrame:
         with MongoClient(self.connection_settings.connection_string) as client:
             db = client[self.connection_settings.database]
             collection = db[self.source_configuration.collection]
-            collection.find(
-                self.source_configuration.filter, projection=self.source_configuration.projection)
+            polar = DataFrame(collection.find(
+                self.source_configuration.filter, projection=self.source_configuration.projection))
+            if "_id" in polar.columns and polar["_id"].dtype == Object:
+                polar = polar.with_columns(
+                    polar["_id"].map_elements(lambda oid: str(oid)))
+            return polar
 
     def insert(self, data: DataFrame) -> int:
         with MongoClient(self.connection_settings.connection_string) as client:
@@ -98,7 +102,7 @@ class MongodbSource(SourceInterface):
         updates = []
         for row in data.to_dicts():
             filter = {field_name: row[field_name]
-                      for field_name in self.source_configuration.unique_fields} 
+                      for field_name in self.source_configuration.unique_fields}
             for field_name in self.source_configuration.unique_fields:
                 del row[field_name]
             updates.append(UpdateOne(filter, {"$set": row}))
