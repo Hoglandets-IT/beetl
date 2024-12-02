@@ -141,6 +141,19 @@ Replaces all occurrences of a string with another string
     search: "search_string"
     replace: "replace_string"
 ```
+## Split into Listfield
+Splits a string by specified separator.
+
+```yaml
+- transformers: strings.split_into_listfield
+  config:
+    # inField: Name of field to transform (Mandatory)
+    inField: "old_field"
+    # outField: Destination of transformed fields (Optional, defaults to value of inField)
+    outField: "new_field"
+    # separator: Value to split the string by (Optional, defaults to "")
+    separator: ","
+```
 
 ## Substring
 Extracts a substring from a string
