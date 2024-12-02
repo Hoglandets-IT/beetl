@@ -121,13 +121,17 @@ class Beetl:
                 f"Comparison columns: {','.join(columns)} \n"
             ) from e
 
+        try:
+            comparison_results = (
+                create.select(source.columns),
+                update.select(source.columns),
+                delete.select(source.columns)
+            )
+        except Exception:
+            raise Exception(
+                "Could not create comparison results. Most likely due to a mismatch in column names between source and destination.")
 
-
-        return (
-            create.select(source.columns),
-            update.select(source.columns),
-            delete.select(source.columns)
-        )
+        return comparison_results
 
     def benchmark(self, text: str) -> None:
         """Inserts a benchmark into the log"""
