@@ -1,7 +1,8 @@
 {
   "devDependencies": {
-    "nodemon": "^3.1.7",
-    "vitepress": "^1.0.0-rc.45"
+    "nodemon": "3.1.7",
+    "vitepress": "1.0.0-rc.45",
+    "vitepress-plugin-mermaid": "2.0.17"
   },
   "scripts": {
     "docs:watch": "nodemon --watch docs -e md,vue,html,mts --legacy-watch --exec \"vitepress dev docs\"",
