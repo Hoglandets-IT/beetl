@@ -249,7 +249,7 @@ If you use transformers that require the original data, for example the iTop rel
 
 ### Insertion/Deletion Transformers
 
-This basic flow has no insertion transformers defined, since they are a more advanced feature. You can read more about them in the insertion transformers documentation (/transformers/pre-insertion)
+This basic flow has no insertion transformers defined, since they are a more advanced feature. You can read more about them in the  [transformers documentation](/transformers/using-transformers.html).
 
 ::: tip
 

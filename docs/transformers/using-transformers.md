@@ -2,13 +2,9 @@
 
 Transformers as the name suggests transform data to a different state.
 
-
-For example, the [int.to_int64](/transformers/int.html#to-int64) casts a field from int32 to int64, while [structs.compose_struct](/transformers/structs.html#compose-struct) composes structs from multiple fields on each row.
-
-
 They are powerful and allow for mutation and restructuring of data in multiple ways.
 
-There are four steps in the beetl sync process where transformers are used:
+Transformers can be applied four times during the sync process:
 - After fetching data from the source.
 - After fetching data from the destination.
 - Before inserting into the destination.
@@ -18,10 +14,11 @@ All transformers work the same way regardless of where in the process they are u
 
 ## Source and destination transformers
 
-Source and destination transformers are applied on the DataFrame created from the data fetched from the source and destination prior to comparing them against each other.
+Source and destination transformers are applied on the datasets created when fetching from the sources defined in your configuration.
 
-You can use these steps to mutate the data into a format where the source and destination schema is the same so that they are able to be compared.
-For example, you might have a document database with addresses that you want to sync into a relational database table. When doing this you might want to use the [structs.jsonpath](/transformers/structs.html#jsonpath) transformer multiple times to flatten the address document into a row with multiple fields.
+Usually they are used to achieve a common structure between your sources for easy comparison.
+
+Let's take a real world example: You have a document database as a source that contains address information in nestled documents. You want to sync these to a relational database and therefor want to flatten the document structure to a single row. You can achieve that using the [structs.jsonpath](/transformers/structs.html#jsonpath) transformer multiple times like this. 
 
 ```yaml
 sync:
@@ -53,13 +50,11 @@ sync:
           columns: ["city", "street", "zip"]
 ```
 
-The DataFrame that you have after the source transformer is then used when inserting into the destination, so transforming the source data into the destination format is usually how this is used. But you can ofcourse transform the destination data prior to comparing as well.
-
 ## Insertion and deletion transformers
 
-These transformers only apply to the source DataFrame before the insertions or deletions are being carried out by the destination data source adapter.
+These transformers are applied to the source dataset prior to insertion of new rows or deletion of existing rows in the destination.
 
-An example of when these are needed is when you work with MongoDB databases as both source and destination. Since beetl is converting MongoDB's ObjectId's to strings automatically for comparison reasons, you might want to convert these back into their original form before trying to insert of delete. You can use the [strings.to_object_id](/transformers/strings.html#to-object-id) in the insertionTransformers and deletionTransformers section to do so.
+As an example you might want to use these when you work with a MongoDB database as both the source and the destination. Since beetl is converting MongoDB's ObjectId's to strings automatically for comparison reasons, you have to convert these back into their original form before insertion or deletion. That can be easily done using the [strings.to_object_id](/transformers/strings.html#to-object-id) transformer.
 
 ```yaml
 sync:
