@@ -216,7 +216,7 @@ This could be used in instances where you, for example, want to compare the data
 You could then via the insertion transformers transform the name_backup column back to the name column.
 
 ::: warning
-If you use transformers that require the original data, for example the iTop relations transformer under insertions, make sure that you restore the fields to their original state before running that transformer transformers, like in the example below.
+If you use transformers that require the original data, for example the iTop relations transformer under insertions, make sure that you restore the fields to their original state before running that transformer, like in the example below.
 
 ```yaml
     sourceTransformers:
@@ -245,10 +245,11 @@ If you use transformers that require the original data, for example the iTop rel
         include_sync: true
 
 ```
+:::
 
-### Insertion Transformers
+### Insertion/Deletion Transformers
 
-This basic flow has no insertion transformers defined, since they are a more advanced feature. You can read more about them in the insertion transformers documentation (/transformers/pre-insertion)
+This basic flow has no insertion transformers defined, since they are a more advanced feature. You can read more about them in the  [transformers documentation](/transformers/using-transformers.html).
 
 ::: tip
 

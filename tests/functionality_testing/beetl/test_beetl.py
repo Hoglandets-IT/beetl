@@ -6,7 +6,7 @@ from copy import deepcopy
 from polars import DataFrame
 from src.beetl import beetl, config
 from src.beetl.sources import interface as src_if
-from tests.configurations import generate_from_static_to_static
+from tests.configurations.static import to_static
 
 
 class TestBeetlFunctions(unittest.TestCase):
@@ -14,7 +14,7 @@ class TestBeetlFunctions(unittest.TestCase):
 
     @classmethod
     def setUpClass(self):
-        self.basicConfig = generate_from_static_to_static()
+        self.basicConfig = to_static()
 
         if not os.path.isdir('/tmp/beetl'):
             os.mkdir('/tmp/beetl')
@@ -100,6 +100,8 @@ class TestBeetlFunctions(unittest.TestCase):
         self.assertEqual(
             delete.to_dict(as_series=False),
             {
-                'id': [4]
+                'id': [4],
+                'name': ['James'],
+                'email': ['jane@test.com']
             }
         )

@@ -92,19 +92,15 @@ class Beetl:
 
         # If source is empty, delete all in destination
         if len(source) == 0:
-            return source, source, destination.select(keys)
+            return source, source, destination
 
         # If destination is empty, create all from source
         if len(destination) == 0:
-            try:
-                return (
-                    source.select(set(keys + columns)
-                                  if keys != columns else keys),
-                    destination,
-                    destination
-                )
-            except pl.ColumnNotFoundError as e:
-                return source.select(columns), destination, destination
+            return (
+                source,
+                destination,
+                destination
+            )
         try:
             # Get rows that only exist in source (Creates)
             create = source.join(destination, on=keys, how="anti")
@@ -125,11 +121,17 @@ class Beetl:
                 f"Comparison columns: {','.join(columns)} \n"
             ) from e
 
-        return (
-            create.select(set(keys + columns) if keys != columns else keys),
-            update.select(set(keys + columns) if keys != columns else keys),
-            delete.select(keys)
-        )
+        try:
+            comparison_results = (
+                create.select(source.columns),
+                update.select(source.columns),
+                delete.select(source.columns)
+            )
+        except Exception:
+            raise Exception(
+                "Could not create comparison results. Most likely due to a mismatch in column names between source and destination.")
+
+        return comparison_results
 
     def benchmark(self, text: str) -> None:
         """Inserts a benchmark into the log"""
@@ -235,7 +237,11 @@ class Beetl:
             self.benchmark("Finished updates, starting deletes")
             amount["deletes"] = 0
             if len(delete):
-                amount["deletes"] = sync.destination.delete(delete)
+
+                amount["deletes"] = sync.destination.delete(
+                    self.runTransformers(
+                        delete, sync.deletionTransformers, sync)
+                )
 
             self.benchmark("Finished deletes, sync finished")
 

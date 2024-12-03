@@ -1,33 +1,77 @@
-from polars import DataFrame as POLARS_DF
+from typing import List
+from polars import DataFrame, Object
 from .interface import (
+    ColumnDefinition,
     register_source,
     SourceInterface,
     SourceInterfaceConfiguration,
     SourceInterfaceConnectionSettings,
 )
+from pymongo import MongoClient, UpdateOne, DeleteOne
 
 
 class MongoDBSourceConfiguration(SourceInterfaceConfiguration):
     """The configuration class used for MongoDB sources"""
+    collection: str = None
+    filter: str = None
+    projection: dict = None
+    unique_fields: List[str] = None
 
-    pass
+    def __init__(self, columns: list, collection: str = None, filter: dict = {}, projection: dict = {}, unique_fields: List[str] = []):
+        super().__init__(columns)
+        self.collection = collection
+        self.filter = filter
+        self.projection = projection
+        self.unique_fields = unique_fields
 
 
 class MongoDBSourceConnectionSettings(SourceInterfaceConnectionSettings):
     """The connection configuration class used for MongoDB sources"""
+    connection_string: str
+    query: str = None
+    database: str = None
 
-    pass
+    def get_connection_string_components(self, settings: dict):
+        config = {
+            "host": settings.get("host", None),
+            "port":  settings.get("post", None),
+            "username":  settings.get("username", None),
+            "password":  settings.get("password", None),
+        }
+        for _, value in config.items():
+            if not value:
+                return None
+
+        return config
+
+    def __init__(self, settings: dict):
+        self.projection = settings.get("projection", {})
+
+        if not settings.get("database", None):
+            raise Exception("Database name in connection settings is required")
+
+        self.database = settings["database"]
+
+        if settings.get("connection_string", False):
+            self.connection_string = settings["connection_string"]
+        else:
+            connection_string_components = self.get_connection_string_components(
+                settings)
+            if not connection_string_components:
+                raise Exception(
+                    "Connection string or host, port, username, and password are required")
+            self.connection_string = f"mongodb://{connection_string_components['username']}:{connection_string_components['password']}@{connection_string_components['host']}:{connection_string_components['port']}/"
 
 
 @register_source("mongodb", MongoDBSourceConfiguration, MongoDBSourceConnectionSettings)
-class MongoDBSource(SourceInterface):
+class MongodbSource(SourceInterface):
     ConnectionSettingsClass = MongoDBSourceConnectionSettings
     SourceConfigClass = MongoDBSourceConfiguration
 
     """ A source for MongoDB data """
 
     def _configure(self):
-        raise Exception("Not yet implemented")
+        pass
 
     def _connect(self):
         pass
@@ -35,14 +79,54 @@ class MongoDBSource(SourceInterface):
     def _disconnect(self):
         pass
 
-    def _query(self, params=None) -> POLARS_DF:
-        pass
+    def _query(self, params=None) -> DataFrame:
+        with MongoClient(self.connection_settings.connection_string) as client:
+            db = client[self.connection_settings.database]
+            collection = db[self.source_configuration.collection]
+            polar = DataFrame(collection.find(
+                self.source_configuration.filter, projection=self.source_configuration.projection))
+            if "_id" in polar.columns and polar["_id"].dtype == Object:
+                polar = polar.with_columns(
+                    polar["_id"].map_elements(lambda oid: str(oid)))
+            return polar
 
-    def insert(self, data: POLARS_DF):
-        pass
+    def insert(self, data: DataFrame) -> int:
+        with MongoClient(self.connection_settings.connection_string) as client:
+            db = client[self.connection_settings.database]
+            collection = db[self.source_configuration.collection]
+            result = collection.insert_many(data.to_dicts())
 
-    def update(self, data: POLARS_DF):
-        pass
+        return len(result.inserted_ids)
 
-    def delete(self, data: POLARS_DF):
-        pass
+    def update(self, data: DataFrame) -> int:
+        updates = []
+        for row in data.to_dicts():
+            filter = {field_name: row[field_name]
+                      for field_name in self.source_configuration.unique_fields}
+            for field_name in self.source_configuration.unique_fields:
+                del row[field_name]
+            updates.append(UpdateOne(filter, {"$set": row}))
+
+        if not len(updates):
+            return 0
+
+        with MongoClient(self.connection_settings.connection_string) as client:
+            db = client[self.connection_settings.database]
+            collection = db[self.source_configuration.collection]
+            result = collection.bulk_write(updates)
+
+        return result.modified_count
+
+    def delete(self, data: DataFrame) -> int:
+        deletes = []
+        for row in data.to_dicts():
+            filter = {field_name: row[field_name]
+                      for field_name in self.source_configuration.unique_fields}
+            deletes.append(DeleteOne(filter))
+
+        with MongoClient(self.connection_settings.connection_string) as client:
+            db = client[self.connection_settings.database]
+            collection = db[self.source_configuration.collection]
+            result = collection.bulk_write(deletes)
+
+        return result.deleted_count

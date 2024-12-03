@@ -31,8 +31,6 @@ class PostgresqlSourceConnectionSettings(SourceInterfaceConnectionSettings):
     """The connection configuration class used for Postgresql sources"""
 
     connection_string: str
-    query: str = None
-    table: str = None
 
     def __init__(self, settings: dict):
         if settings.get("connection_string", False):
@@ -81,9 +79,9 @@ class PostgresqlSource(SourceInterface):
                 query = f"SELECT {cols} FROM {self.source_configuration.table}"
 
         if returnData:
-            return pl.read_sql(
+            return pl.read_database_uri(
                 query=query,
-                connection_uri=self.connection_settings.connection_string,
+                uri=self.connection_settings.connection_string,
             )
 
         with psycopg.connect(self.connection_settings.connection_string) as connection:
@@ -99,7 +97,7 @@ class PostgresqlSource(SourceInterface):
             connection_string = self.connection_settings.connection_string
 
         data.write_database(
-            table, self.connection_settings.connection_string, if_exists="append"
+            table, self.connection_settings.connection_string, if_table_exists="append"
         )
 
         return len(data)
@@ -167,7 +165,7 @@ class PostgresqlSource(SourceInterface):
         for batch in batches:
             id_clause = " AND ".join(
                 (
-                    f"{fld.name} IN ({','.join([str(x) for x in batch[fld.name].to_list()])})"
+                    f"{fld.name} IN ({','.join([self._quote_if_needed(x) for x in batch[fld.name].to_list()])})"
                     for fld in self.source_configuration.columns
                     if fld.unique
                 )
@@ -181,3 +179,8 @@ class PostgresqlSource(SourceInterface):
             self._query(customQuery=query, returnData=False)
 
         return len(data)
+
+    def _quote_if_needed(self, id: any) -> str:
+        if isinstance(id, str):
+            return f"'{id}'"
+        return str(id)

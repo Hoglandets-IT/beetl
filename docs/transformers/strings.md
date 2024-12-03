@@ -1,6 +1,17 @@
 # String Tranformers
 Various string transformers that can be applied to a column.
 
+## Add Prefix
+Adds a prefix to a string
+
+```yaml
+- transformer: strings.add_prefix
+  config:
+    inField: field_name
+    # outField: new_field (Optional, default is same as inField)
+    prefix: "prefix_"
+```
+
 ## Staticfield
 Adds a static field to the dataset
 
@@ -130,6 +141,19 @@ Replaces all occurrences of a string with another string
     search: "search_string"
     replace: "replace_string"
 ```
+## Split into Listfield
+Splits a string by specified separator.
+
+```yaml
+- transformers: strings.split_into_listfield
+  config:
+    # inField: Name of field to transform (Mandatory)
+    inField: "old_field"
+    # outField: Destination of transformed fields (Optional, defaults to value of inField)
+    outField: "new_field"
+    # separator: Value to split the string by (Optional, defaults to "")
+    separator: ","
+```
 
 ## Substring
 Extracts a substring from a string
@@ -142,14 +166,13 @@ Extracts a substring from a string
     start: 1
     # length: 5 (Optional, default is until end of string)
 ```
-
-## Add Prefix
-Adds a prefix to a string
+## To object id
+Casts values of a string column into [bson.ObjectId's](https://pymongo.readthedocs.io/en/stable/api/bson/objectid.html).
 
 ```yaml
-- transformer: strings.add_prefix
+- transformer: strings.to_object_id
   config:
+    # inField: Name of the field to convert (Mandatory)
     inField: field_name
-    # outField: new_field (Optional, default is same as inField)
-    prefix: "prefix_"
+
 ```

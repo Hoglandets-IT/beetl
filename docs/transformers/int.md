@@ -24,3 +24,16 @@ The fillNA transformer replaces NaN and null values with a specified integer.
     outField: output_field
     value: 0
 ```
+
+
+## To Int64
+Converts Int32 fields to Int64
+
+```yaml
+- transformer: int.to_int64
+  config:
+    # inField: The field to convert (Mandatory)
+    inField: input_field
+    # outField: The destination field (Optional, defaults to inField value)
+    outField: output_field
+```
