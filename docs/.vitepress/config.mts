@@ -28,12 +28,12 @@ export default defineConfig({
       {
         text: 'Sources',
         items: [
-          { text: 'SQL Server', link: '/sources/sqlserver' },
-          { text: 'MySQL', link: '/sources/mysql' },
           { text: 'iTop', link: '/sources/itop' },
-          { text: 'Postgres', link: '/sources/postgres' },
           { text: 'MongoDB', link: '/sources/mongodb' },
+          { text: 'MySQL', link: '/sources/mysql' },
+          { text: 'Postgres', link: '/sources/postgres' },
           { text: 'Rest API', link: '/sources/restapi' },
+          { text: 'SQL Server', link: '/sources/sqlserver' },
         ]
       },
       {
@@ -41,12 +41,12 @@ export default defineConfig({
         items: [
           { text: 'Using Transformers', link: '/transformers/using-transformers' },
           { text: 'Frames', link: '/transformers/frames' },
+          { text: 'Integers', link: '/transformers/int' },
           { text: 'iTop', link: '/transformers/itop' },
           { text: 'Miscellaneous', link: '/transformers/misc' },
           { text: 'Regex', link: '/transformers/regex' },
           { text: 'Strings', link: '/transformers/strings' },
           { text: 'Structs', link: '/transformers/structs' },
-          { text: 'Integers', link: '/transformers/int' },
         ]
       },
       {
