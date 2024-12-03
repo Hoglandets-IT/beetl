@@ -19,7 +19,7 @@
       "type": "node",
       "request": "launch",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "docs:dev"],
+      "runtimeArgs": ["run", "docs:watch"],
       "serverReadyAction": {
         "action": "openExternally",
         "pattern": "5173",
