@@ -1,6 +1,7 @@
 import { defineConfig } from 'vitepress'
+import { withMermaid } from 'vitepress-plugin-mermaid'
 
-export default defineConfig({
+const config = defineConfig({
   title: "BeETL",
   description: "Data transportation and transformation software",
   themeConfig: {
@@ -16,6 +17,7 @@ export default defineConfig({
         items: [
           { text: 'Quickstart', link: '/getting-started' },
           { text: 'Column Specification', link: '/getting-started/columns' },
+          { text: 'The Flow', link: '/getting-started/flow'},
         ]
       },
       {
@@ -65,3 +67,7 @@ export default defineConfig({
     ]
   }
 })
+
+const configWithMermaid = withMermaid(config)
+
+export default configWithMermaid
