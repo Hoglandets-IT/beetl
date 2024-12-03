@@ -49,6 +49,10 @@ sync:
         name: 1,
         email: 1,
         address: 0
+      # unique_fields, <List<string>>, (mandatory)
+      # Declares what fields will be used to define a unique row.
+      # Is used on insert and delete.
+      unique_fields: ["_id"]
       # columns, <List[ColumnDefinition]>, (mandatory)
       # Defines how the data will look at compare time
       # See /sources/types/column-definition.html for schema.
@@ -224,6 +228,7 @@ sync:
         _id: 1
         name: 1
         email: 1
+      unique_fields: ["_id"]
       columns: [
         {
           "name": "_id",
@@ -242,6 +247,7 @@ sync:
     destination: database_2
     destinationConfig:
       collection: "people"
+      unique_fields: ["_id"]
       columns: [
         {
           "name": "_id",
