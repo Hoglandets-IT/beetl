@@ -23,44 +23,30 @@ def to_mongodb_with_object_id_as_identifier(connectionString: str):
                 "destination": "database",
                 "sourceConfig": {
                     "collection": "src",
-                    "columns": [
-                        {
-                            "name": "_id",
-                            "type": "Utf8",
-                            "unique": True,
-                        },
-                        {
-                            "name": "email",
-                            "type": "Utf8",
-                            "unique": False,
-                        }
-                    ]
                 },
                 "destinationConfig": {
                     "collection": "dst",
-                    "unique_fields": ["_id"],
-                    "columns": [
-                        {
-                            "name": "_id",
-                            "type": "Utf8",
-                            "unique": True,
-                        },
-                        {
-                            "name": "email",
-                            "type": "Utf8",
-                            "unique": False,
-                        }
-                    ]
                 },
-                "insertionTransformers": [
+                "comparisonColumns": [
                     {
-                        "transformer": "strings.to_object_id",
-                        "config": {
-                            "inField": "_id"
-                        }
-                    }
+                        "name": "_id",
+                        "type": "Utf8",
+                        "unique": True
+                    },
+                    {
+                        "name": "name",
+                        "type": "Utf8",
+                    },
+                    {
+                        "name": "email",
+                        "type": "Utf8",
+                    },
+                    {
+                        "name": "address",
+                        "type": "Struct",
+                    },
                 ],
-                "deletionTransformers": [
+                "insertionTransformers": [
                     {
                         "transformer": "strings.to_object_id",
                         "config": {
@@ -98,35 +84,30 @@ def to_mongodb_with_int_as_identifier(connectionString: str):
                 "destination": "database",
                 "sourceConfig": {
                     "collection": "src",
-                    "columns": [
-                        {
-                            "name": "_id",
-                            "type": "Int32",
-                            "unique": True,
-                        },
-                        {
-                            "name": "email",
-                            "type": "Utf8",
-                            "unique": False,
-                        }
-                    ]
                 },
                 "destinationConfig": {
                     "collection": "dst",
-                    "unique_fields": ["_id"],
-                    "columns": [
-                        {
-                            "name": "_id",
-                            "type": "Int32",
-                            "unique": True,
-                        },
-                        {
-                            "name": "email",
-                            "type": "Utf8",
-                            "unique": False,
-                        }
-                    ]
-                }
+                },
+                "comparisonColumns": [
+                    {
+                        "name": "_id",
+                        "type": "Int64",
+                        "unique": True
+                    },
+                    {
+                        "name": "name",
+                        "type": "Utf8",
+                    },
+                    {
+                        "name": "email",
+                        "type": "Utf8",
+                    },
+                    {
+                        "name": "address",
+                        "type": "Struct",
+                    },
+                ],
+
             }
         ]
     }
@@ -168,34 +149,17 @@ def to_mysql_with_object_id_as_identifier(mongodb_connection_string: str, mysql_
                 "destination": "dstdb",
                 "sourceConfig": {
                     "collection": "src",
-                    "columns": [
-                        {
-                            "name": "_id",
-                            "type": "Utf8",
-                            "unique": True,
-                        },
-                        {
-                            "name": "email",
-                            "type": "Utf8",
-                            "unique": False,
-                        }
-                    ]
                 },
                 "destinationConfig": {
                     "table": "dst",
-                    "columns": [
-                        {
-                            "name": "id",
-                            "type": "Utf8",
-                            "unique": True,
-                        },
-                        {
-                            "name": "email",
-                            "type": "Utf8",
-                            "unique": False,
-                        }
-                    ]
                 },
+                "comparisonColumns": [
+                    {
+                        "name": "id",
+                        "type": "Utf8",
+                        "unique": True
+                    }
+                ],
                 "sourceTransformers": [
                     {
                         "transformer": "frames.rename_columns",

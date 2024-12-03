@@ -13,7 +13,7 @@ BENCHMARK = []
 class Beetl:
     """The main class for BeETL. This class is responsible for orchestrating the ETL process."""
 
-    config: BeetlConfig = None
+    config: Union[BeetlConfig, None] = None
     """Holds the BeETL Configuration"""
 
     def __init__(self, config: BeetlConfig):
@@ -51,7 +51,7 @@ class Beetl:
         destination: pl.DataFrame,
         keys: List[str] = ["id"],
         columns: List[str] = [],
-    ) -> List[pl.DataFrame]:
+    ) -> tuple[pl.DataFrame, pl.DataFrame, pl.DataFrame]:
         """
         This function uses polars DataFrames to quickly compare two datasets and return the differences.
 
@@ -89,6 +89,12 @@ class Beetl:
             if column not in destination.columns and len(destination) > 0:
                 destination = destination.with_columns(
                     pl.lit(None).alias(column).cast(source[column].dtype))
+
+        columns_contain_list_column = any(
+            [True for name in columns if type(source.get_column(name).dtype) == pl.List])
+        if columns_contain_list_column:
+            raise ValueError(
+                "Beetl does not support comparing list columns, please remove them from the sync.comparisonColumns field. If you didn't specify any non unique columns, Beetl will compare all columns by default. Please specify the columns you want to compare in the sync.comparisonColumns field.")
 
         # If source is empty, delete all in destination
         if len(source) == 0:
@@ -201,11 +207,18 @@ class Beetl:
             self.benchmark("Finished data transformation before comparison")
 
             self.benchmark("Starting comparison")
+            unique_columns = [
+                column.name for column in sync.comparisonColumns if column.unique]
+            if len(unique_columns) == 0:
+                raise ValueError(
+                    "You need to specify at least one unique column in the sync.comparisonColumns field")
+            comparison_columns = [
+                column.name for column in sync.comparisonColumns if not column.unique]
             create, update, delete = self.compare_datasets(
                 transformedSource,
                 transformedDestination,
-                sync.destination.source_configuration.unique_columns,
-                sync.destination.source_configuration.comparison_columns,
+                unique_columns,
+                comparison_columns,
             )
             self.benchmark("Successfully extracted operations from dataset")
 
@@ -240,7 +253,7 @@ class Beetl:
 
                 amount["deletes"] = sync.destination.delete(
                     self.runTransformers(
-                        delete, sync.deletionTransformers, sync)
+                        delete, sync.insertionTransformers, sync)
                 )
 
             self.benchmark("Finished deletes, sync finished")

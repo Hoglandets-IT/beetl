@@ -5,6 +5,7 @@ from typing import List, Dict
 from dataclasses import dataclass
 import copy
 from .sources.interface import (
+    ColumnDefinition,
     SourceInterfaceConfiguration,
     SourceInterfaceConnectionSettings,
 )
@@ -43,6 +44,13 @@ class ChangeDetectionConfig:
 
 
 @dataclass
+class ComparisonColumn:
+    name: str
+    type: str
+    unique: bool = False
+
+
+@dataclass
 class SyncConfiguration:
     """The configuration for a single sync between two sources"""
 
@@ -50,12 +58,12 @@ class SyncConfiguration:
     sourceConfig: SourceInterfaceConfiguration
     destination: SourceSettings
     destinationConfig: SourceInterfaceConfiguration
+    comparisonColumns: List[ComparisonColumn]
     name: str = ""
     changeDetection: ChangeDetectionConfig = None
     sourceTransformers: TransformerConfiguration = None
     destinationTransformers: TransformerConfiguration = None
     insertionTransformers: List[TransformerConfiguration] = None
-    deletionTransformers: List[TransformerConfiguration] = None
 
     def __post_init__(self) -> None:
         self.source.config = self.sourceConfig
@@ -218,12 +226,25 @@ class BeetlConfigV1(BeetlConfig):
             tmpDestination = copy.deepcopy(self.sources[sync["destination"]])
             tmpDestination.set_sourceconfig(sync["destinationConfig"])
 
+            try:
+                comparisonColumns = [ComparisonColumn(
+                    **args) for args in sync["comparisonColumns"]]
+            except KeyError as e:
+                raise Exception(
+                    "The comparisonColumns key is missing from the sync configuration."
+                ) from e
+            except TypeError as e:
+                raise Exception(
+                    "The comparisonColumns must be a list of dictionaries containing the mandatory keys 'name', 'type', and optionally 'unique'."
+                ) from e
+
             syncConfig = SyncConfiguration(
                 name=sync.get('name', ''),
                 source=tmpSource,
                 sourceConfig=sync["sourceConfig"],
                 destination=tmpDestination,
                 destinationConfig=sync["destinationConfig"],
+                comparisonColumns=comparisonColumns
             )
 
             tmpSource = tmpDestination = None
@@ -257,17 +278,6 @@ class BeetlConfigV1(BeetlConfig):
                 syncConfig.insertionTransformers = []
                 for transformer in sync["insertionTransformers"]:
                     syncConfig.insertionTransformers.append(
-                        TransformerConfiguration(
-                            transformer.get("transformer"),
-                            transformer.get("config", None),
-                            transformer.get("include_sync", False),
-                        )
-                    )
-
-            if sync.get("deletionTransformers", None) is not None:
-                syncConfig.deletionTransformers = []
-                for transformer in sync["deletionTransformers"]:
-                    syncConfig.deletionTransformers.append(
                         TransformerConfiguration(
                             transformer.get("transformer"),
                             transformer.get("config", None),

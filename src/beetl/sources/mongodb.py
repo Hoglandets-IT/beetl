@@ -17,8 +17,8 @@ class MongoDBSourceConfiguration(SourceInterfaceConfiguration):
     projection: dict = None
     unique_fields: List[str] = None
 
-    def __init__(self, columns: list, collection: str = None, filter: dict = {}, projection: dict = {}, unique_fields: List[str] = []):
-        super().__init__(columns)
+    def __init__(self, collection: str = None, filter: dict = {}, projection: dict = {}, unique_fields: List[str] = ["_id"]):
+        super().__init__()
         self.collection = collection
         self.filter = filter
         self.projection = projection
