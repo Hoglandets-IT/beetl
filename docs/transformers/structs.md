@@ -1,6 +1,7 @@
 # Struct Transformers
 The struct transformers apply on all objects of a column
 
+
 ## Compose struct
 Composes a struct from fields on each row
 
@@ -15,10 +16,9 @@ Composes a struct from fields on each row
     }
     # outField: The destination field.
     outField: address
-
 ```
 
-### Example:
+### Example
 
 If the configuration above was used on this DataFrame:
 
@@ -29,12 +29,13 @@ If the configuration above was used on this DataFrame:
 
 The resulting DataFrame would look like this:
 
-| city        | street_address     | zip_code | address                                                             | 
+| city        | street_address     | zip_code | address                                                             |
 | ----------- | ------------------ | -------- |---------------------------------------------------------------------|
-| "new york"  | "Kennedy st. 1"    | "11224"  | {"city": "new york", "street": "Kennedy st. 1", "zip": "11224"}     |
-| "stockholm" | "Drottninggatan 5" | "55667"  | {"city": "stockholm", "street": "Drottninggatan 5", "zip": "55667"} |
+| "new york"  | "Kennedy st. 1"    | "11224"  | `{"city": "new york", "street": "Kennedy st. 1", "zip": "11224"}`     |
+| "stockholm" | "Drottninggatan 5" | "55667"  | `{"city": "stockholm", "street": "Drottninggatan 5", "zip": "55667"}` |
 
 You could then, as an example, follow up with the `frames.project_columns` transformer to drop all other columns but `address` and insert it into a document database.
+
 
 ## Compose list of structs
 Composes a list of structs from list fields on each row
@@ -61,13 +62,13 @@ If the configuration above was used on this DataFrame:
 
 | group_ids | group_technical_names | group_display_names |
 | --------- | --------------------- | ------------------- |
-| [1, 2]      | ["admin", "user"]       | ["Administrator"]     |
+| `[1, 2]`      | `["admin", "user"]`       | `["Administrator"]`     |
 
 The resulting DataFrame would look like this:
 
 | group_ids | group_technical_names | group_display_names | groups |
 | --------- | --------------------- | ------------------- | ------ |
-| [1, 2]      | ["admin", "user"]       | ["Administrator"]     | [{"id": 1, "technical_name": "admin", "display_name": "Administrator"},{"id": 2, "technical_name": "user", "display_name": None}] |
+| `[1, 2]`      | `["admin", "user"]`       | `["Administrator"]`     | `[{"id": 1, "technical_name": "admin", "display_name": "Administrator"},{"id": 2, "technical_name": "user", "display_name": None}]` |
 
 You could then, as an example, follow up with the `frames.project_columns` transformer to drop all other columns but `groups` and insert it into a document database.
 
