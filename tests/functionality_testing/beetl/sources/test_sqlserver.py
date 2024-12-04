@@ -5,6 +5,7 @@ from testcontainers.mssql import SqlServerContainer
 from src.beetl import beetl
 from tests.configurations.sqlserver import to_sqlserver
 from tests.helpers.manual_result import ManualResult
+from tests.helpers.sqlserver_testcontainer import to_connection_string
 
 
 class TestSqlServerSource(unittest.TestCase):
@@ -13,6 +14,7 @@ class TestSqlServerSource(unittest.TestCase):
     def insert_test_data(self, mssql: SqlServerContainer) -> None:
         engine = sqlalchemy.create_engine(mssql.get_connection_url())
         with engine.begin() as connection:
+
             connection.execute(sqlalchemy.text(
                 "create table src (id int primary key, name varchar(255), email varchar(255))"))
             connection.execute(sqlalchemy.text(
@@ -36,8 +38,9 @@ class TestSqlServerSource(unittest.TestCase):
         with SqlServerContainer() as mssql:
             # Arrange
             self.insert_test_data(mssql)
-            config = to_sqlserver(
+            connection_string = to_connection_string(
                 mssql.get_connection_url())
+            config = to_sqlserver(connection_string)
             beetlInstance = beetl.Beetl(beetl.BeetlConfig(config))
 
             # Act

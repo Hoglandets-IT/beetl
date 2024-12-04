@@ -25,8 +25,8 @@ def to_sqlserver(sqlserver_connection_string: str):
                     "table": "src",
                 },
                 "destinationConfig": {
-                    "collection": "dst",
-                    "uniqueFields": ["id"],
+                    "table": "dst",
+                    "uniqueColumns": ["id"],
                 },
                 "comparisonColumns": [
                     {

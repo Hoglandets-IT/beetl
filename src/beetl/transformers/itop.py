@@ -26,7 +26,8 @@ class ItopTransformer(TransformerInterface):
         def make_code(st):
             return concat_and_sha("-", toplevel, *st.values())
 
-        new = data.with_columns(pl.struct(inFields).apply(make_code).alias(outField))
+        new = data.with_columns(
+            pl.struct(inFields).map_elements(make_code).alias(outField))
 
         return new
 
@@ -93,10 +94,10 @@ class ItopTransformer(TransformerInterface):
                     if fk_def is not None:
                         try:
                             comparison = "="
-                            
+
                             if fk_def.get('use_like'):
                                 comparison = "LIKE"
-                            
+
                             query = (
                                 f'SELECT {fk_def["target_class"]}'
                                 + f' WHERE {fk_def["reconciliation_key"]} {comparison} '
@@ -104,7 +105,7 @@ class ItopTransformer(TransformerInterface):
 
                             transformed = transformed.with_columns(
                                 transformed[fk_def["comparison_field"]]
-                                .apply(
+                                .map_elements(
                                     lambda x: query + f"'{x}'"
                                     if x is not None and x != ""
                                     else None

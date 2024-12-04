@@ -30,13 +30,15 @@ The connection string is the generalized pyodbc/pymyssql connection string. You 
 ```python
 import pyodbc
 
-print(pyodbc.drivers())
+driver = str.replace(pyodbc.drivers()[0], " ", "+")
+parameter = f"&driver={driver}"
+print(f"{your_connection_string}{parameter}")
 
 ```
 
 The driver is then appended to the string as follows:
 ```
-mssql://user:password@server:port/database?driver=ODBC+Driver+17+for+SQL+Server&TrustServerCertificate=Yes
+mssql://user:password@server:port/database?TrustServerCertificate=Yes&driver=ODBC+Driver+17+for+SQL+Server
 ```
 
 ## Sync Settings
