@@ -249,7 +249,7 @@ class BeetlConfigV1(BeetlConfig):
 
             tmpSource = tmpDestination = None
 
-            if sync.get("sourceTransformer", None):
+            if sync.get("sourceTransformer", None) is not None:
                 syncConfig.sourceTransformer = TransformerConfiguration(
                     "source", sync["sourceTransformer"], {}
                 )
