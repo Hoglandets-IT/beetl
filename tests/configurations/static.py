@@ -53,52 +53,23 @@ def to_static() -> dict:
             {
                 "source": "staticsrc",
                 "destination": "staticdst",
-                "sourceConfig": {
-                    "columns": [
-                        {
-                            "name": "id",
-                            "type": "Utf8",
-                            "unique": True,
-                            "skip_update": True
-                        },
-                        {
-                            "name": "name",
-                            "type": "Utf8",
-                            "unique": False,
-                            "skip_update": False
-                        },
-                        {
-                            "name": "email",
-                            "type": "Utf8",
-                            "unique": False,
-                            "skip_update": False
-                        }
-                    ]
-                },
-                "destinationConfig": {
-                    "columns": [
-                        {
-                            "name": "id",
-                            "type": "Utf8",
-                            "unique": True,
-                            "skip_update": True
-                        },
-                        {
-                            "name": "name",
-                            "type": "Utf8",
-                            "unique": False,
-                            "skip_update": False
-                        },
-                        {
-                            "name": "email",
-                            "type": "Utf8",
-                            "unique": False,
-                            "skip_update": False
-                        }
-                    ]
-                },
-                "sourceTransformers": [],
-                "destinationTransformers": []
+                "sourceConfig": {},
+                "destinationConfig": {},
+                "comparisonColumns": [
+                    {
+                        "name": "id",
+                        "type": "Utf8",
+                        "unique": True,
+                    },
+                    {
+                        "name": "name",
+                        "type": "Utf8",
+                    },
+                    {
+                        "name": "email",
+                        "type": "Utf8",
+                    }
+                ]
             }
         ]
     }
