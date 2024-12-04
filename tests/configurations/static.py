@@ -69,7 +69,10 @@ def to_static() -> dict:
                         "name": "email",
                         "type": "Utf8",
                     }
-                ]
+                ],
+                "sourceTransformers": [],
+                "destinationTransformers": [],
+                "insertionTransformers": [],
             }
         ]
     }
