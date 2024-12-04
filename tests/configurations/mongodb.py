@@ -26,6 +26,7 @@ def to_mongodb_with_object_id_as_identifier(connectionString: str):
                 },
                 "destinationConfig": {
                     "collection": "dst",
+                    "uniqueFields": ["_id"]
                 },
                 "comparisonColumns": [
                     {
@@ -87,6 +88,7 @@ def to_mongodb_with_int_as_identifier(connectionString: str):
                 },
                 "destinationConfig": {
                     "collection": "dst",
+                    "uniqueFields": ["_id"]
                 },
                 "comparisonColumns": [
                     {
@@ -152,6 +154,7 @@ def to_mysql_with_object_id_as_identifier(mongodb_connection_string: str, mysql_
                 },
                 "destinationConfig": {
                     "table": "dst",
+                    "uniqueColumns": ["id"]
                 },
                 "comparisonColumns": [
                     {

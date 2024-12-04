@@ -33,35 +33,22 @@ def to_mongodb_with_object_id_as_identifier(mysql_connection_string: str, mongod
                 "destination": "dstdb",
                 "sourceConfig": {
                     "table": "srctable",
-                    "query": "SELECT * FROM srctable",
-                    "columns": [
-                        {
-                            "name": "id",
-                            "type": "Int32",
-                            "unique": True,
-                        },
-                        {
-                            "name": "email",
-                            "type": "Utf8",
-                            "unique": False,
-                        }
-                    ]
                 },
                 "destinationConfig": {
                     "collection": "dstcollection",
-                    "columns": [
-                        {
-                            "name": "id",
-                            "type": "Int32",
-                            "unique": True,
-                        },
-                        {
-                            "name": "email",
-                            "type": "Utf8",
-                            "unique": False,
-                        }
-                    ]
+                    "uniqueFields": ["_id"],
                 },
+                "comparisonColumns": [
+                    {
+                        "name": "id",
+                        "type": "Int32",
+                        "unique": True,
+                    },
+                    {
+                        "name": "email",
+                        "type": "Utf8",
+                    }
+                ],
                 "sourceTransformers": [
                     {
                         "transformer": "int.to_int64",
