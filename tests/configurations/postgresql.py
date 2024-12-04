@@ -22,50 +22,26 @@ def to_postgres(connectionString: str):
                 "destination": "database",
                 "sourceConfig": {
                     "table": "srctable",
-                    "columns": [
-                        {
-                            "name": "id",
-                            "type": "Int32",
-                            "unique": True,
-                            "skip_update": True
-                        },
-                        {
-                            "name": "name",
-                            "type": "Utf8",
-                            "unique": False,
-                            "skip_update": False
-                        },
-                        {
-                            "name": "email",
-                            "type": "Utf8",
-                            "unique": False,
-                            "skip_update": False
-                        }
-                    ]
                 },
                 "destinationConfig": {
                     "table": "dsttable",
-                    "columns": [
-                        {
-                            "name": "id",
-                            "type": "Int32",
-                            "unique": True,
-                            "skip_update": True
-                        },
-                        {
-                            "name": "name",
-                            "type": "Utf8",
-                            "unique": False,
-                            "skip_update": False
-                        },
-                        {
-                            "name": "email",
-                            "type": "Utf8",
-                            "unique": False,
-                            "skip_update": False
-                        }
-                    ]
-                }
+                    "uniqueColumns": ["id"],
+                },
+                "comparisonColumns": [
+                    {
+                        "name": "id",
+                        "type": "Int32",
+                        "unique": True,
+                    },
+                    {
+                        "name": "name",
+                        "type": "Utf8",
+                    },
+                    {
+                        "name": "email",
+                        "type": "Utf8",
+                    }
+                ]
             }
         ]
     }
