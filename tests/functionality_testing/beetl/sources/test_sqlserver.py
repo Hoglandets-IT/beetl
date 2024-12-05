@@ -34,6 +34,8 @@ class TestSqlServerSource(unittest.TestCase):
             connection.execute(sqlalchemy.text(
                 f"delete from src where id = {id}"))
 
+    # TODO: This test is a bit flaky when run in a suite, but works fine when run individually
+    # Needs some extra investigation
     def test_sync_between_two_sqlserver_sources(self):
         with SqlServerContainer() as mssql:
             # Arrange
