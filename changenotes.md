@@ -6,6 +6,12 @@
 - MySQL source now defaults to selecting all columns from the target table `SELECT * FROM <table>`.
   - Previously if no query was specified, the source composed a query based on the sync columns. This is now being removed, see information about ongoing changes to sync columns below. 
   - If you were using this automatic fallback functionality you will now have to provide a query in the source configuration.
+- same for postgres
+- same for sqlserver
+- iTop
+   - source no longer fetches fields defined as unique columns + comparison columns + columns that has custom_options.itop.comparison_field populated. Instead you have to explicitly provide the fields in the comparison_columns prop
+   - In addition, if a field that was fetched only to have a value to compare against in the transformer should be provided in link_columns, old custom.itop.comparison_field
+   - skip_columns old column.skip_update
 
 
 ### New features
