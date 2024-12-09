@@ -154,15 +154,22 @@ class ItopSource(SourceInterface):
         oql = self.source_configuration.oql_key
         if self.soft_delete_active():
             soft_delete = self.source_configuration.soft_delete
-            if f"where {soft_delete.get('field', 'status').lower()}" not in oql:
-                oql += (
-                    f" WHERE {soft_delete.get('field', 'status')} "
-                    + f"= '{soft_delete.get('active_value', 'enabled')}'"
-                )
+            if f"where {soft_delete.get('field', 'status').lower()}" not in oql.lower():
+                if "where" in oql.lower():
+                    oql += (
+                        f" AND {soft_delete.get('field', 'status')} "
+                        + f"= '{soft_delete.get('active_value', 'enabled')}'"
+                    )
+                else:
+                    oql += (
+                        f" WHERE {soft_delete.get('field', 'status')} "
+                        + f"= '{soft_delete.get('active_value', 'enabled')}'"
+                    )
 
         all_colums = (
             self.source_configuration.unique_columns
             + self.source_configuration.comparison_columns
+            + self.source_configuration.are_link_cols
         )
         files = self._create_body(
             "core/get",
@@ -375,7 +382,7 @@ class ItopSource(SourceInterface):
         update_cols = tuple(
             column_name
             for column_name in self.source_configuration.unique_columns
-            + self.source_configuration.compare_columns
+            + self.source_configuration.comparison_columns
             if column_name not in self.source_configuration.skip_columns
         )
 
@@ -420,6 +427,10 @@ class ItopSource(SourceInterface):
             )
             deleteFunc = self.update_item
             deleteMessage = "Soft deletion via API Sync"
+
+        for column_name in deleteData.columns:
+            if column_name in self.source_configuration.are_link_cols:
+                deleteData.drop_in_place(column_name)
 
         iters = (
             {

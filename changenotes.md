@@ -12,6 +12,7 @@
    - source no longer fetches fields defined as unique columns + comparison columns + columns that has custom_options.itop.comparison_field populated. Instead you have to explicitly provide the fields in the comparison_columns prop
    - In addition, if a field that was fetched only to have a value to compare against in the transformer should be provided in link_columns, old custom.itop.comparison_field
    - skip_columns old column.skip_update
+- comparisonColumns are mandatory
 
 
 ### New features

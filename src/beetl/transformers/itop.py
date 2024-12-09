@@ -89,29 +89,18 @@ class ItopTransformer(TransformerInterface):
             return data
 
         transformed = data.clone()
-        for field in data.get_columns():
-            field_relation = next(
-                (
-                    relation
-                    for relation in field_relations
-                    if relation["source_field"] == field.name
-                ),
-                None,
-            )
-            if not field_relation:
-                continue
-
+        for field_relation in field_relations:
             source_field = field_relation["source_field"]
             source_comparison_field = field_relation["source_comparison_field"]
-            target_class = field_relation["target_class"]
-            target_comparison_field = field_relation["target_comparison_field"]
+            foreign_class_type = field_relation["foreign_class_type"]
+            foreign_comparison_field = field_relation["foreign_comparison_field"]
             use_like_operator = field_relation.get("use_like_operator", False)
 
             if (
                 not source_field
                 or not source_comparison_field
-                or not target_class
-                or not target_comparison_field
+                or not foreign_class_type
+                or not foreign_comparison_field
             ):
                 raise ValueError(
                     "One of the field_relations config values for the itop.relations transformer is missing. All fields except use_like_operator are required."
@@ -121,8 +110,8 @@ class ItopTransformer(TransformerInterface):
                 comparison_operator = "LIKE" if use_like_operator else "="
 
                 query = (
-                    f"SELECT {target_class}"
-                    + f" WHERE {target_comparison_field} {comparison_operator} "
+                    f"SELECT {foreign_class_type}"
+                    + f" WHERE {foreign_comparison_field} {comparison_operator} "
                 )
 
                 transformed = transformed.with_columns(
@@ -130,10 +119,15 @@ class ItopTransformer(TransformerInterface):
                     .map_elements(
                         lambda x: (
                             query + f"'{x}'" if x is not None and x != "" else None
-                        )
+                        ),
+                        return_dtype=str,
                     )
                     .alias(source_field)
                 )
+            except pl.exceptions.ColumnNotFoundError as e:
+                raise ValueError(
+                    f"Error: The source_comparison_field {source_comparison_field} is not present in DataFrame"
+                ) from e
             except KeyError as e:
                 raise Exception("Error: The key definition is not valid") from e
 

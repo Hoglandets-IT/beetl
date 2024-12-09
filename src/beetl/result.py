@@ -1,4 +1,3 @@
-
 from typing import List, Tuple
 
 
@@ -11,11 +10,18 @@ class Result:
     def __str__(self) -> str:
         return f"Result: {self.inserts} inserts, {self.updates} updates, {self.deletes} deletes across {len(self.names)} syncs"
 
+    def __repr__(self) -> str:
+        return f"Result: {self.inserts} inserts, {self.updates} updates, {self.deletes} deletes across {len(self.names)} syncs"
+
     def __eq__(self, other) -> bool:
         if not issubclass(type(other), Result):
             return NotImplemented
 
-        return (self.inserts, self.updates, self.deletes) == (other.inserts, other.updates, other.deletes)
+        return (self.inserts, self.updates, self.deletes) == (
+            other.inserts,
+            other.updates,
+            other.deletes,
+        )
 
 
 class SyncResult(Result):
