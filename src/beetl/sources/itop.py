@@ -383,7 +383,7 @@ class ItopSource(SourceInterface):
             column_name
             for column_name in self.source_configuration.unique_columns
             + self.source_configuration.comparison_columns
-            if column_name not in self.source_configuration.skip_columns
+            if column_name not in (self.source_configuration.skip_columns or [])
         )
 
         for column in data.columns:

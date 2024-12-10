@@ -1,5 +1,5 @@
-def insert_15_organizations_from_static_to_itop(
-    itop_url: str, itop_user: str, itop_pass: str
+def insert_14_organizations_from_static_to_itop(
+    itop_url: str, itop_user: str, itop_pass: str, soft_delete: bool = True
 ):
     return {
         "version": "V1",
@@ -83,7 +83,7 @@ def insert_15_organizations_from_static_to_itop(
                     "datamodel": "Organization",
                     "oql_key": "SELECT Organization WHERE (orgpath = 'Top->Hoglandet' OR orgpath LIKE 'Top->Hoglandet->Testing_Beetl%')",
                     "soft_delete": {
-                        "enabled": True,
+                        "enabled": soft_delete,
                         "field": "status",
                         "active_value": "active",
                         "inactive_value": "inactive",
@@ -143,8 +143,8 @@ def insert_15_organizations_from_static_to_itop(
     }
 
 
-def delete_15_organizations_from_static_to_itop(
-    itop_url: str, itop_user: str, itop_pass: str
+def delete_14_organizations_from_static_to_itop(
+    itop_url: str, itop_user: str, itop_pass: str, soft_delete: bool = True
 ):
     return {
         "version": "V1",
@@ -177,7 +177,7 @@ def delete_15_organizations_from_static_to_itop(
                     "datamodel": "Organization",
                     "oql_key": "SELECT Organization WHERE orgpath LIKE 'Top->Hoglandet->Testing_Beetl%'",
                     "soft_delete": {
-                        "enabled": False,
+                        "enabled": soft_delete,
                         "field": "status",
                         "active_value": "active",
                         "inactive_value": "inactive",
