@@ -16,7 +16,10 @@ except:
 
 @unittest.skipIf(skip_tests, "No iTop secrets provided")
 class TestItopSource(unittest.TestCase):
-    def test_itop(self):
+    """Since iTop isnt't easy to set up as a 3rd party dependency container for testing you have to provide the hostname and credentials to your test instance in the test.secrets.yaml file for now."""
+
+    def test_itop_organizations(self):
+        """This test tests that the iTop source can insert, update, and delete organizations, both hard and soft."""
         # Clean up any existing test organizations from previous failed runs.
         config_dict = delete_14_organizations_from_static_to_itop(
             secrets.itop.url,
