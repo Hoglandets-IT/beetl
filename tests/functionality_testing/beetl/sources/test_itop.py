@@ -4,6 +4,7 @@ from tests.configurations.itop import (
     delete_14_organizations_from_static_to_itop,
     delete_3_persons_from_static_to_itop,
     insert_14_organizations_from_static_to_itop,
+    insert_2_nutanix_clusters_from_static_to_itop,
     insert_3_persons_from_static_to_itop,
 )
 from tests.helpers.manual_result import ManualResult
@@ -59,6 +60,27 @@ class TestItopSource(unittest.TestCase):
         finally:
             # Clean up dependencies and potential failures
             self.delete_persons(skip_assertions=True)
+            self.delete_organizations(skip_assertions=True)
+
+    def test_itop_nutanix_clusters(self):
+        """This test tests that the iTop source can insert, update, and delete nutanix clusters, both hard and soft."""
+        try:
+            # Clean up potenitally failed previous tests
+            self.delete_organizations(skip_assertions=True)
+
+            # Create dependencies
+            self.create_organizations()
+
+            # Create + Delete
+            self.create_nutanix_clusters()
+            self.delete_nutanix_clusters()
+
+            # Create + Soft Delete (update under the hood)
+            self.create_nutanix_clusters()
+            self.delete_nutanix_clusters(soft_delete=True)
+        finally:
+            # Clean up dependencies and potential failures
+            self.delete_nutanix_clusters(skip_assertions=True)
             self.delete_organizations(skip_assertions=True)
 
     def delete_organizations(
@@ -128,3 +150,40 @@ class TestItopSource(unittest.TestCase):
             return
 
         self.assertEqual(created_15_result, ManualResult(0, 0, 3))
+
+    # TODO: continue here
+    def create_nutanix_clusters(
+        self, soft_delete: bool = False, skip_assertions: bool = False
+    ):
+        config_dict = insert_2_nutanix_clusters_from_static_to_itop(
+            secrets.itop.url,
+            secrets.itop.username,
+            secrets.itop.password,
+            soft_delete=soft_delete,
+        )
+        config = BeetlConfig(config_dict)
+        beetl_instance = Beetl(config)
+        created_2_result = beetl_instance.sync()
+
+        if skip_assertions:
+            return
+
+        self.assertEqual(created_2_result, ManualResult(2, 0, 0))
+
+    def delete_nutanix_clusters(
+        self, soft_delete: bool = False, skip_assertions: bool = False
+    ):
+        config_dict = insert_2_nutanix_clusters_from_static_to_itop(
+            secrets.itop.url,
+            secrets.itop.username,
+            secrets.itop.password,
+            soft_delete=soft_delete,
+        )
+        config = BeetlConfig(config_dict)
+        beetl_instance = Beetl(config)
+        deleted_2_result = beetl_instance.sync()
+
+        if skip_assertions:
+            return
+
+        self.assertEqual(deleted_2_result, ManualResult(0, 0, 2))

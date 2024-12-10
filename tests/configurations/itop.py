@@ -522,3 +522,1307 @@ def delete_3_persons_from_static_to_itop(
             }
         ],
     }
+
+
+def insert_2_nutanix_clusters_from_static_to_itop(
+    itop_url: str, itop_user: str, itop_pass: str, soft_delete: bool = True
+):
+    return {
+        "version": "V1",
+        "sources": [
+            {
+                "name": "src",
+                "type": "Static",
+                "connection": {
+                    "static": [
+                        {
+                            "uuid": "00000000-0000-0000-0000-000000000001",
+                            "name": "Testing_Beetl_Nutanix_Cluster1",
+                            "business_criticity": "high",
+                            "org_name": "Testing_Beetl",
+                        },
+                        {
+                            "uuid": "00000000-0000-0000-0000-000000000002",
+                            "name": "Testing_Beetl_Nutanix_Cluster2",
+                            "business_criticity": "high",
+                            "org_name": "Testing_Beetl",
+                        },
+                    ]
+                },
+            },
+            {
+                "name": "dst",
+                "type": "Itop",
+                "connection": {
+                    "settings": {
+                        "host": itop_url,
+                        "username": itop_user,
+                        "password": itop_pass,
+                        "verify_ssl": False,
+                    }
+                },
+            },
+        ],
+        "sync": [
+            {
+                "name": "Organization Sync",
+                "source": "src",
+                "destination": "dst",
+                "sourceConfig": {},
+                "destinationConfig": {
+                    "datamodel": "NutanixCluster",
+                    "oql_key": "SELECT NutanixCluster WHERE name LIKE 'Testing_Beetl_Nutanix_Cluster%'",
+                    "soft_delete": {
+                        "enabled": soft_delete,
+                        "field": "status",
+                        "active_value": "active",
+                        "inactive_value": "inactive",
+                    },
+                    "unique_columns": ["uuid"],
+                    "comparison_columns": [
+                        "name",
+                        "business_criticity",
+                    ],
+                    # only here to make transformation work
+                    "link_columns": ["org_code"],
+                },
+                "comparisonColumns": [
+                    {"name": "uuid", "type": "Utf8", "unique": True},
+                    {"name": "name", "type": "Utf8"},
+                    {"name": "business_criticality", "type": "Utf8"},
+                ],
+                "sourceTransformers": [
+                    {
+                        "transformer": "itop.orgcode",
+                        "config": {
+                            "inFields": ["org_name"],
+                            "outField": "org_code",
+                            "toplevel": "Hoglandet",
+                        },
+                    },
+                ],
+                "insertionTransformers": [
+                    {
+                        "transformer": "itop.relations",
+                        "config": {
+                            "field_relations": [
+                                {
+                                    "source_field": "org_id",
+                                    "source_comparison_field": "org_code",
+                                    "foreign_class_type": "Organization",
+                                    "foreign_comparison_field": "code",
+                                    "use_like_operator": False,
+                                },
+                            ]
+                        },
+                    }
+                ],
+            }
+        ],
+    }
+
+
+def delete_2_nutanix_clusters_from_static_to_itop(
+    itop_url: str, itop_user: str, itop_pass: str, soft_delete: bool = True
+):
+    return {
+        "version": "V1",
+        "sources": [
+            {
+                "name": "src",
+                "type": "Static",
+                "connection": {"static": []},
+            },
+            {
+                "name": "dst",
+                "type": "Itop",
+                "connection": {
+                    "settings": {
+                        "host": itop_url,
+                        "username": itop_user,
+                        "password": itop_pass,
+                        "verify_ssl": False,
+                    }
+                },
+            },
+        ],
+        "sync": [
+            {
+                "name": "Organization Sync",
+                "source": "src",
+                "destination": "dst",
+                "sourceConfig": {},
+                "destinationConfig": {
+                    "datamodel": "NutanixCluster",
+                    "oql_key": "SELECT NutanixCluster WHERE name LIKE 'Testing_Beetl_Nutanix_Cluster%'",
+                    "soft_delete": {
+                        "enabled": soft_delete,
+                        "field": "status",
+                        "active_value": "active",
+                        "inactive_value": "inactive",
+                    },
+                    "unique_columns": ["uuid"],
+                    "comparison_columns": [
+                        "name",
+                        "business_criticity",
+                    ],
+                    # only here to make transformation work
+                    "link_columns": ["org_code"],
+                },
+                "comparisonColumns": [
+                    {"name": "uuid", "type": "Utf8", "unique": True},
+                    {"name": "name", "type": "Utf8"},
+                    {"name": "business_criticality", "type": "Utf8"},
+                ],
+                "sourceTransformers": [
+                    {
+                        "transformer": "itop.orgcode",
+                        "config": {
+                            "inFields": ["org_name"],
+                            "outField": "org_code",
+                            "toplevel": "Hoglandet",
+                        },
+                    },
+                ],
+                "insertionTransformers": [
+                    {
+                        "transformer": "itop.relations",
+                        "config": {
+                            "field_relations": [
+                                {
+                                    "source_field": "org_id",
+                                    "source_comparison_field": "org_code",
+                                    "foreign_class_type": "Organization",
+                                    "foreign_comparison_field": "code",
+                                    "use_like_operator": False,
+                                },
+                            ]
+                        },
+                    }
+                ],
+            }
+        ],
+    }
+
+
+def insert_2_nutanix_cluster_hosts_from_static_to_itop(
+    itop_url: str, itop_user: str, itop_pass: str, soft_delete: bool = True
+):
+    return {
+        "version": "V1",
+        "sources": [
+            {
+                "name": "src",
+                "type": "Static",
+                "connection": {
+                    "static": [
+                        {
+                            "uuid": "00000000-0000-0000-0000-000000000001",
+                            "cluster_uuid": "00000000-0000-0000-0000-000000000001",
+                            "name": "Testing_Beetl_Nutanix_Cluster_Host1",
+                            "ip_addr": "127.0.0.1",
+                            "controller_vm_ip": "127.0.0.1",
+                            "org_name": "Testing_Beetl",
+                        },
+                        {
+                            "uuid": "00000000-0000-0000-0000-000000000002",
+                            "cluster_uuid": "00000000-0000-0000-0000-000000000002",
+                            "name": "Testing_Beetl_Nutanix_Cluster_Host2",
+                            "ip_addr": "127.0.0.1",
+                            "controller_vm_ip": "127.0.0.1",
+                            "org_name": "Testing_Beetl",
+                        },
+                    ]
+                },
+            },
+            {
+                "name": "dst",
+                "type": "Itop",
+                "connection": {
+                    "settings": {
+                        "host": itop_url,
+                        "username": itop_user,
+                        "password": itop_pass,
+                        "verify_ssl": False,
+                    }
+                },
+            },
+        ],
+        "sync": [
+            {
+                "name": "Organization Sync",
+                "source": "src",
+                "destination": "dst",
+                "sourceConfig": {},
+                "destinationConfig": {
+                    "datamodel": "NutanixClusterHost",
+                    "oql_key": "SELECT NutanixClusterHost WHERE name LIKE 'Testing_Beetl_Nutanix_Cluster_Host%'",
+                    "soft_delete": {
+                        "enabled": soft_delete,
+                        "field": "status",
+                        "active_value": "active",
+                        "inactive_value": "inactive",
+                    },
+                    "unique_columns": ["uuid"],
+                    "comparison_columns": [
+                        "name",
+                        "ip_addr",
+                        "controller_vm_ip",
+                    ],
+                    # only here to make transformation work
+                    "link_columns": ["cluster_uuid", "org_code"],
+                },
+                "comparisonColumns": [
+                    {"name": "uuid", "type": "Utf8", "unique": True},
+                    {"name": "name", "type": "Utf8"},
+                    {"name": "ip_addr", "type": "Utf8"},
+                    {"name": "controller_vm_ip", "type": "Utf8"},
+                ],
+                "sourceTransformers": [
+                    {
+                        "transformer": "itop.set_default",
+                        "config": {
+                            "inField": "ip_addr",
+                            "outField": " ",
+                        },
+                    },
+                    {
+                        "transformer": "itop.orgcode",
+                        "config": {
+                            "inFields": ["org_name"],
+                            "outField": "org_code",
+                            "toplevel": "Hoglandet",
+                        },
+                    },
+                ],
+                "insertionTransformers": [
+                    {
+                        "transformer": "itop.relations",
+                        "config": {
+                            "field_relations": [
+                                {
+                                    "source_field": "cluster_id",
+                                    "source_comparison_field": "cluster_uuid",
+                                    "foreign_class_type": "NutanixCluster",
+                                    "foreign_comparison_field": "uuid",
+                                    "use_like_operator": False,
+                                },
+                                {
+                                    "source_field": "org_id",
+                                    "source_comparison_field": "org_code",
+                                    "foreign_class_type": "Organization",
+                                    "foreign_comparison_field": "code",
+                                    "use_like_operator": False,
+                                },
+                            ]
+                        },
+                    }
+                ],
+            }
+        ],
+    }
+
+
+def delete_2_nutanix_cluster_hosts_from_static_to_itop(
+    itop_url: str, itop_user: str, itop_pass: str, soft_delete: bool = True
+):
+    return {
+        "version": "V1",
+        "sources": [
+            {
+                "name": "src",
+                "type": "Static",
+                "connection": {"static": []},
+            },
+            {
+                "name": "dst",
+                "type": "Itop",
+                "connection": {
+                    "settings": {
+                        "host": itop_url,
+                        "username": itop_user,
+                        "password": itop_pass,
+                        "verify_ssl": False,
+                    }
+                },
+            },
+        ],
+        "sync": [
+            {
+                "name": "Organization Sync",
+                "source": "src",
+                "destination": "dst",
+                "sourceConfig": {},
+                "destinationConfig": {
+                    "datamodel": "NutanixClusterHost",
+                    "oql_key": "SELECT NutanixClusterHost WHERE name LIKE 'Testing_Beetl_Nutanix_Cluster_Host%'",
+                    "soft_delete": {
+                        "enabled": soft_delete,
+                        "field": "status",
+                        "active_value": "active",
+                        "inactive_value": "inactive",
+                    },
+                    "unique_columns": ["uuid"],
+                    "comparison_columns": [
+                        "name",
+                        "ip_addr",
+                        "controller_vm_ip",
+                    ],
+                    # only here to make transformation work
+                    "link_columns": ["cluster_uuid", "org_code"],
+                },
+                "comparisonColumns": [
+                    {"name": "uuid", "type": "Utf8", "unique": True},
+                    {"name": "name", "type": "Utf8"},
+                    {"name": "ip_addr", "type": "Utf8"},
+                    {"name": "controller_vm_ip", "type": "Utf8"},
+                ],
+                "sourceTransformers": [
+                    {
+                        "transformer": "itop.set_default",
+                        "config": {
+                            "inField": "ip_addr",
+                            "outField": " ",
+                        },
+                    },
+                    {
+                        "transformer": "itop.orgcode",
+                        "config": {
+                            "inFields": ["org_name"],
+                            "outField": "org_code",
+                            "toplevel": "Hoglandet",
+                        },
+                    },
+                ],
+                "insertionTransformers": [
+                    {
+                        "transformer": "itop.relations",
+                        "config": {
+                            "field_relations": [
+                                {
+                                    "source_field": "cluster_id",
+                                    "source_comparison_field": "cluster_uuid",
+                                    "foreign_class_type": "NutanixCluster",
+                                    "foreign_comparison_field": "uuid",
+                                    "use_like_operator": False,
+                                },
+                                {
+                                    "source_field": "org_id",
+                                    "source_comparison_field": "org_code",
+                                    "foreign_class_type": "Organization",
+                                    "foreign_comparison_field": "code",
+                                    "use_like_operator": False,
+                                },
+                            ]
+                        },
+                    }
+                ],
+            }
+        ],
+    }
+
+
+def insert_2_nutanix_cluster_networks_from_static_to_itop(
+    itop_url: str, itop_user: str, itop_pass: str, soft_delete: bool = True
+):
+    return {
+        "version": "V1",
+        "sources": [
+            {
+                "name": "src",
+                "type": "Static",
+                "connection": {
+                    "static": [
+                        {
+                            "uuid": "00000000-0000-0000-0000-000000000001",
+                            "cluster_uuid": "00000000-0000-0000-0000-000000000001",
+                            "name": "Testing_Beetl_Nutanix_Network1",
+                            "vlan": "100",
+                            "vswitch": "br1",
+                            "org_name": "Testing_Beetl",
+                        },
+                        {
+                            "uuid": "00000000-0000-0000-0000-000000000002",
+                            "cluster_uuid": "00000000-0000-0000-0000-000000000002",
+                            "name": "Testing_Beetl_Nutanix_Network2",
+                            "vlan": "200",
+                            "vswitch": "br2",
+                            "org_name": "Testing_Beetl",
+                        },
+                    ]
+                },
+            },
+            {
+                "name": "dst",
+                "type": "Itop",
+                "connection": {
+                    "settings": {
+                        "host": itop_url,
+                        "username": itop_user,
+                        "password": itop_pass,
+                        "verify_ssl": False,
+                    }
+                },
+            },
+        ],
+        "sync": [
+            {
+                "name": "Organization Sync",
+                "source": "src",
+                "destination": "dst",
+                "sourceConfig": {},
+                "destinationConfig": {
+                    "datamodel": "NutanixNetwork",
+                    "oql_key": "SELECT NutanixNetwork WHERE name LIKE 'Testing_Beetl_Nutanix_Network%'",
+                    "soft_delete": {
+                        "enabled": soft_delete,
+                        "field": "status",
+                        "active_value": "active",
+                        "inactive_value": "inactive",
+                    },
+                    "unique_columns": ["uuid"],
+                    "comparison_columns": [
+                        "name",
+                        "vlan",
+                        "vswitch",
+                    ],
+                    # only here to make transformation work
+                    "link_columns": ["cluster_uuid", "org_code"],
+                },
+                "comparisonColumns": [
+                    {"name": "uuid", "type": "Utf8", "unique": True},
+                    {"name": "name", "type": "Utf8"},
+                    {"name": "vlan", "type": "Utf8"},
+                    {"name": "vswitch", "type": "Utf8"},
+                ],
+                "sourceTransformers": [
+                    {
+                        "transformer": "itop.orgcode",
+                        "config": {
+                            "inFields": ["org_name"],
+                            "outField": "org_code",
+                            "toplevel": "Hoglandet",
+                        },
+                    },
+                ],
+                "insertionTransformers": [
+                    {
+                        "transformer": "itop.relations",
+                        "config": {
+                            "field_relations": [
+                                {
+                                    "source_field": "cluster_id",
+                                    "source_comparison_field": "cluster_uuid",
+                                    "foreign_class_type": "NutanixCluster",
+                                    "foreign_comparison_field": "uuid",
+                                    "use_like_operator": False,
+                                },
+                                {
+                                    "source_field": "org_id",
+                                    "source_comparison_field": "org_code",
+                                    "foreign_class_type": "Organization",
+                                    "foreign_comparison_field": "code",
+                                    "use_like_operator": False,
+                                },
+                            ]
+                        },
+                    }
+                ],
+            }
+        ],
+    }
+
+
+def delete_2_nutanix_cluster_networks_from_static_to_itop(
+    itop_url: str, itop_user: str, itop_pass: str, soft_delete: bool = True
+):
+    return {
+        "version": "V1",
+        "sources": [
+            {
+                "name": "src",
+                "type": "Static",
+                "connection": {"static": []},
+            },
+            {
+                "name": "dst",
+                "type": "Itop",
+                "connection": {
+                    "settings": {
+                        "host": itop_url,
+                        "username": itop_user,
+                        "password": itop_pass,
+                        "verify_ssl": False,
+                    }
+                },
+            },
+        ],
+        "sync": [
+            {
+                "name": "Organization Sync",
+                "source": "src",
+                "destination": "dst",
+                "sourceConfig": {},
+                "destinationConfig": {
+                    "datamodel": "NutanixNetwork",
+                    "oql_key": "SELECT NutanixNetwork WHERE name LIKE 'Testing_Beetl_Nutanix_Network%'",
+                    "soft_delete": {
+                        "enabled": soft_delete,
+                        "field": "status",
+                        "active_value": "active",
+                        "inactive_value": "inactive",
+                    },
+                    "unique_columns": ["uuid"],
+                    "comparison_columns": [
+                        "name",
+                        "vlan",
+                        "vswitch",
+                    ],
+                    # only here to make transformation work
+                    "link_columns": ["cluster_uuid", "org_code"],
+                },
+                "comparisonColumns": [
+                    {"name": "uuid", "type": "Utf8", "unique": True},
+                    {"name": "name", "type": "Utf8"},
+                    {"name": "vlan", "type": "Utf8"},
+                    {"name": "vswitch", "type": "Utf8"},
+                ],
+                "sourceTransformers": [
+                    {
+                        "transformer": "itop.orgcode",
+                        "config": {
+                            "inFields": ["org_name"],
+                            "outField": "org_code",
+                            "toplevel": "Hoglandet",
+                        },
+                    },
+                ],
+                "insertionTransformers": [
+                    {
+                        "transformer": "itop.relations",
+                        "config": {
+                            "field_relations": [
+                                {
+                                    "source_field": "cluster_id",
+                                    "source_comparison_field": "cluster_uuid",
+                                    "foreign_class_type": "NutanixCluster",
+                                    "foreign_comparison_field": "uuid",
+                                    "use_like_operator": False,
+                                },
+                                {
+                                    "source_field": "org_id",
+                                    "source_comparison_field": "org_code",
+                                    "foreign_class_type": "Organization",
+                                    "foreign_comparison_field": "code",
+                                    "use_like_operator": False,
+                                },
+                            ]
+                        },
+                    }
+                ],
+            }
+        ],
+    }
+
+
+def insert_2_nutanix_virtual_machines_from_static_to_itop(
+    itop_url: str, itop_user: str, itop_pass: str, soft_delete: bool = True
+):
+    return {
+        "version": "V1",
+        "sources": [
+            {
+                "name": "src",
+                "type": "Static",
+                "connection": {
+                    "static": [
+                        {
+                            "name": "Testing_Beetl_Virtual_Machine1",
+                            "uuid": "00000000-0000-0000-0000-000000000001",
+                            "cluster_uuid": "00000000-0000-0000-0000-000000000001",
+                            "org_names": "Testing_Beetl,Beetl City",
+                            "ip_addr": "127.0.0.1",
+                            "threads_per_core": "1",
+                            "vcpu_per_socket": "1",
+                            "num_sockets": "1",
+                            "memory_mb": "4096",
+                            "top_org_name": "Hoglandet",
+                            "status": "active",
+                        },
+                        {
+                            "name": "Testing_Beetl_Virtual_Machine2",
+                            "uuid": "00000000-0000-0000-0000-000000000002",
+                            "cluster_uuid": "00000000-0000-0000-0000-000000000002",
+                            "org_names": "Testing_Beetl",
+                            "ip_addr": "127.0.0.1",
+                            "threads_per_core": "1",
+                            "vcpu_per_socket": "1",
+                            "num_sockets": "1",
+                            "memory_mb": "4096",
+                            "top_org_name": "Hoglandet",
+                            "status": "active",
+                        },
+                    ]
+                },
+            },
+            {
+                "name": "dst",
+                "type": "Itop",
+                "connection": {
+                    "settings": {
+                        "host": itop_url,
+                        "username": itop_user,
+                        "password": itop_pass,
+                        "verify_ssl": False,
+                    }
+                },
+            },
+        ],
+        "sync": [
+            {
+                "name": "Organization Sync",
+                "source": "src",
+                "destination": "dst",
+                "sourceConfig": {},
+                "destinationConfig": {
+                    "datamodel": "NutanixVM",
+                    "oql_key": "SELECT NutanixVM WHERE name LIKE 'Testing_Beetl_Virtual_Machine%'",
+                    "soft_delete": {
+                        "enabled": soft_delete,
+                        "field": "status",
+                        "active_value": "active",
+                        "inactive_value": "inactive",
+                    },
+                    "unique_columns": ["uuid"],
+                    "comparison_columns": [
+                        "name",
+                        "ip_addr",
+                        "threads_per_core",
+                        "vcpu_per_socket",
+                        "num_sockets",
+                        "status",
+                        "memory_mb",
+                    ],
+                    # TODO: Yes but document :)
+                    # only here to make transformation work
+                    "link_columns": ["cluster_uuid", "org_code"],
+                },
+                "comparisonColumns": [
+                    {"name": "uuid", "type": "Utf8", "unique": True},
+                    {"name": "name", "type": "Utf8"},
+                    {"name": "ip_addr", "type": "Utf8"},
+                    {"name": "threads_per_core", "type": "Utf8"},
+                    {"name": "vcpu_per_socket", "type": "Utf8"},
+                    {"name": "num_sockets", "type": "Utf8"},
+                    {"name": "status", "type": "Utf8"},
+                    {"name": "memory_mb", "type": "Utf8"},
+                ],
+                "sourceTransformers": [
+                    {
+                        "transformer": "strings.uppercase",
+                        "config": {
+                            "inField": "name",
+                            "outField": "name",
+                        },
+                    },
+                    {
+                        "transformer": "strings.set_default",
+                        "config": {
+                            "inField": "org_names",
+                            "defaultValue": "Datacenter",
+                        },
+                    },
+                    {
+                        "transformer": "strings.split",
+                        "config": {
+                            "inField": "org_names",
+                            "outFields": ["org_name", "org_name_rest"],
+                            "separator": ",",
+                        },
+                    },
+                    {
+                        "transformer": "itop.orgcode",
+                        "config": {
+                            "inFields": ["top_org_name", "org_name"],
+                            "outField": "org_code",
+                            "toplevel": "Hoglandet",
+                        },
+                    },
+                ],
+                "insertionTransformers": [
+                    {
+                        "transformer": "itop.relations",
+                        "config": {
+                            "field_relations": [
+                                {
+                                    "source_field": "cluster_id",
+                                    "source_comparison_field": "cluster_uuid",
+                                    "foreign_class_type": "NutanixCluster",
+                                    "foreign_comparison_field": "uuid",
+                                    "use_like_operator": False,
+                                },
+                                {
+                                    "source_field": "org_id",
+                                    "source_comparison_field": "org_code",
+                                    "foreign_class_type": "Organization",
+                                    "foreign_comparison_field": "code",
+                                    "use_like_operator": False,
+                                },
+                            ]
+                        },
+                    }
+                ],
+            }
+        ],
+    }
+
+
+def delete_2_nutanix_virtual_machines_from_static_to_itop(
+    itop_url: str, itop_user: str, itop_pass: str, soft_delete: bool = True
+):
+    return {
+        "version": "V1",
+        "sources": [
+            {
+                "name": "src",
+                "type": "Static",
+                "connection": {"static": []},
+            },
+            {
+                "name": "dst",
+                "type": "Itop",
+                "connection": {
+                    "settings": {
+                        "host": itop_url,
+                        "username": itop_user,
+                        "password": itop_pass,
+                        "verify_ssl": False,
+                    }
+                },
+            },
+        ],
+        "sync": [
+            {
+                "name": "Organization Sync",
+                "source": "src",
+                "destination": "dst",
+                "sourceConfig": {},
+                "destinationConfig": {
+                    "datamodel": "NutanixVM",
+                    "oql_key": "SELECT NutanixVM WHERE name LIKE 'Testing_Beetl_Virtual_Machine%'",
+                    "soft_delete": {
+                        "enabled": soft_delete,
+                        "field": "status",
+                        "active_value": "active",
+                        "inactive_value": "inactive",
+                    },
+                    "unique_columns": ["uuid"],
+                    "comparison_columns": [
+                        "name",
+                        "ip_addr",
+                        "threads_per_core",
+                        "vcpu_per_socket",
+                        "num_sockets",
+                        "status",
+                        "memory_mb",
+                    ],
+                    # TODO: Yes but document :)
+                    # only here to make transformation work
+                    "link_columns": ["cluster_uuid", "org_code"],
+                },
+                "comparisonColumns": [
+                    {"name": "uuid", "type": "Utf8", "unique": True},
+                    {"name": "name", "type": "Utf8"},
+                    {"name": "ip_addr", "type": "Utf8"},
+                    {"name": "threads_per_core", "type": "Utf8"},
+                    {"name": "vcpu_per_socket", "type": "Utf8"},
+                    {"name": "num_sockets", "type": "Utf8"},
+                    {"name": "status", "type": "Utf8"},
+                    {"name": "memory_mb", "type": "Utf8"},
+                ],
+                "sourceTransformers": [
+                    {
+                        "transformer": "strings.uppercase",
+                        "config": {
+                            "inField": "name",
+                            "outField": "name",
+                        },
+                    },
+                    {
+                        "transformer": "strings.set_default",
+                        "config": {
+                            "inField": "org_names",
+                            "defaultValue": "Datacenter",
+                        },
+                    },
+                    {
+                        "transformer": "strings.split",
+                        "config": {
+                            "inField": "org_names",
+                            "outFields": ["org_name", "org_name_rest"],
+                            "separator": ",",
+                        },
+                    },
+                    {
+                        "transformer": "itop.orgcode",
+                        "config": {
+                            "inFields": ["top_org_name", "org_name"],
+                            "outField": "org_code",
+                            "toplevel": "Hoglandet",
+                        },
+                    },
+                ],
+                "insertionTransformers": [
+                    {
+                        "transformer": "itop.relations",
+                        "config": {
+                            "field_relations": [
+                                {
+                                    "source_field": "cluster_id",
+                                    "source_comparison_field": "cluster_uuid",
+                                    "foreign_class_type": "NutanixCluster",
+                                    "foreign_comparison_field": "uuid",
+                                    "use_like_operator": False,
+                                },
+                                {
+                                    "source_field": "org_id",
+                                    "source_comparison_field": "org_code",
+                                    "foreign_class_type": "Organization",
+                                    "foreign_comparison_field": "code",
+                                    "use_like_operator": False,
+                                },
+                            ]
+                        },
+                    }
+                ],
+            }
+        ],
+    }
+
+
+def insert_2_nutanix_virtual_machine_nics_from_static_to_itop(
+    itop_url: str, itop_user: str, itop_pass: str, soft_delete: bool = True
+):
+    return {
+        "version": "V1",
+        "sources": [
+            {
+                "name": "src",
+                "type": "Static",
+                "connection": {
+                    "static": [
+                        {
+                            "uuid": "00000000-0000-0000-0000-000000000001",
+                            "mac_addr": "00:00:00:00:00:01",
+                            "ip_addr": "127.0.0.1",
+                            "vlan_uuid": "00000000-0000-0000-0000-000000000001",
+                            "vm_uuid": "00000000-0000-0000-0000-000000000001",
+                            "vm_name": "Testing_Beetl_Virtual_Machine1",
+                        },
+                        {
+                            "uuid": "00000000-0000-0000-0000-000000000002",
+                            "mac_addr": "00:00:00:00:00:02",
+                            "ip_addr": "127.0.0.1",
+                            "vlan_uuid": "00000000-0000-0000-0000-000000000002",
+                            "vm_uuid": "00000000-0000-0000-0000-000000000002",
+                            "vm_name": "Testing_Beetl_Virtual_Machine2",
+                        },
+                    ]
+                },
+            },
+            {
+                "name": "dst",
+                "type": "Itop",
+                "connection": {
+                    "settings": {
+                        "host": itop_url,
+                        "username": itop_user,
+                        "password": itop_pass,
+                        "verify_ssl": False,
+                    }
+                },
+            },
+        ],
+        "sync": [
+            {
+                "name": "iTop Nutanix Virtual Machine NICs Sync",
+                "source": "src",
+                "destination": "dst",
+                "sourceConfig": {},
+                "destinationConfig": {
+                    "datamodel": "NutanixNetworkInterface",
+                    "oql_key": "SELECT NutanixNetworkInterface WHERE uuid = '00000000-0000-0000-0000-000000000001' OR uuid = '00000000-0000-0000-0000-000000000002'",
+                    "soft_delete": {
+                        "enabled": soft_delete,
+                        "field": "status",
+                        "active_value": "active",
+                        "inactive_value": "inactive",
+                    },
+                    "unique_columns": ["uuid"],
+                    "comparison_columns": [
+                        "name",
+                        "mac_addr",
+                        "ip_addr",
+                    ],
+                    # TODO: Yes but document :)
+                    # only here to make transformation work
+                    "link_columns": ["vlan_uuid", "vm_uuid"],
+                },
+                "comparisonColumns": [
+                    {"name": "uuid", "type": "Utf8", "unique": True},
+                    {"name": "name", "type": "Utf8"},
+                    {"name": "mac_addr", "type": "Utf8"},
+                    {"name": "ip_addr", "type": "Utf8"},
+                ],
+                "sourceTransformers": [
+                    {
+                        "transformer": "strings.uppercase",
+                        "config": {
+                            "inField": "mac_addr",
+                            "outField": "mac_addr",
+                        },
+                    },
+                    {
+                        "transformer": "strings.join",
+                        "config": {
+                            "inFields": ["ip_addr", "vm_name"],
+                            "outField": "name",
+                            "separator": "@",
+                        },
+                    },
+                ],
+                "insertionTransformers": [
+                    {
+                        "transformer": "itop.relations",
+                        "config": {
+                            "field_relations": [
+                                {
+                                    "source_field": "vlan_id",
+                                    "source_comparison_field": "vlan_uuid",
+                                    "foreign_class_type": "NutanixNetwork",
+                                    "foreign_comparison_field": "uuid",
+                                    "use_like_operator": False,
+                                },
+                                {
+                                    "source_field": "vm_id",
+                                    "source_comparison_field": "vm_uuid",
+                                    "foreign_class_type": "NutanixVM",
+                                    "foreign_comparison_field": "uuid",
+                                    "use_like_operator": False,
+                                },
+                            ]
+                        },
+                    }
+                ],
+            }
+        ],
+    }
+
+
+def delete_2_nutanix_virtual_machine_nics_from_static_to_itop(
+    itop_url: str, itop_user: str, itop_pass: str, soft_delete: bool = True
+):
+    return {
+        "version": "V1",
+        "sources": [
+            {
+                "name": "src",
+                "type": "Static",
+                "connection": {"static": []},
+            },
+            {
+                "name": "dst",
+                "type": "Itop",
+                "connection": {
+                    "settings": {
+                        "host": itop_url,
+                        "username": itop_user,
+                        "password": itop_pass,
+                        "verify_ssl": False,
+                    }
+                },
+            },
+        ],
+        "sync": [
+            {
+                "name": "iTop Nutanix Virtual Machine NICs Sync",
+                "source": "src",
+                "destination": "dst",
+                "sourceConfig": {},
+                "destinationConfig": {
+                    "datamodel": "NutanixNetworkInterface",
+                    "oql_key": "SELECT NutanixNetworkInterface WHERE uuid = '00000000-0000-0000-0000-000000000001' OR uuid = '00000000-0000-0000-0000-000000000002'",
+                    "soft_delete": {
+                        "enabled": soft_delete,
+                        "field": "status",
+                        "active_value": "active",
+                        "inactive_value": "inactive",
+                    },
+                    "unique_columns": ["uuid"],
+                    "comparison_columns": [
+                        "name",
+                        "mac_addr",
+                        "ip_addr",
+                    ],
+                    # TODO: Yes but document :)
+                    # only here to make transformation work
+                    "link_columns": ["vlan_uuid", "vm_uuid"],
+                },
+                "comparisonColumns": [
+                    {"name": "uuid", "type": "Utf8", "unique": True},
+                    {"name": "name", "type": "Utf8"},
+                    {"name": "mac_addr", "type": "Utf8"},
+                    {"name": "ip_addr", "type": "Utf8"},
+                ],
+                "sourceTransformers": [
+                    {
+                        "transformer": "strings.uppercase",
+                        "config": {
+                            "inField": "mac_addr",
+                            "outField": "mac_addr",
+                        },
+                    },
+                    {
+                        "transformer": "strings.join",
+                        "config": {
+                            "inFields": ["ip_addr", "vm_name"],
+                            "outField": "name",
+                            "separator": "@",
+                        },
+                    },
+                ],
+                "insertionTransformers": [
+                    {
+                        "transformer": "itop.relations",
+                        "config": {
+                            "field_relations": [
+                                {
+                                    "source_field": "vlan_id",
+                                    "source_comparison_field": "vlan_uuid",
+                                    "foreign_class_type": "NutanixNetwork",
+                                    "foreign_comparison_field": "uuid",
+                                    "use_like_operator": False,
+                                },
+                                {
+                                    "source_field": "vm_id",
+                                    "source_comparison_field": "vm_uuid",
+                                    "foreign_class_type": "NutanixVM",
+                                    "foreign_comparison_field": "uuid",
+                                    "use_like_operator": False,
+                                },
+                            ]
+                        },
+                    }
+                ],
+            }
+        ],
+    }
+
+
+def insert_2_nutanix_virtual_machine_disks_from_static_to_itop(
+    itop_url: str, itop_user: str, itop_pass: str, soft_delete: bool = True
+):
+    return {
+        "version": "V1",
+        "sources": [
+            {
+                "name": "src",
+                "type": "Static",
+                "connection": {
+                    "static": [
+                        {
+                            "uuid": "00000000-0000-0000-0000-000000000001",
+                            "vm_uuid": "00000000-0000-0000-0000-000000000001",
+                            "device_type": "DISK",
+                            "name": "nvme0@Testing_Beetl_Virtual_Machine1",
+                            "size": "81920",
+                        },
+                        {
+                            "uuid": "00000000-0000-0000-0000-000000000002",
+                            "vm_uuid": "00000000-0000-0000-0000-000000000002",
+                            "device_type": "DISK",
+                            "name": "nvme0@Testing_Beetl_Virtual_Machine2",
+                            "size": "81920",
+                        },
+                    ]
+                },
+            },
+            {
+                "name": "dst",
+                "type": "Itop",
+                "connection": {
+                    "settings": {
+                        "host": itop_url,
+                        "username": itop_user,
+                        "password": itop_pass,
+                        "verify_ssl": False,
+                    }
+                },
+            },
+        ],
+        "sync": [
+            {
+                "name": "iTop Nutanix Virtual Machine Disks Sync",
+                "source": "src",
+                "destination": "dst",
+                "sourceConfig": {},
+                "destinationConfig": {
+                    "datamodel": "NutanixVMDisk",
+                    "oql_key": "SELECT NutanixVMDisk WHERE name LIKE 'nvme0@Testing_Beetl_Virtual_Machine%'",
+                    "soft_delete": {
+                        "enabled": soft_delete,
+                        "field": "status",
+                        "active_value": "active",
+                        "inactive_value": "inactive",
+                    },
+                    "unique_columns": ["uuid"],
+                    "comparison_columns": [
+                        "name",
+                        "size",
+                        "device_type",
+                    ],
+                    # TODO: Yes but document :)
+                    # only here to make transformation work
+                    "link_columns": ["vm_uuid"],
+                },
+                "comparisonColumns": [
+                    {"name": "uuid", "type": "Utf8", "unique": True},
+                    {"name": "name", "type": "Utf8"},
+                    {"name": "size", "type": "Utf8"},
+                    {"name": "device_type", "type": "Utf8"},
+                ],
+                "sourceTransformers": [
+                    {
+                        "transformer": "strings.uppercase",
+                        "config": {
+                            "inOutMap": {
+                                "uuid": "uuid",
+                                "vm_uuid": "vm_uuid",
+                                "device_type": "device_type",
+                            }
+                        },
+                    },
+                    {
+                        "transformer": "int.fillna",
+                        "config": {
+                            "inField": "size",
+                            "outField": "size",
+                            "value": 1,
+                        },
+                    },
+                ],
+                "insertionTransformers": [
+                    {
+                        "transformer": "itop.relations",
+                        "config": {
+                            "field_relations": [
+                                {
+                                    "source_field": "vm_id",
+                                    "source_comparison_field": "vm_uuid",
+                                    "foreign_class_type": "NutanixVM",
+                                    "foreign_comparison_field": "uuid",
+                                    "use_like_operator": False,
+                                },
+                            ]
+                        },
+                    }
+                ],
+            }
+        ],
+    }
+
+
+def delete_2_nutanix_virtual_machine_disks_from_static_to_itop(
+    itop_url: str, itop_user: str, itop_pass: str, soft_delete: bool = True
+):
+    return {
+        "version": "V1",
+        "sources": [
+            {
+                "name": "src",
+                "type": "Static",
+                "connection": {"static": []},
+            },
+            {
+                "name": "dst",
+                "type": "Itop",
+                "connection": {
+                    "settings": {
+                        "host": itop_url,
+                        "username": itop_user,
+                        "password": itop_pass,
+                        "verify_ssl": False,
+                    }
+                },
+            },
+        ],
+        "sync": [
+            {
+                "name": "iTop Nutanix Virtual Machine Disks Sync",
+                "source": "src",
+                "destination": "dst",
+                "sourceConfig": {},
+                "destinationConfig": {
+                    "datamodel": "NutanixVMDisk",
+                    "oql_key": "SELECT NutanixVMDisk WHERE name LIKE 'nvme0@Testing_Beetl_Virtual_Machine%'",
+                    "soft_delete": {
+                        "enabled": soft_delete,
+                        "field": "status",
+                        "active_value": "active",
+                        "inactive_value": "inactive",
+                    },
+                    "unique_columns": ["uuid"],
+                    "comparison_columns": [
+                        "name",
+                        "size",
+                        "device_type",
+                    ],
+                    # TODO: Yes but document :)
+                    # only here to make transformation work
+                    "link_columns": ["vm_uuid"],
+                },
+                "comparisonColumns": [
+                    {"name": "uuid", "type": "Utf8", "unique": True},
+                    {"name": "name", "type": "Utf8"},
+                    {"name": "size", "type": "Utf8"},
+                    {"name": "device_type", "type": "Utf8"},
+                ],
+                "sourceTransformers": [
+                    {
+                        "transformer": "strings.uppercase",
+                        "config": {
+                            "inOutMap": {
+                                "uuid": "uuid",
+                                "vm_uuid": "vm_uuid",
+                                "device_type": "device_type",
+                            }
+                        },
+                    },
+                    {
+                        "transformer": "int.fillna",
+                        "config": {
+                            "inField": "size",
+                            "outField": "size",
+                            "value": 1,
+                        },
+                    },
+                ],
+                "insertionTransformers": [
+                    {
+                        "transformer": "itop.relations",
+                        "config": {
+                            "field_relations": [
+                                {
+                                    "source_field": "vm_id",
+                                    "source_comparison_field": "vm_uuid",
+                                    "foreign_class_type": "NutanixVM",
+                                    "foreign_comparison_field": "uuid",
+                                    "use_like_operator": False,
+                                },
+                            ]
+                        },
+                    }
+                ],
+            }
+        ],
+    }
