@@ -2,7 +2,9 @@ import unittest
 from src.beetl.beetl import Beetl, BeetlConfig
 from tests.configurations.itop import (
     delete_14_organizations_from_static_to_itop,
+    delete_3_persons_from_static_to_itop,
     insert_14_organizations_from_static_to_itop,
+    insert_3_persons_from_static_to_itop,
 )
 from tests.helpers.manual_result import ManualResult
 from tests.helpers.secrets import get_test_secrets
@@ -20,77 +22,109 @@ class TestItopSource(unittest.TestCase):
 
     def test_itop_organizations(self):
         """This test tests that the iTop source can insert, update, and delete organizations, both hard and soft."""
-        # Clean up any existing test organizations from previous failed runs.
+
+        # Clean up potenitally failed previous tests
+        self.delete_organizations(skip_assertions=True)
+
+        try:
+            # Create + Delete
+            self.create_organizations()
+            self.delete_organizations()
+
+            # Create + Soft Delete (update under the hood)
+            self.create_organizations()
+            self.delete_organizations(soft_delete=True)
+
+        finally:
+            # Clean up
+            self.delete_organizations()
+
+    def test_itop_persons(self):
+        """This test tests that the iTop source can insert, update, and delete persons, both hard and soft."""
+        try:
+            # Clean up potenitally failed previous tests
+            self.delete_persons(skip_assertions=True)
+            self.delete_organizations(skip_assertions=True)
+
+            # Create dependencies
+            self.create_organizations()
+
+            # Create + Delete
+            self.create_persons()
+            self.delete_persons()
+
+            # Create + Soft Delete (update under the hood)
+            self.create_persons()
+            self.delete_persons(soft_delete=True)
+        finally:
+            # Clean up dependencies and potential failures
+            self.delete_persons(skip_assertions=True)
+            self.delete_organizations(skip_assertions=True)
+
+    def delete_organizations(
+        self, soft_delete: bool = False, skip_assertions: bool = False
+    ):
         config_dict = delete_14_organizations_from_static_to_itop(
             secrets.itop.url,
             secrets.itop.username,
             secrets.itop.password,
-            soft_delete=False,
-        )
-        config = BeetlConfig(config_dict)
-        beetl_instance = Beetl(config)
-        beetl_instance.sync()
-
-        # Create 14 organizations
-        config_dict = insert_14_organizations_from_static_to_itop(
-            secrets.itop.url,
-            secrets.itop.username,
-            secrets.itop.password,
-            soft_delete=False,
-        )
-        config = BeetlConfig(config_dict)
-        beetl_instance = Beetl(config)
-        created_15_result = beetl_instance.sync()
-
-        self.assertEqual(created_15_result, ManualResult(14, 0, 0))
-
-        # Hard delete 14 organizations
-        config_dict = delete_14_organizations_from_static_to_itop(
-            secrets.itop.url,
-            secrets.itop.username,
-            secrets.itop.password,
-            soft_delete=False,
+            soft_delete=soft_delete,
         )
         config = BeetlConfig(config_dict)
         beetl_instance = Beetl(config)
         deleted_14_result = beetl_instance.sync()
 
+        if skip_assertions:
+            return
+
         self.assertEqual(deleted_14_result, ManualResult(0, 0, 14))
 
-        # Create 14 organizations
+    def create_organizations(
+        self, soft_delete: bool = False, skip_assertions: bool = False
+    ):
         config_dict = insert_14_organizations_from_static_to_itop(
             secrets.itop.url,
             secrets.itop.username,
             secrets.itop.password,
-            soft_delete=True,
+            soft_delete=soft_delete,
         )
         config = BeetlConfig(config_dict)
         beetl_instance = Beetl(config)
         created_15_result = beetl_instance.sync()
 
+        if skip_assertions:
+            return
+
         self.assertEqual(created_15_result, ManualResult(14, 0, 0))
 
-        # Update (soft delete) 14 organizations
-        config_dict = delete_14_organizations_from_static_to_itop(
+    def create_persons(self, soft_delete: bool = False, skip_assertions: bool = False):
+        config_dict = insert_3_persons_from_static_to_itop(
             secrets.itop.url,
             secrets.itop.username,
             secrets.itop.password,
-            soft_delete=True,
+            soft_delete=soft_delete,
         )
         config = BeetlConfig(config_dict)
         beetl_instance = Beetl(config)
-        updated_14_result = beetl_instance.sync()
-        self.assertEqual(updated_14_result, ManualResult(0, 0, 14))
+        created_15_result = beetl_instance.sync()
 
-        # Hard delete 14 organizations
-        config_dict = delete_14_organizations_from_static_to_itop(
+        if skip_assertions:
+            return
+
+        self.assertEqual(created_15_result, ManualResult(3, 0, 0))
+
+    def delete_persons(self, soft_delete: bool = False, skip_assertions: bool = False):
+        config_dict = delete_3_persons_from_static_to_itop(
             secrets.itop.url,
             secrets.itop.username,
             secrets.itop.password,
-            soft_delete=False,
+            soft_delete=soft_delete,
         )
         config = BeetlConfig(config_dict)
         beetl_instance = Beetl(config)
-        deleted_14_result = beetl_instance.sync()
+        created_15_result = beetl_instance.sync()
 
-        self.assertEqual(deleted_14_result, ManualResult(0, 0, 14))
+        if skip_assertions:
+            return
+
+        self.assertEqual(created_15_result, ManualResult(0, 0, 3))
