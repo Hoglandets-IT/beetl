@@ -1135,7 +1135,7 @@ def delete_2_nutanix_cluster_hosts_from_static_to_itop(
     }
 
 
-def insert_2_nutanix_cluster_networks_from_static_to_itop(
+def insert_2_nutanix_networks_from_static_to_itop(
     itop_url: str, itop_user: str, itop_pass: str, soft_delete: bool = True
 ):
     return {
@@ -1248,7 +1248,120 @@ def insert_2_nutanix_cluster_networks_from_static_to_itop(
     }
 
 
-def delete_2_nutanix_cluster_networks_from_static_to_itop(
+def update_2_nutanix_networks_from_static_to_itop(
+    itop_url: str, itop_user: str, itop_pass: str, soft_delete: bool = True
+):
+    return {
+        "version": "V1",
+        "sources": [
+            {
+                "name": "src",
+                "type": "Static",
+                "connection": {
+                    "static": [
+                        {
+                            "uuid": "00000000-0000-0000-0000-000000000001",
+                            "cluster_uuid": "00000000-0000-0000-0000-000000000001",
+                            "name": "Testing_Beetl_Nutanix_Network3",
+                            "vlan": "100",
+                            "vswitch": "br1",
+                            "org_name": "Testing_Beetl",
+                        },
+                        {
+                            "uuid": "00000000-0000-0000-0000-000000000002",
+                            "cluster_uuid": "00000000-0000-0000-0000-000000000002",
+                            "name": "Testing_Beetl_Nutanix_Network4",
+                            "vlan": "200",
+                            "vswitch": "br2",
+                            "org_name": "Testing_Beetl",
+                        },
+                    ]
+                },
+            },
+            {
+                "name": "dst",
+                "type": "Itop",
+                "connection": {
+                    "settings": {
+                        "host": itop_url,
+                        "username": itop_user,
+                        "password": itop_pass,
+                        "verify_ssl": False,
+                    }
+                },
+            },
+        ],
+        "sync": [
+            {
+                "name": "Organization Sync",
+                "source": "src",
+                "destination": "dst",
+                "sourceConfig": {},
+                "destinationConfig": {
+                    "datamodel": "NutanixNetwork",
+                    "oql_key": "SELECT NutanixNetwork WHERE name LIKE 'Testing_Beetl_Nutanix_Network%'",
+                    "soft_delete": {
+                        "enabled": soft_delete,
+                        "field": "status",
+                        "active_value": "active",
+                        "inactive_value": "inactive",
+                    },
+                    "unique_columns": ["uuid"],
+                    "comparison_columns": [
+                        "name",
+                        "vlan",
+                        "vswitch",
+                        "cluster_id",
+                        "org_id",
+                    ],
+                    # only here to make transformation work
+                    "link_columns": ["cluster_uuid", "org_code"],
+                },
+                "comparisonColumns": [
+                    {"name": "uuid", "type": "Utf8", "unique": True},
+                    {"name": "name", "type": "Utf8"},
+                    {"name": "vlan", "type": "Utf8"},
+                    {"name": "vswitch", "type": "Utf8"},
+                ],
+                "sourceTransformers": [
+                    {
+                        "transformer": "itop.orgcode",
+                        "config": {
+                            "inFields": ["org_name"],
+                            "outField": "org_code",
+                            "toplevel": "Hoglandet",
+                        },
+                    },
+                ],
+                "insertionTransformers": [
+                    {
+                        "transformer": "itop.relations",
+                        "config": {
+                            "field_relations": [
+                                {
+                                    "source_field": "cluster_id",
+                                    "source_comparison_field": "cluster_uuid",
+                                    "foreign_class_type": "NutanixCluster",
+                                    "foreign_comparison_field": "uuid",
+                                    "use_like_operator": False,
+                                },
+                                {
+                                    "source_field": "org_id",
+                                    "source_comparison_field": "org_code",
+                                    "foreign_class_type": "Organization",
+                                    "foreign_comparison_field": "code",
+                                    "use_like_operator": False,
+                                },
+                            ]
+                        },
+                    }
+                ],
+            }
+        ],
+    }
+
+
+def delete_2_nutanix_networks_from_static_to_itop(
     itop_url: str, itop_user: str, itop_pass: str, soft_delete: bool = True
 ):
     return {

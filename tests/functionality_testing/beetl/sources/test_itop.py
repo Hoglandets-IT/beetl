@@ -4,13 +4,16 @@ from src.beetl.beetl import Beetl, BeetlConfig
 from tests.configurations.itop import (
     delete_14_organizations_from_static_to_itop,
     delete_2_nutanix_cluster_hosts_from_static_to_itop,
+    delete_2_nutanix_networks_from_static_to_itop,
     delete_2_nutanix_clusters_from_static_to_itop,
     delete_3_persons_from_static_to_itop,
     insert_14_organizations_from_static_to_itop,
     insert_2_nutanix_cluster_hosts_from_static_to_itop,
+    insert_2_nutanix_networks_from_static_to_itop,
     insert_2_nutanix_clusters_from_static_to_itop,
     insert_3_persons_from_static_to_itop,
     update_2_nutanix_cluster_hosts_from_static_to_itop,
+    update_2_nutanix_networks_from_static_to_itop,
     update_2_nutanix_clusters_from_static_to_itop,
 )
 from tests.helpers.manual_result import ManualResult
@@ -42,6 +45,9 @@ class TestItopSource(unittest.TestCase):
             self.create_organizations()
             self.delete_organizations(soft_delete=True)
 
+        except Exception as e:
+            raise e
+
         finally:
             # Clean up
             self.delete_organizations()
@@ -63,6 +69,10 @@ class TestItopSource(unittest.TestCase):
             # Create + Soft Delete (update under the hood)
             self.create_persons()
             self.delete_persons(soft_delete=True)
+
+        except Exception as e:
+            raise e
+
         finally:
             # Clean up dependencies and potential failures
             self.delete_persons(skip_assertions=True)
@@ -82,6 +92,9 @@ class TestItopSource(unittest.TestCase):
             self.create_nutanix_clusters()
             self.update_nutanix_clusters()
             self.delete_nutanix_clusters()
+
+        except Exception as e:
+            raise e
 
         finally:
             # Clean up dependencies and potential failures
@@ -104,12 +117,39 @@ class TestItopSource(unittest.TestCase):
             self.create_nutanix_cluster_hosts()
             self.update_nutanix_cluster_hosts()
             self.delete_nutanix_cluster_hosts()
+
         except Exception as e:
             raise e
 
         finally:
             # Clean up dependencies and potential failures
             self.delete_nutanix_cluster_hosts(skip_assertions=True)
+            self.delete_nutanix_clusters(skip_assertions=True)
+            self.delete_organizations(skip_assertions=True)
+
+    def test_itop_nutanix_networks(self):
+        """This test tests that the iTop source can insert, update, and delete nutanix cluster networks. Soft deletion is not supported for nutanix clusters."""
+        try:
+            # Clean up potenitally failed previous tests
+            self.delete_nutanix_cluster_networks(skip_assertions=True)
+            self.delete_nutanix_clusters(skip_assertions=True)
+            self.delete_organizations(skip_assertions=True)
+
+            # Create dependencies
+            self.create_organizations()
+            self.create_nutanix_clusters()
+
+            # Create + Update + Delete
+            self.create_nutanix_cluster_networks()
+            self.update_nutanix_cluster_networks()
+            self.delete_nutanix_cluster_networks()
+
+        except Exception as e:
+            raise e
+
+        finally:
+            # Clean up dependencies and potential failures
+            self.delete_nutanix_cluster_networks(skip_assertions=True)
             self.delete_nutanix_clusters(skip_assertions=True)
             self.delete_organizations(skip_assertions=True)
 
@@ -245,6 +285,42 @@ class TestItopSource(unittest.TestCase):
         self, soft_delete: bool = False, skip_assertions: bool = False
     ):
         config_generator = delete_2_nutanix_cluster_hosts_from_static_to_itop
+        expected_result = ManualResult(0, 0, 2)
+        result = self.run_sync(config_generator, soft_delete=soft_delete)
+
+        if skip_assertions:
+            return
+
+        self.assertEqual(result, expected_result)
+
+    def create_nutanix_cluster_networks(
+        self, soft_delete: bool = False, skip_assertions: bool = False
+    ):
+        config_generator = insert_2_nutanix_networks_from_static_to_itop
+        expected_result = ManualResult(2, 0, 0)
+        result = self.run_sync(config_generator, soft_delete=soft_delete)
+
+        if skip_assertions:
+            return
+
+        self.assertEqual(result, expected_result)
+
+    def update_nutanix_cluster_networks(
+        self, soft_delete: bool = False, skip_assertions: bool = False
+    ):
+        config_generator = update_2_nutanix_networks_from_static_to_itop
+        expected_result = ManualResult(0, 2, 0)
+        result = self.run_sync(config_generator, soft_delete=soft_delete)
+
+        if skip_assertions:
+            return
+
+        self.assertEqual(result, expected_result)
+
+    def delete_nutanix_cluster_networks(
+        self, soft_delete: bool = False, skip_assertions: bool = False
+    ):
+        config_generator = delete_2_nutanix_networks_from_static_to_itop
         expected_result = ManualResult(0, 0, 2)
         result = self.run_sync(config_generator, soft_delete=soft_delete)
 
