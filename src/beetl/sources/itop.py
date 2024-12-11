@@ -19,7 +19,12 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 BULK_CUTOFF = 300
 
-DATAMODEL_WITHOUT_SOFT_DELETE = ("NutanixCluster", "NutanixClusterHost")
+DATAMODEL_WITHOUT_SOFT_DELETE = (
+    "NutanixCluster",
+    "NutanixClusterHost",
+    "NutanixVM",
+    "NutanixNetwork",
+)
 
 
 class ItopSourceConfiguration(SourceInterfaceConfiguration):

@@ -6,15 +6,18 @@ from tests.configurations.itop import (
     delete_2_nutanix_cluster_hosts_from_static_to_itop,
     delete_2_nutanix_networks_from_static_to_itop,
     delete_2_nutanix_clusters_from_static_to_itop,
+    delete_2_nutanix_virtual_machines_from_static_to_itop,
     delete_3_persons_from_static_to_itop,
     insert_14_organizations_from_static_to_itop,
     insert_2_nutanix_cluster_hosts_from_static_to_itop,
     insert_2_nutanix_networks_from_static_to_itop,
     insert_2_nutanix_clusters_from_static_to_itop,
+    insert_2_nutanix_virtual_machines_from_static_to_itop,
     insert_3_persons_from_static_to_itop,
     update_2_nutanix_cluster_hosts_from_static_to_itop,
     update_2_nutanix_networks_from_static_to_itop,
     update_2_nutanix_clusters_from_static_to_itop,
+    update_2_nutanix_virtual_machines_from_static_to_itop,
 )
 from tests.helpers.manual_result import ManualResult
 from tests.helpers.secrets import get_test_secrets
@@ -152,6 +155,48 @@ class TestItopSource(unittest.TestCase):
             self.delete_nutanix_cluster_networks(skip_assertions=True)
             self.delete_nutanix_clusters(skip_assertions=True)
             self.delete_organizations(skip_assertions=True)
+
+    def test_itop_nutanix_virtual_machines(self):
+        """This test tests that the iTop source can insert, update, and delete nutanix virtual machines. Soft deletion is not supported for nutanix virtual machines."""
+        try:
+            # Clean up potenitally failed previous tests
+            self.delete_nutanix_virtual_machines(skip_assertions=True)
+            self.delete_nutanix_clusters(skip_assertions=True)
+            self.delete_organizations(skip_assertions=True)
+
+            # Create dependencies
+            self.create_organizations()
+            self.create_nutanix_clusters()
+
+            # Create + Update + Delete
+            self.create_nutanix_virtual_machines()
+            self.update_nutanix_virtual_machines()
+            self.delete_nutanix_virtual_machines()
+
+        except Exception as e:
+            raise e
+
+        finally:
+            # Clean up dependencies and potential failures
+            self.delete_nutanix_virtual_machines(skip_assertions=True)
+            self.delete_nutanix_clusters(skip_assertions=True)
+            self.delete_organizations(skip_assertions=True)
+
+    def run_sync(
+        self: "TestItopSource",
+        config_generator: Callable[[str, str, str, bool], dict],
+        soft_delete: bool = False,
+    ):
+        config_dict = config_generator(
+            secrets.itop.url,
+            secrets.itop.username,
+            secrets.itop.password,
+            soft_delete=soft_delete,
+        )
+        config = BeetlConfig(config_dict)
+        beetl_instance = Beetl(config)
+        result = beetl_instance.sync()
+        return result
 
     def delete_organizations(
         self, soft_delete: bool = False, skip_assertions: bool = False
@@ -329,18 +374,38 @@ class TestItopSource(unittest.TestCase):
 
         self.assertEqual(result, expected_result)
 
-    def run_sync(
-        self: "TestItopSource",
-        config_generator: Callable[[str, str, str, bool], dict],
-        soft_delete: bool = False,
+    def create_nutanix_virtual_machines(
+        self, soft_delete: bool = False, skip_assertions: bool = False
     ):
-        config_dict = config_generator(
-            secrets.itop.url,
-            secrets.itop.username,
-            secrets.itop.password,
-            soft_delete=soft_delete,
-        )
-        config = BeetlConfig(config_dict)
-        beetl_instance = Beetl(config)
-        result = beetl_instance.sync()
-        return result
+        config_generator = insert_2_nutanix_virtual_machines_from_static_to_itop
+        expected_result = ManualResult(2, 0, 0)
+        result = self.run_sync(config_generator, soft_delete=soft_delete)
+
+        if skip_assertions:
+            return
+
+        self.assertEqual(result, expected_result)
+
+    def update_nutanix_virtual_machines(
+        self, soft_delete: bool = False, skip_assertions: bool = False
+    ):
+        config_generator = update_2_nutanix_virtual_machines_from_static_to_itop
+        expected_result = ManualResult(0, 2, 0)
+        result = self.run_sync(config_generator, soft_delete=soft_delete)
+
+        if skip_assertions:
+            return
+
+        self.assertEqual(result, expected_result)
+
+    def delete_nutanix_virtual_machines(
+        self, soft_delete: bool = False, skip_assertions: bool = False
+    ):
+        config_generator = delete_2_nutanix_virtual_machines_from_static_to_itop
+        expected_result = ManualResult(0, 0, 2)
+        result = self.run_sync(config_generator, soft_delete=soft_delete)
+
+        if skip_assertions:
+            return
+
+        self.assertEqual(result, expected_result)
