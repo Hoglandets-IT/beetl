@@ -23,7 +23,9 @@ DATAMODEL_WITHOUT_SOFT_DELETE = (
     "NutanixCluster",
     "NutanixClusterHost",
     "NutanixVM",
+    "NutanixVMDisk",
     "NutanixNetwork",
+    "NutanixNetworkInterface",
 )
 
 

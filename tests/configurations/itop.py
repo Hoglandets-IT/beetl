@@ -2009,6 +2009,127 @@ def insert_2_nutanix_virtual_machine_nics_from_static_to_itop(
     }
 
 
+def update_2_nutanix_virtual_machine_nics_from_static_to_itop(
+    itop_url: str, itop_user: str, itop_pass: str, soft_delete: bool = True
+):
+    return {
+        "version": "V1",
+        "sources": [
+            {
+                "name": "src",
+                "type": "Static",
+                "connection": {
+                    "static": [
+                        {
+                            "uuid": "00000000-0000-0000-0000-000000000001",
+                            "mac_addr": "00:00:00:00:00:01",
+                            "ip_addr": "127.0.0.2",
+                            "vlan_uuid": "00000000-0000-0000-0000-000000000001",
+                            "vm_uuid": "00000000-0000-0000-0000-000000000001",
+                            "vm_name": "Testing_Beetl_Virtual_Machine1",
+                        },
+                        {
+                            "uuid": "00000000-0000-0000-0000-000000000002",
+                            "mac_addr": "00:00:00:00:00:02",
+                            "ip_addr": "127.0.0.2",
+                            "vlan_uuid": "00000000-0000-0000-0000-000000000002",
+                            "vm_uuid": "00000000-0000-0000-0000-000000000002",
+                            "vm_name": "Testing_Beetl_Virtual_Machine2",
+                        },
+                    ]
+                },
+            },
+            {
+                "name": "dst",
+                "type": "Itop",
+                "connection": {
+                    "settings": {
+                        "host": itop_url,
+                        "username": itop_user,
+                        "password": itop_pass,
+                        "verify_ssl": False,
+                    }
+                },
+            },
+        ],
+        "sync": [
+            {
+                "name": "iTop Nutanix Virtual Machine NICs Sync",
+                "source": "src",
+                "destination": "dst",
+                "sourceConfig": {},
+                "destinationConfig": {
+                    "datamodel": "NutanixNetworkInterface",
+                    "oql_key": "SELECT NutanixNetworkInterface WHERE uuid = '00000000-0000-0000-0000-000000000001' OR uuid = '00000000-0000-0000-0000-000000000002'",
+                    "soft_delete": {
+                        "enabled": soft_delete,
+                        "field": "status",
+                        "active_value": "active",
+                        "inactive_value": "inactive",
+                    },
+                    "unique_columns": ["uuid"],
+                    "comparison_columns": [
+                        "name",
+                        "mac_addr",
+                        "ip_addr",
+                        "vlan_id",
+                        "vm_id",
+                    ],
+                    # TODO: Yes but document :)
+                    # only here to make transformation work
+                    "link_columns": ["vlan_uuid", "vm_uuid"],
+                },
+                "comparisonColumns": [
+                    {"name": "uuid", "type": "Utf8", "unique": True},
+                    {"name": "name", "type": "Utf8"},
+                    {"name": "mac_addr", "type": "Utf8"},
+                    {"name": "ip_addr", "type": "Utf8"},
+                ],
+                "sourceTransformers": [
+                    {
+                        "transformer": "strings.uppercase",
+                        "config": {
+                            "inField": "mac_addr",
+                            "outField": "mac_addr",
+                        },
+                    },
+                    {
+                        "transformer": "strings.join",
+                        "config": {
+                            "inFields": ["ip_addr", "vm_name"],
+                            "outField": "name",
+                            "separator": "@",
+                        },
+                    },
+                ],
+                "insertionTransformers": [
+                    {
+                        "transformer": "itop.relations",
+                        "config": {
+                            "field_relations": [
+                                {
+                                    "source_field": "vlan_id",
+                                    "source_comparison_field": "vlan_uuid",
+                                    "foreign_class_type": "NutanixNetwork",
+                                    "foreign_comparison_field": "uuid",
+                                    "use_like_operator": False,
+                                },
+                                {
+                                    "source_field": "vm_id",
+                                    "source_comparison_field": "vm_uuid",
+                                    "foreign_class_type": "NutanixVM",
+                                    "foreign_comparison_field": "uuid",
+                                    "use_like_operator": False,
+                                },
+                            ]
+                        },
+                    }
+                ],
+            }
+        ],
+    }
+
+
 def delete_2_nutanix_virtual_machine_nics_from_static_to_itop(
     itop_url: str, itop_user: str, itop_pass: str, soft_delete: bool = True
 ):
@@ -2135,6 +2256,120 @@ def insert_2_nutanix_virtual_machine_disks_from_static_to_itop(
                             "device_type": "DISK",
                             "name": "nvme0@Testing_Beetl_Virtual_Machine2",
                             "size": "81920",
+                        },
+                    ]
+                },
+            },
+            {
+                "name": "dst",
+                "type": "Itop",
+                "connection": {
+                    "settings": {
+                        "host": itop_url,
+                        "username": itop_user,
+                        "password": itop_pass,
+                        "verify_ssl": False,
+                    }
+                },
+            },
+        ],
+        "sync": [
+            {
+                "name": "iTop Nutanix Virtual Machine Disks Sync",
+                "source": "src",
+                "destination": "dst",
+                "sourceConfig": {},
+                "destinationConfig": {
+                    "datamodel": "NutanixVMDisk",
+                    "oql_key": "SELECT NutanixVMDisk WHERE name LIKE 'nvme0@Testing_Beetl_Virtual_Machine%'",
+                    "soft_delete": {
+                        "enabled": soft_delete,
+                        "field": "status",
+                        "active_value": "active",
+                        "inactive_value": "inactive",
+                    },
+                    "unique_columns": ["uuid"],
+                    "comparison_columns": [
+                        "name",
+                        "size",
+                        "device_type",
+                        "vm_id",
+                    ],
+                    # TODO: Yes but document :)
+                    # only here to make transformation work
+                    "link_columns": ["vm_uuid"],
+                },
+                "comparisonColumns": [
+                    {"name": "uuid", "type": "Utf8", "unique": True},
+                    {"name": "name", "type": "Utf8"},
+                    {"name": "size", "type": "Utf8"},
+                    {"name": "device_type", "type": "Utf8"},
+                ],
+                "sourceTransformers": [
+                    {
+                        "transformer": "strings.uppercase",
+                        "config": {
+                            "inOutMap": {
+                                "uuid": "uuid",
+                                "vm_uuid": "vm_uuid",
+                                "device_type": "device_type",
+                            }
+                        },
+                    },
+                    {
+                        "transformer": "int.fillna",
+                        "config": {
+                            "inField": "size",
+                            "outField": "size",
+                            "value": 1,
+                        },
+                    },
+                ],
+                "insertionTransformers": [
+                    {
+                        "transformer": "itop.relations",
+                        "config": {
+                            "field_relations": [
+                                {
+                                    "source_field": "vm_id",
+                                    "source_comparison_field": "vm_uuid",
+                                    "foreign_class_type": "NutanixVM",
+                                    "foreign_comparison_field": "uuid",
+                                    "use_like_operator": False,
+                                },
+                            ]
+                        },
+                    }
+                ],
+            }
+        ],
+    }
+
+
+def update_2_nutanix_virtual_machine_disks_from_static_to_itop(
+    itop_url: str, itop_user: str, itop_pass: str, soft_delete: bool = True
+):
+    return {
+        "version": "V1",
+        "sources": [
+            {
+                "name": "src",
+                "type": "Static",
+                "connection": {
+                    "static": [
+                        {
+                            "uuid": "00000000-0000-0000-0000-000000000001",
+                            "vm_uuid": "00000000-0000-0000-0000-000000000001",
+                            "device_type": "DISK",
+                            "name": "nvme0@Testing_Beetl_Virtual_Machine1",
+                            "size": "1048",
+                        },
+                        {
+                            "uuid": "00000000-0000-0000-0000-000000000002",
+                            "vm_uuid": "00000000-0000-0000-0000-000000000002",
+                            "device_type": "DISK",
+                            "name": "nvme0@Testing_Beetl_Virtual_Machine2",
+                            "size": "1048",
                         },
                     ]
                 },
