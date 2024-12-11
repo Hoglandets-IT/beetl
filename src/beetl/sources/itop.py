@@ -19,6 +19,8 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 BULK_CUTOFF = 300
 
+DATAMODEL_WITHOUT_SOFT_DELETE = ("NutanixCluster", "NutanixClusterHost")
+
 
 class ItopSourceConfiguration(SourceInterfaceConfiguration):
     """The configuration class used for iTop sources"""
@@ -54,6 +56,15 @@ class ItopSourceConfiguration(SourceInterfaceConfiguration):
         self.unique_columns = unique_columns
 
         self.skip_columns = skip_columns
+
+        if soft_delete is not None:
+            if (
+                soft_delete.get("enabled", False)
+                and datamodel in DATAMODEL_WITHOUT_SOFT_DELETE
+            ):
+                raise Exception(
+                    f"Soft delete is not supported for {datamodel} datamodel"
+                )
 
         self.soft_delete = soft_delete
 

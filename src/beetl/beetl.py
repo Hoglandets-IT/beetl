@@ -138,7 +138,7 @@ class Beetl:
             comparison_results = (
                 create.select(source.columns),
                 update.select(source.columns),
-                delete.select(source.columns),
+                delete.select(destination.columns),
             )
         except Exception:
             raise Exception(

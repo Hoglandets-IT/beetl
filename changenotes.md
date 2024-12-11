@@ -13,6 +13,7 @@
    - In addition, if a field that was fetched only to have a value to compare against in the transformer should be provided in link_columns, old custom.itop.comparison_field
    - skip_columns old column.skip_update
 - comparisonColumns are mandatory
+- iTop nutanixcluster does not support soft_delete
 
 
 ### New features

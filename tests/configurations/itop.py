@@ -579,17 +579,109 @@ def insert_2_nutanix_clusters_from_static_to_itop(
                         "inactive_value": "inactive",
                     },
                     "unique_columns": ["uuid"],
-                    "comparison_columns": [
-                        "name",
-                        "business_criticity",
-                    ],
+                    "comparison_columns": ["name", "business_criticity", "org_id"],
                     # only here to make transformation work
                     "link_columns": ["org_code"],
                 },
                 "comparisonColumns": [
                     {"name": "uuid", "type": "Utf8", "unique": True},
                     {"name": "name", "type": "Utf8"},
-                    {"name": "business_criticality", "type": "Utf8"},
+                    {"name": "business_criticity", "type": "Utf8"},
+                ],
+                "sourceTransformers": [
+                    {
+                        "transformer": "itop.orgcode",
+                        "config": {
+                            "inFields": ["org_name"],
+                            "outField": "org_code",
+                            "toplevel": "Hoglandet",
+                        },
+                    },
+                ],
+                "insertionTransformers": [
+                    {
+                        "transformer": "itop.relations",
+                        "config": {
+                            "field_relations": [
+                                {
+                                    "source_field": "org_id",
+                                    "source_comparison_field": "org_code",
+                                    "foreign_class_type": "Organization",
+                                    "foreign_comparison_field": "code",
+                                    "use_like_operator": False,
+                                },
+                            ]
+                        },
+                    }
+                ],
+            }
+        ],
+    }
+
+
+def update_2_nutanix_clusters_from_static_to_itop(
+    itop_url: str, itop_user: str, itop_pass: str, soft_delete: bool = True
+):
+    return {
+        "version": "V1",
+        "sources": [
+            {
+                "name": "src",
+                "type": "Static",
+                "connection": {
+                    "static": [
+                        {
+                            "uuid": "00000000-0000-0000-0000-000000000001",
+                            "name": "Testing_Beetl_Nutanix_Cluster3",
+                            "business_criticity": "high",
+                            "org_name": "Testing_Beetl",
+                        },
+                        {
+                            "uuid": "00000000-0000-0000-0000-000000000002",
+                            "name": "Testing_Beetl_Nutanix_Cluster4",
+                            "business_criticity": "high",
+                            "org_name": "Testing_Beetl",
+                        },
+                    ]
+                },
+            },
+            {
+                "name": "dst",
+                "type": "Itop",
+                "connection": {
+                    "settings": {
+                        "host": itop_url,
+                        "username": itop_user,
+                        "password": itop_pass,
+                        "verify_ssl": False,
+                    }
+                },
+            },
+        ],
+        "sync": [
+            {
+                "name": "Organization Sync",
+                "source": "src",
+                "destination": "dst",
+                "sourceConfig": {},
+                "destinationConfig": {
+                    "datamodel": "NutanixCluster",
+                    "oql_key": "SELECT NutanixCluster WHERE name LIKE 'Testing_Beetl_Nutanix_Cluster%'",
+                    "soft_delete": {
+                        "enabled": soft_delete,
+                        "field": "status",
+                        "active_value": "active",
+                        "inactive_value": "inactive",
+                    },
+                    "unique_columns": ["uuid"],
+                    "comparison_columns": ["name", "business_criticity", "org_id"],
+                    # only here to make transformation work
+                    "link_columns": ["org_code"],
+                },
+                "comparisonColumns": [
+                    {"name": "uuid", "type": "Utf8", "unique": True},
+                    {"name": "name", "type": "Utf8"},
+                    {"name": "business_criticity", "type": "Utf8"},
                 ],
                 "sourceTransformers": [
                     {
@@ -662,17 +754,14 @@ def delete_2_nutanix_clusters_from_static_to_itop(
                         "inactive_value": "inactive",
                     },
                     "unique_columns": ["uuid"],
-                    "comparison_columns": [
-                        "name",
-                        "business_criticity",
-                    ],
+                    "comparison_columns": ["name", "business_criticity", "org_id"],
                     # only here to make transformation work
                     "link_columns": ["org_code"],
                 },
                 "comparisonColumns": [
                     {"name": "uuid", "type": "Utf8", "unique": True},
                     {"name": "name", "type": "Utf8"},
-                    {"name": "business_criticality", "type": "Utf8"},
+                    {"name": "business_criticity", "type": "Utf8"},
                 ],
                 "sourceTransformers": [
                     {
@@ -768,6 +857,8 @@ def insert_2_nutanix_cluster_hosts_from_static_to_itop(
                         "name",
                         "ip_addr",
                         "controller_vm_ip",
+                        "cluster_id",
+                        "org_id",
                     ],
                     # only here to make transformation work
                     "link_columns": ["cluster_uuid", "org_code"],
@@ -780,10 +871,130 @@ def insert_2_nutanix_cluster_hosts_from_static_to_itop(
                 ],
                 "sourceTransformers": [
                     {
-                        "transformer": "itop.set_default",
+                        "transformer": "strings.set_default",
                         "config": {
                             "inField": "ip_addr",
-                            "outField": " ",
+                            "defaultValue": " ",
+                        },
+                    },
+                    {
+                        "transformer": "itop.orgcode",
+                        "config": {
+                            "inFields": ["org_name"],
+                            "outField": "org_code",
+                            "toplevel": "Hoglandet",
+                        },
+                    },
+                ],
+                "insertionTransformers": [
+                    {
+                        "transformer": "itop.relations",
+                        "config": {
+                            "field_relations": [
+                                {
+                                    "source_field": "cluster_id",
+                                    "source_comparison_field": "cluster_uuid",
+                                    "foreign_class_type": "NutanixCluster",
+                                    "foreign_comparison_field": "uuid",
+                                    "use_like_operator": False,
+                                },
+                                {
+                                    "source_field": "org_id",
+                                    "source_comparison_field": "org_code",
+                                    "foreign_class_type": "Organization",
+                                    "foreign_comparison_field": "code",
+                                    "use_like_operator": False,
+                                },
+                            ]
+                        },
+                    }
+                ],
+            }
+        ],
+    }
+
+
+def update_2_nutanix_cluster_hosts_from_static_to_itop(
+    itop_url: str, itop_user: str, itop_pass: str, soft_delete: bool = True
+):
+    return {
+        "version": "V1",
+        "sources": [
+            {
+                "name": "src",
+                "type": "Static",
+                "connection": {
+                    "static": [
+                        {
+                            "uuid": "00000000-0000-0000-0000-000000000001",
+                            "cluster_uuid": "00000000-0000-0000-0000-000000000001",
+                            "name": "Testing_Beetl_Nutanix_Cluster_Host3",
+                            "ip_addr": "127.0.0.1",
+                            "controller_vm_ip": "127.0.0.1",
+                            "org_name": "Testing_Beetl",
+                        },
+                        {
+                            "uuid": "00000000-0000-0000-0000-000000000002",
+                            "cluster_uuid": "00000000-0000-0000-0000-000000000002",
+                            "name": "Testing_Beetl_Nutanix_Cluster_Host4",
+                            "ip_addr": "127.0.0.1",
+                            "controller_vm_ip": "127.0.0.1",
+                            "org_name": "Testing_Beetl",
+                        },
+                    ]
+                },
+            },
+            {
+                "name": "dst",
+                "type": "Itop",
+                "connection": {
+                    "settings": {
+                        "host": itop_url,
+                        "username": itop_user,
+                        "password": itop_pass,
+                        "verify_ssl": False,
+                    }
+                },
+            },
+        ],
+        "sync": [
+            {
+                "name": "Organization Sync",
+                "source": "src",
+                "destination": "dst",
+                "sourceConfig": {},
+                "destinationConfig": {
+                    "datamodel": "NutanixClusterHost",
+                    "oql_key": "SELECT NutanixClusterHost WHERE name LIKE 'Testing_Beetl_Nutanix_Cluster_Host%'",
+                    "soft_delete": {
+                        "enabled": soft_delete,
+                        "field": "status",
+                        "active_value": "active",
+                        "inactive_value": "inactive",
+                    },
+                    "unique_columns": ["uuid"],
+                    "comparison_columns": [
+                        "name",
+                        "ip_addr",
+                        "controller_vm_ip",
+                        "cluster_id",
+                        "org_id",
+                    ],
+                    # only here to make transformation work
+                    "link_columns": ["cluster_uuid", "org_code"],
+                },
+                "comparisonColumns": [
+                    {"name": "uuid", "type": "Utf8", "unique": True},
+                    {"name": "name", "type": "Utf8"},
+                    {"name": "ip_addr", "type": "Utf8"},
+                    {"name": "controller_vm_ip", "type": "Utf8"},
+                ],
+                "sourceTransformers": [
+                    {
+                        "transformer": "strings.set_default",
+                        "config": {
+                            "inField": "ip_addr",
+                            "defaultValue": " ",
                         },
                     },
                     {
@@ -867,6 +1078,8 @@ def delete_2_nutanix_cluster_hosts_from_static_to_itop(
                         "name",
                         "ip_addr",
                         "controller_vm_ip",
+                        "cluster_id",
+                        "org_id",
                     ],
                     # only here to make transformation work
                     "link_columns": ["cluster_uuid", "org_code"],
@@ -879,10 +1092,10 @@ def delete_2_nutanix_cluster_hosts_from_static_to_itop(
                 ],
                 "sourceTransformers": [
                     {
-                        "transformer": "itop.set_default",
+                        "transformer": "strings.set_default",
                         "config": {
                             "inField": "ip_addr",
-                            "outField": " ",
+                            "defaultValue": " ",
                         },
                     },
                     {
@@ -985,6 +1198,8 @@ def insert_2_nutanix_cluster_networks_from_static_to_itop(
                         "name",
                         "vlan",
                         "vswitch",
+                        "cluster_id",
+                        "org_id",
                     ],
                     # only here to make transformation work
                     "link_columns": ["cluster_uuid", "org_code"],
@@ -1077,6 +1292,8 @@ def delete_2_nutanix_cluster_networks_from_static_to_itop(
                         "name",
                         "vlan",
                         "vswitch",
+                        "cluster_id",
+                        "org_id",
                     ],
                     # only here to make transformation work
                     "link_columns": ["cluster_uuid", "org_code"],
@@ -1202,6 +1419,8 @@ def insert_2_nutanix_virtual_machines_from_static_to_itop(
                         "num_sockets",
                         "status",
                         "memory_mb",
+                        "cluster_id",
+                        "org_id",
                     ],
                     # TODO: Yes but document :)
                     # only here to make transformation work
@@ -1325,6 +1544,8 @@ def delete_2_nutanix_virtual_machines_from_static_to_itop(
                         "num_sockets",
                         "status",
                         "memory_mb",
+                        "cluster_id",
+                        "org_id",
                     ],
                     # TODO: Yes but document :)
                     # only here to make transformation work
@@ -1463,6 +1684,8 @@ def insert_2_nutanix_virtual_machine_nics_from_static_to_itop(
                         "name",
                         "mac_addr",
                         "ip_addr",
+                        "vlan_id",
+                        "vm_id",
                     ],
                     # TODO: Yes but document :)
                     # only here to make transformation work
@@ -1563,6 +1786,8 @@ def delete_2_nutanix_virtual_machine_nics_from_static_to_itop(
                         "name",
                         "mac_addr",
                         "ip_addr",
+                        "vlan_id",
+                        "vm_id",
                     ],
                     # TODO: Yes but document :)
                     # only here to make transformation work
@@ -1680,6 +1905,7 @@ def insert_2_nutanix_virtual_machine_disks_from_static_to_itop(
                         "name",
                         "size",
                         "device_type",
+                        "vm_id",
                     ],
                     # TODO: Yes but document :)
                     # only here to make transformation work
@@ -1776,6 +2002,7 @@ def delete_2_nutanix_virtual_machine_disks_from_static_to_itop(
                         "name",
                         "size",
                         "device_type",
+                        "vm_id",
                     ],
                     # TODO: Yes but document :)
                     # only here to make transformation work
