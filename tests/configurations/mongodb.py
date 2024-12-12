@@ -45,6 +45,12 @@ def to_mongodb_with_object_id_as_identifier(connectionString: str):
                         "config": {"inField": "_id"},
                     }
                 ],
+                "deletionTransformers": [
+                    {
+                        "transformer": "strings.to_object_id",
+                        "config": {"inField": "_id"},
+                    }
+                ],
             }
         ],
     }
