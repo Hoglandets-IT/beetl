@@ -55,32 +55,94 @@ transformers:
       parent_field: parent_code
 ```
 
-## Insertion Transformer
-This insertion transformer is one of the more advanced transformers, and is used pre-insertion to replace the values of link fields with queries that point out the correct resource in iTop.
+## Relations
+This insertion transformer is one of the more advanced transformers, and is used pre-insertion to replace the values of link fields with queries that point out the correct resource in iTop. Itop will use the query to resolve you want to point at.
 
-If you have a foreign key field (e.g. org_id) and a linked field (e.g. org_code), and want to make the comparisons between source and destination on the org_code field but insert the org_id field into iTop you can do that like this:
-
+Take this config as an example:
 ```yaml
-destinationConfig:
-  columns:
-    - name: org_code
-      type: utf8
-    - name: org_id
-      type: Utf8
-      custom_options:
-        itop:
-          target_class: Organization
-          comparison_field: org_code
-          reconciliation_key: code
-...
-insertionTransformers:
-  - transformer: itop.relations
-
-
+    sourceConfig:
+      datamodel: "Organization"
+      oql_key: "SELECT Organization WHERE orgpath LIKE 'Top->Testing->%'"
+      soft_delete:
+        enabled: True
+        field: status
+        active_value: active
+        inactive_value: inactive
+      unique_columns:
+        - code
+      comparison_columns:
+        - name
+        - orgpath
+        - status
+      link_columns:
+        - parent_code
+    destination: itop_2
+    destinationConfig:
+      datamodel: "Organization"
+      oql_key: "SELECT Organization"
+      unique_columns:
+        - code
+      comparison_columns:
+        - name
+        - orgpath
+        - status
+        - parent_id
+      link_columns:
+        - parent_code
+    comparisonColumns:
+      - name: "code",
+        type: "Utf8",
+        unique: True
+      - name: "name",
+        type: "Utf8",
+      - name: "orgpath",
+        type: "Utf8",
+      - name: "status",
+        type: "Utf8",
+      - name: "parent_code",
+        type: "Utf8",
+    insertionTransformers:
+      - transformer: itop.relations
+        config:
+          source_field: parent_id
+          source_comparison_field: parent_code
+          foreign_class_type: Organization
+          foreign_comparison_field: code
+          use_like_operator: False
 ```
 
-This will, on insertion, set the value of the `org_id` field to:
+The queried data from the source might look like this:
+|code|name|orgpath|status|parent_code|
+|--|---|--|--|--|
+|1|Testing|Top->Testing|active|null|
+|2|Unit Testing|Top->Testing->Unit Testing|active|1|
 
-``` SELECT FROM Organization WHERE code = `{org_code}` ```
+Organization is the root and has no parent code. Unit testing has Testing as its parent.
 
-For more information, see the example sqlserver-to-itop in the examples section.
+
+And the queried data from the destination might look like this:
+|code|name|orgpath|status|parent_code|
+|--|---|--|--|--|
+|1|Testing|Top->Testing|active|null|
+
+The root exists since before but the Unit Testing child will be inserted. The insert dataset will look like this prior to transformation:
+
+
+|code|name|orgpath|status|parent_code|
+|--|---|--|--|--|
+|2|Unit Testing|Top->Testing->Unit Testing|active|1|
+
+During transformation a query will be built using the value of the `source_comparison_field` in this case `parent_code` i.e `1` in our case above. It will select another `foreign_class_type` i.e. `Organization` and compare the rows value against the `foreign_comparison_field` column i.e. `code`.
+
+The `use_like_operator` is false, so the equal operator `=` will be used instead.
+
+The value is constructed like this `SELECT Organization WHERE code = 1`
+
+And is then appended to the now transformed dataset:
+|code|name|orgpath|status|parent_code|parent_id|
+|--|---|--|--|--|--|
+|2|Unit Testing|Top->Testing->Unit Testing|active|1|`SELECT Organization WHERE code = 1`|
+
+Since `parent_code` is defined in `link_columns` it will be excluded from the insertions, updates and deletions.
+
+Since `parent_id` is defined in the `comparison_columns` it will be sent to the destination and itop will resolve the resource for us as the organizations parent.

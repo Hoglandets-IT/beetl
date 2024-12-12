@@ -41,7 +41,7 @@ sync:
       # collection: <string>, (mandatory)
       # Name of the collection to sync from
       collection: "people"
-      # projection, <object>, (optional), default=all fields
+      # projection: <object>, (optional), default=all fields
       # Declares what fields will be queried from the collection.
       # https://www.mongodb.com/docs/manual/tutorial/project-fields-from-query-results/
       projection: 
@@ -49,56 +49,25 @@ sync:
         name: 1,
         email: 1,
         address: 0
+      # filter: <object>, (optional), default=none 
+      # defines the filter that will be used to get documents from the collection.
+      filter:
+        _id: 1
       # unique_fields, <List<string>>, (mandatory)
       # Declares what fields will be used to define a unique row.
       # Is used on insert and delete.
       unique_fields: ["_id"]
-      # columns, <List[ColumnDefinition]>, (mandatory)
-      # Defines how the data will look at compare time
-      # See /sources/types/column-definition.html for schema.
-      # Id will define a rows identity, while name will be compared against the name of the row in destination sharing the same identity.
-      columns: [
-        {
-          "name": "id",
-          "type": "Utf8",
-          "unique": True
-        },
-        {
-          "name": "name",
-          "type": "Utf8",
-        },
-        {
-          "name": "email",
-          "type": "Utf8",
-        }
-      ]
     # The mongodb configs are the same regardless of direction of the sync
     destination: database_1
     destinationConfig:
       collection: "people"
+      unique_fields: ["_id"]
       projection: 
         _id: 1,
         name: 1,
         email: 1,
         address: 0
-      columns: [
-        {
-          "name": "id",
-          "type": "Utf8",
-          "unique": True
-        },
-        {
-          "name": "name",
-          "type": "Utf8",
-        },
-        {
-          "name": "email",
-          "type": "Utf8",
-        }
-      ]
 ```
-*Related types:*
-- [ColumnDefinitions](/sources/types/column-definition.html)
 
 ## Quirks
 ### ObjectId'
@@ -229,26 +198,11 @@ sync:
         name: 1
         email: 1
       unique_fields: ["_id"]
-      columns: [
-        {
-          "name": "_id",
-          "type": "Utf8",
-          "unique": True
-        },
-        {
-          "name": "name",
-          "type": "Utf8",
-        },
-        {
-          "name": "email",
-          "type": "Utf8",
-        },
-      ]
     destination: database_2
     destinationConfig:
       collection: "people"
       unique_fields: ["_id"]
-      columns: [
+    comparisonColumns: [
         {
           "name": "_id",
           "type": "Utf8",

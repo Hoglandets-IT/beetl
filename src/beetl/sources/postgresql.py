@@ -6,7 +6,6 @@ import psycopg
 from .interface import (
     register_source,
     SourceInterface,
-    ColumnDefinition,
     SourceInterfaceConfiguration,
     SourceInterfaceConnectionSettings,
 )
@@ -20,7 +19,13 @@ class PostgresqlSourceConfiguration(SourceInterfaceConfiguration):
     table: str = None
     query: str = None
 
-    def __init__(self, table: str = None, query: str = None, uniqueColumns: List[str] = [], skipColumns: List[str] = []):
+    def __init__(
+        self,
+        table: str = None,
+        query: str = None,
+        uniqueColumns: List[str] = [],
+        skipColumns: List[str] = [],
+    ):
         super().__init__()
         self.table = table
         self.query = query
@@ -105,23 +110,31 @@ class PostgresqlSource(SourceInterface):
 
     def update(self, data: pl.DataFrame):
         self._validate_unique_columns()
-        temp_table_name = self.source_configuration.table + \
-            "_udTemp_" + str(uuid.uuid4()).replace("-", "")
+        temp_table_name = (
+            self.source_configuration.table
+            + "_udTemp_"
+            + str(uuid.uuid4()).replace("-", "")
+        )
 
         try:
-            with psycopg.connect(self.connection_settings.connection_string) as connection:
+            with psycopg.connect(
+                self.connection_settings.connection_string
+            ) as connection:
                 with connection.cursor() as cursor:
                     create_temp_table_with_same_structure_as_destination = f"CREATE TABLE {temp_table_name} AS SELECT * FROM {self.source_configuration.table} where 1=0"
-                    cursor.execute(
-                        create_temp_table_with_same_structure_as_destination)
+                    cursor.execute(create_temp_table_with_same_structure_as_destination)
 
             self._insert(data, table=temp_table_name)
 
             source_table_name = temp_table_name
             destination_table_name = self.source_configuration.table
 
-            columns_to_update = [column.name for column in data.get_columns(
-            ) if not column.name in self.source_configuration.unique_columns and not column.name in self.source_configuration.skip_columns]
+            columns_to_update = [
+                column.name
+                for column in data.get_columns()
+                if not column.name in self.source_configuration.unique_columns
+                and not column.name in self.source_configuration.skip_columns
+            ]
             set_values_of_comparison_columns = "SET " + ", ".join(
                 (
                     f"{columnName} = {source_table_name}.{columnName}"
@@ -147,7 +160,9 @@ class PostgresqlSource(SourceInterface):
 
             return len(data)
         finally:
-            with psycopg.connect(self.connection_settings.connection_string) as connection:
+            with psycopg.connect(
+                self.connection_settings.connection_string
+            ) as connection:
                 with connection.cursor() as cursor:
                     cursor.execute(f"DROP TABLE IF EXISTS {temp_table_name}")
 
@@ -160,7 +175,7 @@ class PostgresqlSource(SourceInterface):
             batches = []
 
             for i in range(0, len(data), batch_size):
-                batches.append(data[i: i + batch_size])
+                batches.append(data[i : i + batch_size])
 
         for batch in batches:
             id_clause = " AND ".join(
@@ -187,4 +202,5 @@ class PostgresqlSource(SourceInterface):
     def _validate_unique_columns(self):
         if not self.source_configuration.unique_columns:
             raise ValueError(
-                "Unique columns are required for PostgreSQL when used as a destination")
+                "Unique columns are required for PostgreSQL when used as a destination"
+            )

@@ -10,7 +10,6 @@ sources:
       settings:
         # The pyodbc/pymysql connection string
         connection_string: "mssql://user:password@server:port/database?TrustServerCertificate=Yes"
-        # Soft Delete Settings
         
   - name: sqlserver2
     type: Sqlserver
@@ -45,15 +44,17 @@ mssql://user:password@server:port/database?TrustServerCertificate=Yes&driver=ODB
 The settings for each sync are specified below. The `source` field should match the name of the source specified in the `sources` array.
 
 ### As a Source
-To use SQL Server as a source to retrieve data from, you can either specify the "query" or the "table" field. If you specify the "query" field, the query will be used to retrieve data. If you specify the "table" field, the table and column specification will be used to retrieve data. If you specify both, the "query" field will be used.
+To use SQL Server as a source to retrieve data from, you can either specify the "query" or the "table" field. If you specify the "query" field, the query will be used to retrieve data. If you specify the "table" field, the table will be used in a `SELECT * FROM <table>` query. 
 ```yaml
 - source: "sqlserver"
   sourceConfig:
     table: "table"
     query: |
         SELECT * FROM table
-    columns:
-      ...
+    unique_columns:
+      - id
+    skip_columns:
+      - street_address
 ```
 
 ### As a destination
@@ -64,4 +65,8 @@ When used as a destination, the "table" field has to be specified. You can still
     table: "table"
     query: |
         SELECT * FROM table
+    unique_columns:
+      - id
+    skip_columns:
+      - street_address
 ```

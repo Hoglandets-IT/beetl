@@ -17,14 +17,15 @@ const config = defineConfig({
         items: [
           { text: 'Quickstart', link: '/getting-started' },
           { text: 'Column Specification', link: '/getting-started/columns' },
-          { text: 'The Flow', link: '/getting-started/flow'},
+          { text: 'The Flow', link: '/getting-started/flow' },
+          { text: 'Change Notes', link: '/getting-started/change-notes' },
         ]
       },
       {
         text: 'Examples',
         items: [
           { text: 'Nutanix to SQL Server', link: '/examples/nutanix-to-sqlserver' },
-          { text: 'Rest API to iTop', link: '/examples/rest-api-to-itop' },
+          { text: 'SqlServer to iTop', link: '/examples/sqlserver-to-itop' },
         ]
       },
       {

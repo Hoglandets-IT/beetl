@@ -23,24 +23,12 @@ This will sync all registered clusters to a table in SQL Server with the followi
         response:
             length: metadata.total_matches
             items: entities
-        columns:
-        - name: metadata.uuid
-            type: Utf8
-            unique: true
-        - name: status.name
-            type: Utf8
     destinationConfig:
         table: ntnx_cluster
         query: SELECT * FROM [NUTANIX_DB].[dbo].[ntnx_cluster] WHERE deleted IS NULL
         soft_delete: true
         deleted_field: deleted
         deleted_value: GETDATE()
-        columns:
-        - name: id
-            type: Utf8
-            unique: true
-        - name: name
-            type: Utf8
     sourceTransformers:
         - transformer: strings.set_default
         config:
@@ -51,6 +39,12 @@ This will sync all registered clusters to a table in SQL Server with the followi
             inOutMap:
             status.name: name
             metadata.uuid: id
+    comparisonColumns:
+      - name: id
+          type: Utf8
+          unique: true
+      - name: name
+          type: Utf8
 
   - name: Sync Cluster Hosts
     source: nutanix
@@ -65,18 +59,6 @@ This will sync all registered clusters to a table in SQL Server with the followi
         response:
           length: metadata.total_matches
           items: entities
-      columns:
-        - name: metadata.uuid
-          type: Utf8
-          unique: true
-        - name: status.name
-          type: Utf8
-        - name: status.cluster_reference.uuid
-          type: Utf8
-        - name: status.resources.ipmi.ip
-          type: Utf8
-        - name: status.resources.controller_vm.ip
-          type: Utf8
     destinationConfig:
       table: ntnx_cluster_host
       query: SELECT * FROM [NUTANIX_DB].[dbo].[ntnx_cluster_host] WHERE deleted IS
@@ -84,18 +66,6 @@ This will sync all registered clusters to a table in SQL Server with the followi
       soft_delete: true
       deleted_field: deleted
       deleted_value: GETDATE()
-      columns:
-        - name: id
-          type: Utf8
-          unique: true
-        - name: cluster_id
-          type: Utf8
-        - name: name
-          type: Utf8
-        - name: ip_address
-          type: Utf8
-        - name: controller_vm_ip
-          type: Utf8
     sourceTransformers:
       - transformer: strings.set_default
         config:
@@ -114,6 +84,18 @@ This will sync all registered clusters to a table in SQL Server with the followi
               to: ip_address
             - from: status.resources.controller_vm.ip
               to: controller_vm_ip
+    comparisonColumns:
+      - name: id
+        type: Utf8
+        unique: true
+      - name: ip_address
+        type: Utf8
+      - name: controller_vm_ip
+        type: Utf8
+      - name: cluster_id
+        type: Utf8
+      - name: name
+        type: Utf8
 ```
 
 ## Subnets/Networks
