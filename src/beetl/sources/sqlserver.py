@@ -270,6 +270,11 @@ class SqlserverSource(SourceInterface):
 
         self._query(customQuery=query, returnData=False)
 
+        try:
+            self._query(customQuery="DROP TABLE " + tempDB, returnData=False)
+        except Exception:
+            pass
+
         return len(data)
 
     def _validate_unique_columns(self):
