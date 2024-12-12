@@ -6,48 +6,24 @@ def to_static() -> dict:
                 "name": "staticsrc",
                 "type": "Static",
                 "connection": {
-                        "static": [
-                            {
-                                "id": 1,
-                                "name": "John",
-                                "email": "john@test.com"
-                            },
-                            {
-                                "id": 2,
-                                "name": "Jane",
-                                "email": "jane@test.com"
-                            },
-                            {
-                                "id": 3,
-                                "name": "Steffen",
-                                "email": "steffen@test.com"
-                            }
-                        ]
-                }
+                    "static": [
+                        {"id": 1, "name": "John", "email": "john@test.com"},
+                        {"id": 2, "name": "Jane", "email": "jane@test.com"},
+                        {"id": 3, "name": "Steffen", "email": "steffen@test.com"},
+                    ]
+                },
             },
             {
                 "name": "staticdst",
                 "type": "Static",
                 "connection": {
-                        "static": [
-                            {
-                                "id": 1,
-                                "name": "John",
-                                "email": "john@test.com"
-                            },
-                            {
-                                "id": 4,
-                                "name": "James",
-                                "email": "jane@test.com"
-                            },
-                            {
-                                "id": 3,
-                                "name": "Stephen",
-                                "email": "stephen@test.com"
-                            }
-                        ]
-                }
-            }
+                    "static": [
+                        {"id": 1, "name": "John", "email": "john@test.com"},
+                        {"id": 4, "name": "James", "email": "jane@test.com"},
+                        {"id": 3, "name": "Stephen", "email": "stephen@test.com"},
+                    ]
+                },
+            },
         ],
         "sync": [
             {
@@ -58,7 +34,7 @@ def to_static() -> dict:
                 "comparisonColumns": [
                     {
                         "name": "id",
-                        "type": "Utf8",
+                        "type": "Int64",
                         "unique": True,
                     },
                     {
@@ -68,11 +44,11 @@ def to_static() -> dict:
                     {
                         "name": "email",
                         "type": "Utf8",
-                    }
+                    },
                 ],
                 "sourceTransformers": [],
                 "destinationTransformers": [],
                 "insertionTransformers": [],
             }
-        ]
+        ],
     }
