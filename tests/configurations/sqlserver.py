@@ -1,6 +1,5 @@
-
 def to_sqlserver(sqlserver_connection_string: str):
-    if (not sqlserver_connection_string):
+    if not sqlserver_connection_string:
         raise Exception("Connection string is required")
 
     return {
@@ -13,8 +12,7 @@ def to_sqlserver(sqlserver_connection_string: str):
                     "settings": {
                         "connection_string": sqlserver_connection_string,
                     }
-
-                }
+                },
             },
         ],
         "sync": [
@@ -31,7 +29,7 @@ def to_sqlserver(sqlserver_connection_string: str):
                 "comparisonColumns": [
                     {
                         "name": "id",
-                        "type": "Int32",
+                        "type": "Int64",
                         "unique": True,
                     },
                     {
@@ -41,8 +39,8 @@ def to_sqlserver(sqlserver_connection_string: str):
                     {
                         "name": "name",
                         "type": "Utf8",
-                    }
-                ]
+                    },
+                ],
             }
-        ]
+        ],
     }

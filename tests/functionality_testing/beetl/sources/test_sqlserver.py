@@ -15,24 +15,33 @@ class TestSqlServerSource(unittest.TestCase):
         engine = sqlalchemy.create_engine(mssql.get_connection_url())
         with engine.begin() as connection:
 
-            connection.execute(sqlalchemy.text(
-                "create table src (id int primary key, name varchar(255), email varchar(255))"))
-            connection.execute(sqlalchemy.text(
-                "create table dst (id int primary key, name varchar(255), email varchar(255))"))
-            connection.execute(sqlalchemy.text(
-                "insert into src (id, name, email) values (1, 'John Doe', 'john@doe.com'),(2, 'Jane Doe', 'jane@doe.com'),(3, 'Joseph Doe', 'joseph@doe.com')"))
+            connection.execute(
+                sqlalchemy.text(
+                    "create table src (id int primary key, name varchar(255), email varchar(255))"
+                )
+            )
+            connection.execute(
+                sqlalchemy.text(
+                    "create table dst (id int primary key, name varchar(255), email varchar(255))"
+                )
+            )
+            connection.execute(
+                sqlalchemy.text(
+                    "insert into src (id, name, email) values (1, 'John Doe', 'john@doe.com'),(2, 'Jane Doe', 'jane@doe.com'),(3, 'Joseph Doe', 'joseph@doe.com')"
+                )
+            )
 
     def update_test_data(self, id: int, email: str, mssql: SqlServerContainer) -> None:
         engine = sqlalchemy.create_engine(mssql.get_connection_url())
         with engine.begin() as connection:
-            connection.execute(sqlalchemy.text(
-                f"update src set email = '{email}' where id = {id}"))
+            connection.execute(
+                sqlalchemy.text(f"update src set email = '{email}' where id = {id}")
+            )
 
     def delete_test_data(self, id: int, mssql: SqlServerContainer) -> None:
         engine = sqlalchemy.create_engine(mssql.get_connection_url())
         with engine.begin() as connection:
-            connection.execute(sqlalchemy.text(
-                f"delete from src where id = {id}"))
+            connection.execute(sqlalchemy.text(f"delete from src where id = {id}"))
 
     # TODO: This test is a bit flaky when run in a suite, but works fine when run individually
     # Needs some extra investigation
@@ -40,8 +49,7 @@ class TestSqlServerSource(unittest.TestCase):
         with SqlServerContainer() as mssql:
             # Arrange
             self.insert_test_data(mssql)
-            connection_string = to_connection_string(
-                mssql.get_connection_url())
+            connection_string = to_connection_string(mssql.get_connection_url())
             config = to_sqlserver(connection_string)
             beetlInstance = beetl.Beetl(beetl.BeetlConfig(config))
 
@@ -50,7 +58,7 @@ class TestSqlServerSource(unittest.TestCase):
 
             noActionResult = beetlInstance.sync()
 
-            self.update_test_data(1, 'new@email.com', mssql)
+            self.update_test_data(1, "new@email.com", mssql)
             updateResult = beetlInstance.sync()
 
             self.delete_test_data(1, mssql)

@@ -1,3 +1,4 @@
+from uuid import uuid4
 import polars as pl
 import pandas as pd
 import sqlalchemy as sqla
@@ -21,7 +22,16 @@ class SqlserverConfiguration(SourceInterfaceConfiguration):
     unique_columns: list[str] = None
     skip_columns: list[str] = None
 
-    def __init__(self, table: str = None, query: str = None, soft_delete: bool = False, deleted_field: str = None, deleted_value: str = "true", uniqueColumns: list[str] = [], skipColumns: list[str] = []):
+    def __init__(
+        self,
+        table: str = None,
+        query: str = None,
+        soft_delete: bool = False,
+        deleted_field: str = None,
+        deleted_value: str = "true",
+        uniqueColumns: list[str] = [],
+        skipColumns: list[str] = [],
+    ):
         super().__init__()
         self.table = table
         self.query = query
@@ -104,9 +114,10 @@ class SqlserverSource(SourceInterface):
                 query = f"SELECT * FROM [{self.source_configuration.table}]"
 
         if returnData:
-            pdd = pd.read_sql_query(
-                sql=query, con=self.connection_settings.connection_string
-            )
+            with sqla.create_engine(
+                self.connection_settings.connection_string
+            ).connect() as con:
+                pdd = pd.read_sql_query(sql=query, con=con)
 
             return pl.from_pandas(pdd)
         with sqla.create_engine(
@@ -116,17 +127,23 @@ class SqlserverSource(SourceInterface):
                 query = sqla.text(query)
 
             con.execute(query)
-            con.commit()
 
     def _insert(
-        self, data: pl.DataFrame, table: str = None, connection_string: str = None, tempDB: bool = False
+        self,
+        data: pl.DataFrame,
+        table: str = None,
+        connection_string: str = None,
+        tempDB: bool = False,
     ):
         # Check for binary tables
         data_columns = data.get_columns()
         for column in data_columns:
             if column.dtype == pl.Binary:
-                data = data.with_columns(pl.col(column.name).map_elements(
-                    lambda x: bytes(x), return_dtype=pl.Binary))
+                data = data.with_columns(
+                    pl.col(column.name).map_elements(
+                        lambda x: bytes(x), return_dtype=pl.Binary
+                    )
+                )
 
         if table is None:
             table = self.source_configuration.table
@@ -137,8 +154,14 @@ class SqlserverSource(SourceInterface):
         pand_df = data.to_pandas()
         try:
             engine = sqla.create_engine(connection_string)
-            pand_df.to_sql(
-                table, if_exists="append" if not tempDB else "replace", index=False, con=engine)
+            with engine.connect() as con:
+                pand_df.to_sql(
+                    table,
+                    if_exists="append" if not tempDB else "replace",
+                    index=False,
+                    con=con,
+                )
+                con.commit()
         except ModuleNotFoundError:
             data.write_database(
                 table,
@@ -161,13 +184,17 @@ class SqlserverSource(SourceInterface):
         if len(data) == 0:
             return 0
 
-        tempDB = "##" + self.source_configuration.table + "_udtemp"
+        tempDB = self._get_temp_table_name(self.source_configuration.table)
 
         # Insert data into temporary table
         self._insert(data, table=tempDB, tempDB=True)
 
         columns_to_update = [
-            column_name for column_name in data.columns if column_name not in self.source_configuration.unique_columns and column_name not in self.source_configuration.skip_columns]
+            column_name
+            for column_name in data.columns
+            if column_name not in self.source_configuration.unique_columns
+            and column_name not in self.source_configuration.skip_columns
+        ]
         field_spec = ", ".join(
             (
                 f"TDEST.[{column_name}] = TTEMP.[{column_name}]"
@@ -188,7 +215,6 @@ class SqlserverSource(SourceInterface):
             FROM {self.source_configuration.table} AS TDEST
             INNER JOIN {tempDB} AS TTEMP ON {on_clause}
         """
-
         self._query(customQuery=query, returnData=False)
         try:
             self._query(customQuery="DROP TABLE " + tempDB, returnData=False)
@@ -202,7 +228,7 @@ class SqlserverSource(SourceInterface):
         if len(data) == 0:
             return 0
 
-        tempDB = "##" + self.source_configuration.table + "_ddtemp"
+        tempDB = self._get_temp_table_name(self.source_configuration.table)
         self._insert(data, table=tempDB, tempDB=True)
 
         where_clause = " AND ".join(
@@ -213,7 +239,10 @@ class SqlserverSource(SourceInterface):
         )
 
         if self.source_configuration.soft_delete:
-            if self.source_configuration.deleted_field is None or self.source_configuration.deleted_value is None:
+            if (
+                self.source_configuration.deleted_field is None
+                or self.source_configuration.deleted_value is None
+            ):
                 raise Exception(
                     "Deleted field and value must be specified when using soft delete"
                 )
@@ -246,4 +275,8 @@ class SqlserverSource(SourceInterface):
     def _validate_unique_columns(self):
         if not self.source_configuration.unique_columns:
             raise ValueError(
-                "Unique columns must be specified for SQLServer source when used as destination")
+                "Unique columns must be specified for SQLServer source when used as destination"
+            )
+
+    def _get_temp_table_name(self, table_name: str):
+        return f"{table_name}_{str(uuid4()).replace('-', '')}_temp"
