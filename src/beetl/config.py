@@ -68,6 +68,7 @@ class SyncConfiguration:
     sourceTransformers: TransformerConfiguration = None
     destinationTransformers: TransformerConfiguration = None
     insertionTransformers: List[TransformerConfiguration] = None
+    deletionTransformers: List[TransformerConfiguration] = None
 
     def __post_init__(self) -> None:
         self.source.config = self.sourceConfig
@@ -281,6 +282,17 @@ class BeetlConfigV1(BeetlConfig):
                 syncConfig.insertionTransformers = []
                 for transformer in sync["insertionTransformers"]:
                     syncConfig.insertionTransformers.append(
+                        TransformerConfiguration(
+                            transformer.get("transformer"),
+                            transformer.get("config", None),
+                            transformer.get("include_sync", False),
+                        )
+                    )
+
+            if sync.get("deletionTransformers", None) is not None:
+                syncConfig.deletionTransformers = []
+                for transformer in sync["deletionTransformers"]:
+                    syncConfig.deletionTransformers.append(
                         TransformerConfiguration(
                             transformer.get("transformer"),
                             transformer.get("config", None),

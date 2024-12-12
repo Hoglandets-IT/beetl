@@ -14,6 +14,11 @@
    - skip_columns old column.skip_update
 - comparisonColumns are mandatory
 - iTop nutanixcluster does not support soft_delete
+- deletetransformers added
+- integration tests for all implemented sources
+- create, update will now be in format of source
+- delete will be in format of dest
+- src and dest will get all the compare columns added to them if not already present, they will also be cast according to their types if the type is castable.
 
 
 ### New features

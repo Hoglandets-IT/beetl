@@ -274,7 +274,7 @@ class Beetl:
             amount["deletes"] = 0
             if len(delete):
                 amount["deletes"] = sync.destination.delete(
-                    self.runTransformers(delete, sync.insertionTransformers, sync)
+                    self.runTransformers(delete, sync.deletionTransformers, sync)
                 )
 
             self.benchmark("Finished deletes, sync finished")
