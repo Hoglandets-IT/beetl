@@ -76,6 +76,8 @@ class Beetl:
 
         source = Beetl._initialize_columns_if_empty(source, columns)
         source = Beetl._cast_columns_to_types(source, columns)
+        destination = Beetl._initialize_columns_if_empty(destination, columns)
+        destination = Beetl._cast_columns_to_types(destination, columns)
         column_names = [col.name for col in columns]
 
         for column in column_names:
