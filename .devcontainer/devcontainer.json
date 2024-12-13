@@ -4,16 +4,13 @@
 	"name": "Python 3",
 	// Or use a Dockerfile or Docker Compose file. More info: https://containers.dev/guide/dockerfile
 	"image": "mcr.microsoft.com/devcontainers/python:3.11-bullseye",
-
 	// Features to add to the dev container. More info: https://containers.dev/features.
 	"features": {
 		"node": "20",
 		"ghcr.io/devcontainers/features/docker-in-docker": {}
 	},
-
 	// Use 'forwardPorts' to make a list of ports inside the container available locally.
 	// "forwardPorts": [],
-
 	// Use 'postCreateCommand' to run commands after the container is created.
 	// run scriptfile from .devcontainer folder
 	"postCreateCommand": "sh .devcontainer/post-create.sh",
@@ -22,13 +19,13 @@
 			"extensions": [
 				"ms-python.python",
 				"ms-python.debugpy",
-				"ms-python.autopep8"
+				"ms-python.autopep8",
+				"github.vscode-github-actions"
 			]
 		}
 	}
 	// Configure tool-specific properties.
 	// "customizations": {},
-
 	// Uncomment to connect as root instead. More info: https://aka.ms/dev-containers-non-root.
 	// "remoteUser": "root"
 }
