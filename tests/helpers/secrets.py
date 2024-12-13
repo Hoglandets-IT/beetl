@@ -22,8 +22,7 @@ class Secrets:
 
 def get_test_secrets():
     try:
-        # TODO: use os path join
-        with open(f"{os.getcwd()}/test.secrets.yaml") as f:
+        with open(os.path.join(os.getcwd(), "test.secrets.yaml")) as f:
             yaml_string = f.read()
     except FileNotFoundError:
         raise Exception(
