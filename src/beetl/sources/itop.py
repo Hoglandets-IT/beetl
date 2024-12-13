@@ -19,7 +19,7 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 BULK_CUTOFF = 300
 
-DATAMODEL_WITHOUT_SOFT_DELETE = (
+DATAMODELS_WITHOUT_SOFT_DELETE = (
     "NutanixCluster",
     "NutanixClusterHost",
     "NutanixVM",
@@ -35,7 +35,7 @@ class ItopSourceConfiguration(SourceInterfaceConfiguration):
     datamodel: str = None
     oql_key: str = None
     soft_delete: dict = None
-    are_link_cols: list = []
+    link_colums: list = []
     comparison_columns: list = None
     unique_columns: list = None
     skip_columns: list = None
@@ -67,7 +67,7 @@ class ItopSourceConfiguration(SourceInterfaceConfiguration):
         if soft_delete is not None:
             if (
                 soft_delete.get("enabled", False)
-                and datamodel in DATAMODEL_WITHOUT_SOFT_DELETE
+                and datamodel in DATAMODELS_WITHOUT_SOFT_DELETE
             ):
                 raise Exception(
                     f"Soft delete is not supported for {datamodel} datamodel"
@@ -75,7 +75,7 @@ class ItopSourceConfiguration(SourceInterfaceConfiguration):
 
         self.soft_delete = soft_delete
 
-        self.are_link_cols = link_columns
+        self.link_colums = link_columns
 
 
 class ItopSourceConnectionSettings(SourceInterfaceConnectionSettings):
@@ -172,22 +172,17 @@ class ItopSource(SourceInterface):
         oql = self.source_configuration.oql_key
         if self.soft_delete_active():
             soft_delete = self.source_configuration.soft_delete
-            if f"where {soft_delete.get('field', 'status').lower()}" not in oql.lower():
-                if "where" in oql.lower():
-                    oql += (
-                        f" AND {soft_delete.get('field', 'status')} "
-                        + f"= '{soft_delete.get('active_value', 'enabled')}'"
-                    )
-                else:
-                    oql += (
-                        f" WHERE {soft_delete.get('field', 'status')} "
-                        + f"= '{soft_delete.get('active_value', 'enabled')}'"
-                    )
+            if f"{soft_delete.get('field', 'status').lower()}" not in oql.lower():
+                combining_word = "WHERE" if "WHERE" not in oql.upper() else "AND"
+                oql += (
+                    f" {combining_word} {soft_delete.get('field', 'status')} "
+                    + f"= '{soft_delete.get('active_value', 'enabled')}'"
+                )
 
         all_colums = (
             self.source_configuration.unique_columns
             + self.source_configuration.comparison_columns
-            + self.source_configuration.are_link_cols
+            + self.source_configuration.link_colums
         )
         files = self._create_body(
             "core/get",
@@ -245,8 +240,7 @@ class ItopSource(SourceInterface):
                 "fields": {
                     x: y
                     for x, y in data.items()
-                    if y is not None
-                    and x not in self.source_configuration.are_link_cols
+                    if y is not None and x not in self.source_configuration.link_colums
                 },
             },
         )
@@ -279,11 +273,11 @@ class ItopSource(SourceInterface):
             if column_name in self.source_configuration.unique_columns:
                 identifiers[column_name] = data.pop(column_name)
 
-        if len(identifiers) == 0:
-            dKeys = tuple(data.keys())
-            for column_name in self.source_configuration.unique_columns:
-                if column_name in dKeys:
-                    identifiers[column_name] = data.pop(column_name)
+        # if len(identifiers) == 0:
+        #    dKeys = tuple(data.keys())
+        #    for column_name in self.source_configuration.unique_columns:
+        #        if column_name in dKeys:
+        #            identifiers[column_name] = data.pop(column_name)
 
         where_clause_conditions = " AND ".join(
             [f"{key} = '{value}'" for key, value in identifiers.items()]
@@ -447,7 +441,7 @@ class ItopSource(SourceInterface):
             deleteMessage = "Soft deletion via API Sync"
 
         for column_name in deleteData.columns:
-            if column_name in self.source_configuration.are_link_cols:
+            if column_name in self.source_configuration.link_colums:
                 deleteData.drop_in_place(column_name)
 
         iters = (

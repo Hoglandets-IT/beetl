@@ -96,7 +96,6 @@ def insert_14_organizations_from_static_to_itop(
                         "status",
                         "parent_id",
                     ],
-                    # only here to make transformation work
                     "link_columns": ["parent_code"],
                 },
                 "comparisonColumns": [
@@ -190,7 +189,6 @@ def delete_14_organizations_from_static_to_itop(
                         "status",
                         "parent_id",
                     ],
-                    # only here to make transformation work
                     "link_columns": ["parent_code"],
                 },
                 "comparisonColumns": [
@@ -328,7 +326,6 @@ def insert_3_persons_from_static_to_itop(
                         "first_name",
                         "employee_number",
                     ],
-                    # only here to make transformation work
                     "link_columns": ["manager_samaccountname", "org_code"],
                 },
                 "comparisonColumns": [
@@ -338,8 +335,6 @@ def insert_3_persons_from_static_to_itop(
                     {"name": "phone", "type": "Utf8"},
                     {"name": "first_name", "type": "Utf8"},
                     {"name": "employee_number", "type": "Utf8"},
-                    # {"name": "manager_id", "type": "Utf8"},
-                    # {"name": "org_id", "type": "Utf8"},
                 ],
                 "sourceTransformers": [
                     {
@@ -452,7 +447,6 @@ def delete_3_persons_from_static_to_itop(
                         "first_name",
                         "employee_number",
                     ],
-                    # only here to make transformation work
                     "link_columns": ["manager_samaccountname", "org_code"],
                 },
                 "comparisonColumns": [
@@ -580,7 +574,6 @@ def insert_2_nutanix_clusters_from_static_to_itop(
                     },
                     "unique_columns": ["uuid"],
                     "comparison_columns": ["name", "business_criticity", "org_id"],
-                    # only here to make transformation work
                     "link_columns": ["org_code"],
                 },
                 "comparisonColumns": [
@@ -675,7 +668,6 @@ def update_2_nutanix_clusters_from_static_to_itop(
                     },
                     "unique_columns": ["uuid"],
                     "comparison_columns": ["name", "business_criticity", "org_id"],
-                    # only here to make transformation work
                     "link_columns": ["org_code"],
                 },
                 "comparisonColumns": [
@@ -755,7 +747,6 @@ def delete_2_nutanix_clusters_from_static_to_itop(
                     },
                     "unique_columns": ["uuid"],
                     "comparison_columns": ["name", "business_criticity", "org_id"],
-                    # only here to make transformation work
                     "link_columns": ["org_code"],
                 },
                 "comparisonColumns": [
@@ -860,7 +851,6 @@ def insert_2_nutanix_cluster_hosts_from_static_to_itop(
                         "cluster_id",
                         "org_id",
                     ],
-                    # only here to make transformation work
                     "link_columns": ["cluster_uuid", "org_code"],
                 },
                 "comparisonColumns": [
@@ -980,7 +970,6 @@ def update_2_nutanix_cluster_hosts_from_static_to_itop(
                         "cluster_id",
                         "org_id",
                     ],
-                    # only here to make transformation work
                     "link_columns": ["cluster_uuid", "org_code"],
                 },
                 "comparisonColumns": [
@@ -1081,7 +1070,6 @@ def delete_2_nutanix_cluster_hosts_from_static_to_itop(
                         "cluster_id",
                         "org_id",
                     ],
-                    # only here to make transformation work
                     "link_columns": ["cluster_uuid", "org_code"],
                 },
                 "comparisonColumns": [
@@ -1201,7 +1189,6 @@ def insert_2_nutanix_networks_from_static_to_itop(
                         "cluster_id",
                         "org_id",
                     ],
-                    # only here to make transformation work
                     "link_columns": ["cluster_uuid", "org_code"],
                 },
                 "comparisonColumns": [
@@ -1314,7 +1301,6 @@ def update_2_nutanix_networks_from_static_to_itop(
                         "cluster_id",
                         "org_id",
                     ],
-                    # only here to make transformation work
                     "link_columns": ["cluster_uuid", "org_code"],
                 },
                 "comparisonColumns": [
@@ -1408,7 +1394,6 @@ def delete_2_nutanix_networks_from_static_to_itop(
                         "cluster_id",
                         "org_id",
                     ],
-                    # only here to make transformation work
                     "link_columns": ["cluster_uuid", "org_code"],
                 },
                 "comparisonColumns": [
@@ -1535,8 +1520,6 @@ def insert_2_nutanix_virtual_machines_from_static_to_itop(
                         "cluster_id",
                         "org_id",
                     ],
-                    # TODO: Yes but document :)
-                    # only here to make transformation work
                     "link_columns": ["cluster_uuid", "org_code"],
                 },
                 "comparisonColumns": [
@@ -1689,8 +1672,6 @@ def update_2_nutanix_virtual_machines_from_static_to_itop(
                         "cluster_id",
                         "org_id",
                     ],
-                    # TODO: Yes but document :)
-                    # only here to make transformation work
                     "link_columns": ["cluster_uuid", "org_code"],
                 },
                 "comparisonColumns": [
@@ -1814,8 +1795,6 @@ def delete_2_nutanix_virtual_machines_from_static_to_itop(
                         "cluster_id",
                         "org_id",
                     ],
-                    # TODO: Yes but document :)
-                    # only here to make transformation work
                     "link_columns": ["cluster_uuid", "org_code"],
                 },
                 "comparisonColumns": [
@@ -1954,8 +1933,6 @@ def insert_2_nutanix_virtual_machine_nics_from_static_to_itop(
                         "vlan_id",
                         "vm_id",
                     ],
-                    # TODO: Yes but document :)
-                    # only here to make transformation work
                     "link_columns": ["vlan_uuid", "vm_uuid"],
                 },
                 "comparisonColumns": [
@@ -2075,8 +2052,6 @@ def update_2_nutanix_virtual_machine_nics_from_static_to_itop(
                         "vlan_id",
                         "vm_id",
                     ],
-                    # TODO: Yes but document :)
-                    # only here to make transformation work
                     "link_columns": ["vlan_uuid", "vm_uuid"],
                 },
                 "comparisonColumns": [
@@ -2177,8 +2152,6 @@ def delete_2_nutanix_virtual_machine_nics_from_static_to_itop(
                         "vlan_id",
                         "vm_id",
                     ],
-                    # TODO: Yes but document :)
-                    # only here to make transformation work
                     "link_columns": ["vlan_uuid", "vm_uuid"],
                 },
                 "comparisonColumns": [
@@ -2295,8 +2268,6 @@ def insert_2_nutanix_virtual_machine_disks_from_static_to_itop(
                         "device_type",
                         "vm_id",
                     ],
-                    # TODO: Yes but document :)
-                    # only here to make transformation work
                     "link_columns": ["vm_uuid"],
                 },
                 "comparisonColumns": [
@@ -2409,8 +2380,6 @@ def update_2_nutanix_virtual_machine_disks_from_static_to_itop(
                         "device_type",
                         "vm_id",
                     ],
-                    # TODO: Yes but document :)
-                    # only here to make transformation work
                     "link_columns": ["vm_uuid"],
                 },
                 "comparisonColumns": [
@@ -2506,8 +2475,6 @@ def delete_2_nutanix_virtual_machine_disks_from_static_to_itop(
                         "device_type",
                         "vm_id",
                     ],
-                    # TODO: Yes but document :)
-                    # only here to make transformation work
                     "link_columns": ["vm_uuid"],
                 },
                 "comparisonColumns": [

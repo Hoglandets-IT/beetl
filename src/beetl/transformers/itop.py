@@ -117,8 +117,11 @@ class ItopTransformer(TransformerInterface):
                 transformed = transformed.with_columns(
                     transformed[source_comparison_field]
                     .map_elements(
-                        lambda x: (
-                            query + f"'{x}'" if x is not None and x != "" else None
+                        lambda source_comparison_field_value: (
+                            query + f"'{source_comparison_field_value}'"
+                            if source_comparison_field_value is not None
+                            and source_comparison_field_value != ""
+                            else None
                         ),
                         return_dtype=str,
                     )

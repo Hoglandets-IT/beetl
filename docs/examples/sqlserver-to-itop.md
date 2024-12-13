@@ -54,7 +54,7 @@ This example syncs data from table `organizations` in sqlserver to itop
 - All rows in in SqlServer not present in iTop will be created.
 
 
-**People of database 2 after sync**
+**Organizations in iTop after sync**
 
 ```json
 [

@@ -11,7 +11,7 @@ class Result:
         return f"Result: {self.inserts} inserts, {self.updates} updates, {self.deletes} deletes across {len(self.names)} syncs"
 
     def __repr__(self) -> str:
-        return f"Result: {self.inserts} inserts, {self.updates} updates, {self.deletes} deletes across {len(self.names)} syncs"
+        return self.__str__()
 
     def __eq__(self, other) -> bool:
         if not issubclass(type(other), Result):
