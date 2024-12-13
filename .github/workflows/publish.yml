@@ -1,8 +1,9 @@
 name: "Publish Application"
 on:
-  workflow_dispatch:
-  release:
-    types: [published]
+  push:
+    tags:
+      - "*"
+
 
 jobs:
   package:
