@@ -1,7 +1,8 @@
 from typing import List, Union
 
+from src.beetl.sources.interface import CASTABLE
 from src.beetl.result import Result, SyncResult
-from .config import BeetlConfig, SyncConfiguration
+from .config import BeetlConfig, ComparisonColumn, SyncConfiguration
 from .transformers.interface import TransformerConfiguration
 import polars as pl
 from time import perf_counter
@@ -13,7 +14,7 @@ BENCHMARK = []
 class Beetl:
     """The main class for BeETL. This class is responsible for orchestrating the ETL process."""
 
-    config: BeetlConfig = None
+    config: Union[BeetlConfig, None] = None
     """Holds the BeETL Configuration"""
 
     def __init__(self, config: BeetlConfig):
@@ -50,8 +51,8 @@ class Beetl:
         source: pl.DataFrame,
         destination: pl.DataFrame,
         keys: List[str] = ["id"],
-        columns: List[str] = [],
-    ) -> List[pl.DataFrame]:
+        columns: List[ComparisonColumn] = [],
+    ) -> tuple[pl.DataFrame, pl.DataFrame, pl.DataFrame]:
         """
         This function uses polars DataFrames to quickly compare two datasets and return the differences.
 
@@ -73,22 +74,40 @@ class Beetl:
         if isinstance(destination, Union[list, set, tuple]):
             destination = pl.DataFrame(destination)
 
-        # Get all columns from destination if none are specified
-        columns = destination.columns if len(columns) == 0 else columns
+        source = Beetl._initialize_columns_if_empty(source, columns)
+        source = Beetl._cast_columns_to_types(source, columns)
+        destination = Beetl._initialize_columns_if_empty(destination, columns)
+        destination = Beetl._cast_columns_to_types(destination, columns)
+        column_names = [col.name for col in columns]
 
-        for column in columns:
+        for column in column_names:
 
             if column not in source.columns and column not in destination.columns:
                 raise Exception(
-                    f"Column {column} does not exist in any of the datasets")
+                    f"Column {column} does not exist in any of the datasets"
+                )
 
             if column not in source.columns and len(source) > 0:
-                source = source.with_columns(pl.lit(None).alias(
-                    column).cast(destination[column].dtype))
+                source = source.with_columns(
+                    pl.lit(None).alias(column).cast(destination[column].dtype)
+                )
 
             if column not in destination.columns and len(destination) > 0:
                 destination = destination.with_columns(
-                    pl.lit(None).alias(column).cast(source[column].dtype))
+                    pl.lit(None).alias(column).cast(source[column].dtype)
+                )
+
+        columns_contain_list_column = any(
+            [
+                True
+                for name in column_names
+                if type(source.get_column(name).dtype) == pl.List
+            ]
+        )
+        if columns_contain_list_column:
+            raise ValueError(
+                "Beetl does not support comparing list columns, please remove them from the sync.comparisonColumns field. If you didn't specify any non unique columns, Beetl will compare all columns by default. Please specify the columns you want to compare in the sync.comparisonColumns field."
+            )
 
         # If source is empty, delete all in destination
         if len(source) == 0:
@@ -96,18 +115,14 @@ class Beetl:
 
         # If destination is empty, create all from source
         if len(destination) == 0:
-            return (
-                source,
-                destination,
-                destination
-            )
+            return (source, destination, destination)
         try:
             # Get rows that only exist in source (Creates)
             create = source.join(destination, on=keys, how="anti")
 
             # Get rows that exist in both and have differing values (Updates)
             update = source.join(destination, on=keys, how="semi").join(
-                destination, on=columns, how="anti"
+                destination, on=column_names, how="anti"
             )
 
             # Get rows that only exist in destination (Deletes)
@@ -118,20 +133,35 @@ class Beetl:
                 "One or more comparison columns do not exist \n"
                 f"Source columns: {','.join(source.columns)} \n"
                 f"Destination columns: {','.join(destination.columns)} \n"
-                f"Comparison columns: {','.join(columns)} \n"
+                f"Comparison columns: {','.join(column_names)} \n"
             ) from e
 
         try:
             comparison_results = (
                 create.select(source.columns),
                 update.select(source.columns),
-                delete.select(source.columns)
+                delete.select(destination.columns),
             )
         except Exception:
             raise Exception(
-                "Could not create comparison results. Most likely due to a mismatch in column names between source and destination.")
+                "Could not create comparison results. Most likely due to a mismatch in column names between source and destination."
+            )
 
         return comparison_results
+
+    @staticmethod
+    def _initialize_columns_if_empty(source, columns):
+        if len(source) == 0 and source.width == 0:
+            for col in columns:
+                source = source.with_columns(pl.Series(col.name, dtype=col.type))
+        return source
+
+    @staticmethod
+    def _cast_columns_to_types(source, columns):
+        for col in columns:
+            if col.name in source.columns and col.type in CASTABLE:
+                source = source.with_columns(pl.col(col.name).cast(col.type))
+        return source
 
     def benchmark(self, text: str) -> None:
         """Inserts a benchmark into the log"""
@@ -193,7 +223,8 @@ class Beetl:
                 source_data, sync.sourceTransformers, sync
             )
             self.benchmark(
-                "Finished source data transformation, starting destination transformation")
+                "Finished source data transformation, starting destination transformation"
+            )
             transformedDestination = self.runTransformers(
                 destination_data, sync.destinationTransformers, sync
             )
@@ -201,11 +232,18 @@ class Beetl:
             self.benchmark("Finished data transformation before comparison")
 
             self.benchmark("Starting comparison")
+            unique_columns = [
+                column.name for column in sync.comparisonColumns if column.unique
+            ]
+            if len(unique_columns) == 0:
+                raise ValueError(
+                    "You need to specify at least one unique column in the sync.comparisonColumns field"
+                )
             create, update, delete = self.compare_datasets(
                 transformedSource,
                 transformedDestination,
-                sync.destination.source_configuration.unique_columns,
-                sync.destination.source_configuration.comparison_columns,
+                unique_columns,
+                sync.comparisonColumns,
             )
             self.benchmark("Successfully extracted operations from dataset")
 
@@ -222,25 +260,21 @@ class Beetl:
             amount["inserts"] = 0
             if len(create):
                 amount["inserts"] = sync.destination.insert(
-                    self.runTransformers(
-                        create, sync.insertionTransformers, sync)
+                    self.runTransformers(create, sync.insertionTransformers, sync)
                 )
 
             self.benchmark("Finished inserts, starting updates")
             amount["updates"] = 0
             if len(update):
                 amount["updates"] = sync.destination.update(
-                    self.runTransformers(
-                        update, sync.insertionTransformers, sync)
+                    self.runTransformers(update, sync.insertionTransformers, sync)
                 )
 
             self.benchmark("Finished updates, starting deletes")
             amount["deletes"] = 0
             if len(delete):
-
                 amount["deletes"] = sync.destination.delete(
-                    self.runTransformers(
-                        delete, sync.deletionTransformers, sync)
+                    self.runTransformers(delete, sync.deletionTransformers, sync)
                 )
 
             self.benchmark("Finished deletes, sync finished")
@@ -251,7 +285,9 @@ class Beetl:
 
             allAmounts.append([sync.name, *amount.values()])
 
-        print("\r\n\r\n" + tabulate(allAmounts,
-              headers=["Sync", "Inserts", "Updates", "Deletes"]))
+        print(
+            "\r\n\r\n"
+            + tabulate(allAmounts, headers=["Sync", "Inserts", "Updates", "Deletes"])
+        )
 
         return SyncResult(allAmounts)

@@ -1,7 +1,6 @@
 from typing import List
 from polars import DataFrame, Object
 from .interface import (
-    ColumnDefinition,
     register_source,
     SourceInterface,
     SourceInterfaceConfiguration,
@@ -17,12 +16,12 @@ class MongoDBSourceConfiguration(SourceInterfaceConfiguration):
     projection: dict = None
     unique_fields: List[str] = None
 
-    def __init__(self, columns: list, collection: str = None, filter: dict = {}, projection: dict = {}, unique_fields: List[str] = []):
-        super().__init__(columns)
+    def __init__(self, collection: str = None, filter: dict = {}, projection: dict = {}, uniqueFields: List[str] = []):
+        super().__init__()
         self.collection = collection
         self.filter = filter
         self.projection = projection
-        self.unique_fields = unique_fields
+        self.unique_fields = uniqueFields
 
 
 class MongoDBSourceConnectionSettings(SourceInterfaceConnectionSettings):
@@ -99,6 +98,7 @@ class MongodbSource(SourceInterface):
         return len(result.inserted_ids)
 
     def update(self, data: DataFrame) -> int:
+        self._validate_unique_fields()
         updates = []
         for row in data.to_dicts():
             filter = {field_name: row[field_name]
@@ -118,6 +118,7 @@ class MongodbSource(SourceInterface):
         return result.modified_count
 
     def delete(self, data: DataFrame) -> int:
+        self._validate_unique_fields()
         deletes = []
         for row in data.to_dicts():
             filter = {field_name: row[field_name]
@@ -130,3 +131,8 @@ class MongodbSource(SourceInterface):
             result = collection.bulk_write(deletes)
 
         return result.deleted_count
+
+    def _validate_unique_fields(self):
+        if not self.source_configuration.unique_fields:
+            raise ValueError(
+                "Unique fields are required for MongoDB when used as a destination")

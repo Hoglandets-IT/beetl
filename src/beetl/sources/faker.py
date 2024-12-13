@@ -42,11 +42,14 @@ class FakerSource(SourceInterface):
     def insert(self, data: POLARS_DF):
         print("Inserting data into static source...")
         print(data)
+        return len(data)
 
     def update(self, data: POLARS_DF):
         print("Updating data in static source...")
         print(data)
+        return len(data)
 
     def delete(self, data: POLARS_DF):
         print("Deleting data from static source")
         print(data)
+        return len(data)

@@ -1,8 +1,11 @@
 name: "Publish Application"
 on:
-  workflow_dispatch:
-  release:
-    types: [published]
+  push:
+    tags:
+      - "*"
+    branches:
+      - main
+
 
 jobs:
   package:
@@ -58,5 +61,5 @@ jobs:
           context: docker
           file: docker/Dockerfile
           push: true
-          # Push to latest on develop, otherwise push to the tag
-          tags: ghcr.io/hoglandets-it/beetl:${{ github.ref == 'refs/heads/develop' && 'latest' || github.event.release.tag_name }}
+          # Push to latest on main, otherwise push to the tag
+          tags: ghcr.io/hoglandets-it/beetl:${{ github.ref == 'refs/heads/main' && 'latest' || github.event.release.tag_name }}

@@ -1,7 +1,8 @@
 """Module information."""
+
 import os
 
-FALLBACK_VERSION = "0.5.0"
+FALLBACK_VERSION = "1.0.0-rc.1"
 
 __title__ = "beetl"
 __description__ = """
@@ -10,7 +11,7 @@ __description__ = """
 """
 
 __version__ = os.getenv("GHRELEASE", FALLBACK_VERSION)
-if os.getenv('GHRUN', False) and os.getenv('GHBRANCH', 'develop') == 'develop':
+if os.getenv("GHRUN", False) and os.getenv("GHBRANCH", "develop") == "develop":
     __version__ += f".{os.getenv('RUN_ID')}"
 
 if __version__ == "":

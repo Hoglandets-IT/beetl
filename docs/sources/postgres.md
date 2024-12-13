@@ -37,44 +37,28 @@ sync:
     destination: postgres_database_1
     sourceConfig:
       # query, <string>, (optional)
-      # If not specified a query will be constructed out of the columns specified below. This is not recommended as it is due to change in the future.
+      # default is SELECT * from <table>
       query: SELECT * FROM source-table-name
       # table, <string>, (optional*)
       # Mandatory if query isn't specified
       table: source-table-name
-      # columns, <List[ColumnDefinition]>, (mandatory)
-      # Defines how the data will look at compare time
-      # See /sources/types/column-definition.html for schema.
-      # Id will define a rows identity, while name will be compared against the name of the row in destination sharing the same identity.
-      columns: [
-        {
-          "name": "id",
-          "type": "Int32",
-          "unique": True
-        },
-        {
-          "name": "name",
-          "type": "Utf8",
-        }
-      ]
+      # unique_columns, <list<string>> (mandatory)
+      # defines uniqueness of a row
+      # used when modifying data in the source
+      unique_columns:
+        - id
+      # skip_columns, <list<string>> (mandatory)
+      # specified column names will not be inserted or updated in the source
+      skip_columns:
+        - street_address
+
     # The postgresql configs are the same regardless of direction of the sync
     destinationConfig:
       query: SELECT * FROM destination-table-name
       table: destination-table-name
-      columns: [
-        {
-          "name": "id",
-          "type": "Int32",
-          "unique": True
-        },
-        {
-          "name": "name",
-          "type": "Utf8",
-        }
-      ]
+      unique_columns:
+        - id
 ```
-*Related types:*
-- [ColumnDefinitions](/sources/types/column-definition.html)
 
 ## Example
 
@@ -141,37 +125,19 @@ sync:
   - source: database_1
     destination: database_2
     sourceConfig:
-      query: SELECT * FROM people
-      columns: [
-        {
-          "name": "id",
-          "type": "Int32",
-          "unique": True
-        },
-        {
-          "name": "name",
-          "type": "Utf8",
-        },
-        {
-          "name": "email",
-          "type": "Utf8",
-        },
-      ]
+      query: SELECT id, name, email FROM people
+      unique_columns: 
+        - id
     destinationConfig:
       query: SELECT * FROM people
-      columns: [
-        {
-          "name": "id",
-          "type": "Int32",
-          "unique": True
-        },
-        {
-          "name": "name",
-          "type": "Utf8",
-        },
-        {
-          "name": "email",
-          "type": "Utf8",
-        },
-      ]
+      unique_columns: 
+        - id
+    comparisonColumns:
+      - name: id
+        type: Int32
+        unique: true
+      - name: name
+        type: Utf8
+      - name: email
+        type: Utf8
 ```

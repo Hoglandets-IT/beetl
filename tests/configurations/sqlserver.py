@@ -1,5 +1,5 @@
-def to_postgres(connectionString: str):
-    if (not connectionString):
+def to_sqlserver(sqlserver_connection_string: str):
+    if not sqlserver_connection_string:
         raise Exception("Connection string is required")
 
     return {
@@ -7,41 +7,40 @@ def to_postgres(connectionString: str):
         "sources": [
             {
                 "name": "database",
-                "type": "Postgresql",
+                "type": "Sqlserver",
                 "connection": {
                     "settings": {
-                        "connection_string": connectionString
+                        "connection_string": sqlserver_connection_string,
                     }
-
-                }
-            }
+                },
+            },
         ],
         "sync": [
             {
                 "source": "database",
                 "destination": "database",
                 "sourceConfig": {
-                    "table": "srctable",
+                    "table": "src",
                 },
                 "destinationConfig": {
-                    "table": "dsttable",
+                    "table": "dst",
                     "uniqueColumns": ["id"],
                 },
                 "comparisonColumns": [
                     {
                         "name": "id",
-                        "type": "Int32",
+                        "type": "Int64",
                         "unique": True,
+                    },
+                    {
+                        "name": "email",
+                        "type": "Utf8",
                     },
                     {
                         "name": "name",
                         "type": "Utf8",
                     },
-                    {
-                        "name": "email",
-                        "type": "Utf8",
-                    }
-                ]
+                ],
             }
-        ]
+        ],
     }

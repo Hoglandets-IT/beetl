@@ -40,7 +40,6 @@ sources:
     connection:
       settings:
         connection_string: "Server=myServerAddress;Database=myDataBase;User Id=myUsername;Password=myPassword;"
-        fast_executemany: False
 sync:
   - source: csv
     sourceConfig:
@@ -48,35 +47,25 @@ sync:
         path: /path/to/users.csv
         separator: ","
         qualifier: '"'
-      columns:
-        - name: id
-          type: Uint8
-          unique: True
-        - name: name
-          type: Utf8
-        - name: age
-          type: Uint8
-        - name: email
-          type: Utf8
-        - name: phone
-          type: Utf8
     destination: sqlserver
     destinationConfig:
       table: users
       query: |
         SELECT id, name, age, email, phone FROM [DATABASE].dbo.[users]
-      columns:
-        - name: id
-          type: Uint8
-          unique: True
-        - name: name
-          type: Utf8
-        - name: age
-          type: Uint8
-        - name: email
-          type: Utf8
-        - name: phone
-          type: Utf8
+      unique_columns:
+        - id
+    comparisonColumns:
+      - name: id
+        type: Uint8
+        unique: True
+      - name: name
+        type: Utf8
+      - name: age
+        type: Uint8
+      - name: email
+        type: Utf8
+      - name: phone
+        type: Utf8
     sourceTransformers:
       - transformer: strings.replace_all
         config:
@@ -116,7 +105,6 @@ sources:
     connection:
       settings:
         connection_string: "Server=myServerAddress;Database=myDataBase;User Id=myUsername;Password=myPassword;"
-        fast_executemany: False
 ```
 
 ### Source/Destination
@@ -141,21 +129,8 @@ sync:
         path: /path/to/users.csv
         separator: ","
         qualifier: '"'
-      # The columns to use from the source, their data types and whether the column is unique
-      # There should be a minimum of one unique column per dataset
-      # These columns don't yet need to match the destination columns, as we can transform them later
-      columns:
-        - name: id
-          type: Uint8
-          unique: True
-        - name: name
-          type: Utf8
-        - name: age
-          type: Uint8
-        - name: email
-          type: Utf8
-        - name: phone
-          type: Utf8
+      # The csv source will fetch all the columns from the source
+      # For other sources you can provide what columns to fetch
     # The destination name
     destination: sqlserver
     destinationConfig:
@@ -166,18 +141,18 @@ sync:
       # The columns to use from the destination, their data types and whether the column is unique
       # There should be a minimum of one unique column per dataset
       # These columns don't yet need to match the source columns, as we can transform them later
-      columns:
-        - name: id
-          type: Uint8
-          unique: True
-        - name: name
-          type: Utf8
-        - name: age
-          type: Uint8
-        - name: email
-          type: Utf8
-        - name: phone
-          type: Utf8
+    comparisonColumns:
+      - name: id
+        type: Uint8
+        unique: True
+      - name: name
+        type: Utf8
+      - name: age
+        type: Uint8
+      - name: email
+        type: Utf8
+      - name: phone
+        type: Utf8
 ```
 
 ### Source Transformers
@@ -255,7 +230,7 @@ This basic flow has no insertion transformers defined, since they are a more adv
 
 **Under the hood**
 
-BeETL will run the insertion transformers when the changes have been determined, and the data is ready to be inserted
+BeETL will run the insertion/deletion transformers when the changes have been determined, and the data is ready to be inserted/deleted.
 
 :::
 

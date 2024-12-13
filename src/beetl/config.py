@@ -1,10 +1,12 @@
 import os
 import yaml
 import json
-from typing import List, Dict
+from typing import Any, List, Dict
 from dataclasses import dataclass
 import copy
+import polars as pl
 from .sources.interface import (
+    ColumnDefinition,
     SourceInterfaceConfiguration,
     SourceInterfaceConnectionSettings,
 )
@@ -29,8 +31,7 @@ class SourceSettings:
             source_class, f"{source_type}SourceConnectionSettings"
         )(**connection)
 
-        self.config = getattr(
-            source_class, f"{source_type}SourceConfig")(**config)
+        self.config = getattr(source_class, f"{source_type}SourceConfig")(**config)
 
 
 @dataclass
@@ -43,6 +44,17 @@ class ChangeDetectionConfig:
 
 
 @dataclass
+class ComparisonColumn:
+    name: str
+    type: pl.DataType
+    unique: bool = False
+
+    def __init__(self, name: str, type: Any, unique: bool = False) -> None:
+        self.name, self.unique = name, unique
+        self.type = getattr(pl, type)
+
+
+@dataclass
 class SyncConfiguration:
     """The configuration for a single sync between two sources"""
 
@@ -50,6 +62,7 @@ class SyncConfiguration:
     sourceConfig: SourceInterfaceConfiguration
     destination: SourceSettings
     destinationConfig: SourceInterfaceConfiguration
+    comparisonColumns: List[ComparisonColumn]
     name: str = ""
     changeDetection: ChangeDetectionConfig = None
     sourceTransformers: TransformerConfiguration = None
@@ -164,9 +177,7 @@ class BeetlConfigV1(BeetlConfig):
         self.sources, self.sync_list = {}, []
 
         if len(config.get("sync", "")) == 0:
-            raise Exception(
-                "The configuration file is missing the 'sync' section."
-            )
+            raise Exception("The configuration file is missing the 'sync' section.")
 
         if len(config.get("sources", "")) == 0:
             if config.get("sourcesFromEnv", "") in [None, ""]:
@@ -218,17 +229,31 @@ class BeetlConfigV1(BeetlConfig):
             tmpDestination = copy.deepcopy(self.sources[sync["destination"]])
             tmpDestination.set_sourceconfig(sync["destinationConfig"])
 
+            try:
+                comparisonColumns = [
+                    ComparisonColumn(**args) for args in sync["comparisonColumns"]
+                ]
+            except KeyError as e:
+                raise Exception(
+                    "The comparisonColumns key is missing from the sync configuration."
+                ) from e
+            except TypeError as e:
+                raise Exception(
+                    "The comparisonColumns must be a list of dictionaries containing the mandatory keys 'name', 'type', and optionally 'unique'."
+                ) from e
+
             syncConfig = SyncConfiguration(
-                name=sync.get('name', ''),
+                name=sync.get("name", ""),
                 source=tmpSource,
                 sourceConfig=sync["sourceConfig"],
                 destination=tmpDestination,
                 destinationConfig=sync["destinationConfig"],
+                comparisonColumns=comparisonColumns,
             )
 
             tmpSource = tmpDestination = None
 
-            if sync.get("sourceTransformer", None):
+            if sync.get("sourceTransformer", None) is not None:
                 syncConfig.sourceTransformer = TransformerConfiguration(
                     "source", sync["sourceTransformer"], {}
                 )

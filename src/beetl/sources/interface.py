@@ -32,7 +32,8 @@ class RequestThreader:
 
     def __enter__(self):
         print("Threading the needle...")
-        self.executor = concurrent.futures.ThreadPoolExecutor(max_workers=self.threads)
+        self.executor = concurrent.futures.ThreadPoolExecutor(
+            max_workers=self.threads)
 
         return self
 
@@ -91,30 +92,8 @@ class ColumnDefinition:
 class SourceInterfaceConfiguration:
     """The configuration class used for data sources, abstract"""
 
-    columns: List[ColumnDefinition]
-    unique_columns: List[str] = None
-    comparison_columns: List[str] = None
-    skip_columns: List[str] = None
-
-    def __init__(self, columns: list):
-        ncolumns = columns
-        if isinstance(columns, dict):
-            ncolumns = []
-            for k, v in columns.items():
-                ncolumns.append({
-                    "name": k,
-                    "type": v,
-                    "unique": False
-                })
-            
-            ncolumns[0]["unique"] = True
-        
-        self.columns = [ColumnDefinition(**col) for col in ncolumns]
-        self.unique_columns = [col.name for col in self.columns if col.unique]
-        self.comparison_columns = [
-            col.name for col in self.columns if (not col.unique and not col.skip_update)
-        ]
-        self.skip_columns = [col.name for col in self.columns if col.skip_update]
+    def __init__(self):
+        pass
 
 
 @dataclass
@@ -142,12 +121,14 @@ class SourceInterface:
                 Configuration for the source connection (paths, credentials, etc.)
         """
         try:
-            self.connection_settings = self.ConnectionSettingsClass(**connection)
+            self.connection_settings = self.ConnectionSettingsClass(
+                **connection)
             self.source_configuration = (
                 self.SourceConfigClass(**config) if config else None
             )
         except Exception as e:
-            raise Exception("Invalid connection settings for source: " + str(e))
+            raise Exception(
+                "Invalid connection settings for source: " + str(e))
 
         self._configure()
 
@@ -189,13 +170,7 @@ class SourceInterface:
         Args:
             df (DataFrame): The data from the data source
         """
-        df = self._query(params)
-
-        for col in self.source_configuration.columns:
-            if col.name in df.columns and col.type in CASTABLE:
-                df = df.with_columns(pl.col(col.name).cast(col.type))
-
-        return df
+        return self._query(params)
 
     def _query(self, params=None) -> pl.DataFrame:
         """Run a query on the source and return the results

@@ -1,9 +1,9 @@
 # Column Specifications
 
-The columns are specified for both source and destination, and determine how the data will be interpreted and transformed. A full example of all general options per column is shown below:
+The columns are specified for each sync, and determine how the data will be interpreted and transformed at the comparison stage. A full example of all general options per column is shown below:
 
 ```yaml
-columns:
+comparisonColumns:
   - name: id
     type: Uint8
     unique: True
@@ -13,29 +13,21 @@ columns:
   - name: another_unique_id
     type: Utf8
     unique: False
-    skip_update: True
 ```
-
-::: tip
-There is work in progress on auto-discovery of source- and destination columns
-:::
 
 ## Alternate column declaration
 If you do not need to set any special settings for the columns, you can use the alternate syntax for column declaration to speed things up. This will cause the first field in the list to be set as unique:
 
 ```yaml
-columns:
+comparisionColumns:
   uniqueField: Int32
   fieldA: Utf8
   fieldB: Int32
 ```
 
-## Source Columns
-The source columns are a representation of how the data should look when doing the comparison, meaning AFTER any source transformers have been applied.
-You can retrieve any number of columns not listed in the columns-section, but they will neither be used for comparison or insertion if they are not specified. You can use them for transformations, though.
-
-## Destination Columns
-The destination columns are a representation of how the data looks when stored in the destination, without any applied transformations.
+## Comparison columns
+The comparison columns are a representation of how the data should look when doing the comparison, meaning AFTER any source or destination transformers have been applied.
+You can retrieve any number of columns not listed in the columns-section, but they will not be used for comparison. You can use them for insertion and transformations, though.
 
 ## Field types
 There are a number of field types that can be used for the columns:
@@ -66,12 +58,9 @@ If you don't do this, you will likely have all records updated every time.
 :::
 
 
-## Skip Update
-This means the field will be ignored during insertion, but can still be used for comparison.
-
 ## Multi-dimensional Data
 If you use sources with multi-dimensional data (e.g. json, MongoDB, etc.), you can use the `pl.Object` type to store the entire data structure in a single column.
-With many of the sources, you also have the option to flatten the data structure into multiple columns
+You also have the option to use transformers to flatten the data structure into multiple columns
 
 ### Objects
 ```yaml
@@ -88,7 +77,7 @@ allRows:
       width: 360
 ```
 
-This data structure will be flattened into the following columns:
+This data structure can be flattened into the following columns:
 
 | name | attrs.height | attrs.length | attrs.width |
 |------|--------------|--------------|-------------|
@@ -97,6 +86,8 @@ This data structure will be flattened into the following columns:
 
 ### Arrays
 Arrays will generally be flattened to a pl.List type, and can then be modified and/or extracted with for example the strings.join or structs.jsonpath transformers
+
+Lists cannot yet be compared against each other.
 
 ```yaml
 - name: hello
@@ -129,7 +120,3 @@ Arrays will generally be flattened to a pl.List type, and can then be modified a
     inField: deep
     path: "0.deep_attr.0"
 ```
-
-
-
-
