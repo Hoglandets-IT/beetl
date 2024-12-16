@@ -11,9 +11,9 @@
 - New Transformers
   - [frames.project_columns](/transformers/frames.html#project-columns)
   - [int.to_int64](/transformers/int.html#to-int64)
-  - [string.split_into_listfield](/transformers/string.html#split-into-listfield)
-  - [string.join_listfield](/transformers/string.html#join_listfield)
-  - [string.to_object_id](/transformers/string.html#to_object_id)
+  - [string.split_into_listfield](/transformers/strings.html#split-into-listfield)
+  - [string.join_listfield](/transformers/strings.html#join_listfield)
+  - [string.to_object_id](/transformers/strings.html#to_object_id)
   - [structs.compose_struct](/transformers/structs.html#compose-struct)
   - [structs.compose_list_of_structs](/transformers/structs.html#compose-list-of-structs)
 - Updated Transformers
@@ -23,7 +23,7 @@
   - This [changelog](/getting-started/change-notes.html).
   - A [flowchart](/getting-started/change-notes.html) explaining the beetl sync process.
   - And a lot of other additions from data sources to transformers and examples.
-- A dry run mode has been added. If you pass `dry_run=True` to `beetl.sync()` no mutations will be done on the operation and the sync method will return a list containing one ComparisonResult per sync in the configuration containing the create, update and delete DataFrames post instertion and deletion transformers.
+- A dry run mode has been added. If you pass `dry_run=True` to `beetl.sync()` no mutations will be done on the operation and the sync method will return a list containing one ComparisonResult per sync in the configuration containing the create, update and delete DataFrames post insertion and deletion transformers.
 
 
 ### Bugfixes 🐛

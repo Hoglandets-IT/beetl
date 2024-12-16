@@ -1,8 +1,8 @@
 from typing import List, Union
 
-from src.beetl.comparison_result import ComparisonResult
-from src.beetl.sources.interface import CASTABLE
-from src.beetl.result import Result, SyncResult
+from .comparison_result import ComparisonResult
+from .sources.interface import CASTABLE
+from .result import Result, SyncResult
 from .config import BeetlConfig, ComparisonColumn, SyncConfiguration
 from .transformers.interface import TransformerConfiguration
 import polars as pl
