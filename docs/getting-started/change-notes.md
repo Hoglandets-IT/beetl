@@ -11,9 +11,9 @@
 - New Transformers
   - [frames.project_columns](/transformers/frames.html#project-columns)
   - [int.to_int64](/transformers/int.html#to-int64)
-  - [string.split_into_listfield](/transformers/string.html#split-into-listfield)
-  - [string.join_listfield](/transformers/string.html#join_listfield)
-  - [string.to_object_id](/transformers/string.html#to_object_id)
+  - [string.split_into_listfield](/transformers/strings.html#split-into-listfield)
+  - [string.join_listfield](/transformers/strings.html#join_listfield)
+  - [string.to_object_id](/transformers/strings.html#to_object_id)
   - [structs.compose_struct](/transformers/structs.html#compose-struct)
   - [structs.compose_list_of_structs](/transformers/structs.html#compose-list-of-structs)
 - Updated Transformers
