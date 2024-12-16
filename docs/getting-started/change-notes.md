@@ -23,6 +23,7 @@
   - This [changelog](/getting-started/change-notes.html).
   - A [flowchart](/getting-started/change-notes.html) explaining the beetl sync process.
   - And a lot of other additions from data sources to transformers and examples.
+- A dry run mode has been added. If you pass `dry_run=True` to `beetl.sync()` no mutations will be done on the operation and the sync method will return a list containing one ComparisonResult per sync in the configuration containing the create, update and delete DataFrames post instertion and deletion transformers.
 
 
 ### Bugfixes 🐛

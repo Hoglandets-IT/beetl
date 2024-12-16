@@ -1,5 +1,6 @@
 from typing import List, Union
 
+from src.beetl.comparison_result import ComparisonResult
 from src.beetl.sources.interface import CASTABLE
 from src.beetl.result import Result, SyncResult
 from .config import BeetlConfig, ComparisonColumn, SyncConfiguration
@@ -192,8 +193,17 @@ class Beetl:
 
         return transformed
 
-    def sync(self) -> Result:
-        """Executes the ETL process. The following steps will be performed:
+    def sync(self, dry_run: bool = False) -> Union[Result, List[ComparisonResult]]:
+        """Executes the ETL process.
+
+        Args:
+            dry_run (bool, optional): If set to true, the function will not execute any database operations and will return the dataframes that would have been used in the operations. Defaults to False.
+
+        Returns:
+            ComparisonResult: If the argument dry_run was passed as true, returns a list of ComparisionResult objects that contain the create, update and delete dataframes that would have been used by the destination if the dry_run argument was false.
+            Result: A Result object containing the amount of inserts, updates and deletes for each sync
+
+        The following steps will be performed:
 
         1. Load source and destination data
 
@@ -204,6 +214,7 @@ class Beetl:
         4. Execute the respective insert, update and delete queries
 
         """
+        dry_run_results = []
         self.benchmark("Starting sync and retrieving source data")
         allAmounts = []
         for i, sync in enumerate(self.config.sync_list, 1):
@@ -256,6 +267,16 @@ class Beetl:
                 f"Insert: {len(create)}, Update: {len(update)}, Delete: {len(delete)}"
             )
 
+            if dry_run:
+                dry_run_results.append(
+                    ComparisonResult(
+                        self.runTransformers(create, sync.insertionTransformers, sync),
+                        self.runTransformers(update, sync.insertionTransformers, sync),
+                        self.runTransformers(delete, sync.deletionTransformers, sync),
+                    )
+                )
+                continue
+
             self.benchmark("Starting database operations")
             amount["inserts"] = 0
             if len(create):
@@ -264,6 +285,7 @@ class Beetl:
                 )
 
             self.benchmark("Finished inserts, starting updates")
+
             amount["updates"] = 0
             if len(update):
                 amount["updates"] = sync.destination.update(
@@ -284,6 +306,9 @@ class Beetl:
             print("Deleted: " + str(amount["deletes"]))
 
             allAmounts.append([sync.name, *amount.values()])
+
+        if dry_run:
+            return dry_run_results
 
         print(
             "\r\n\r\n"

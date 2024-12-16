@@ -4,6 +4,7 @@ import yaml
 import unittest
 from copy import deepcopy
 from polars import DataFrame
+from src.beetl.comparison_result import ComparisonResult
 from src.beetl import beetl, config
 from src.beetl.sources import interface as src_if
 from tests.configurations.static import to_static
@@ -103,3 +104,14 @@ class TestBeetlFunctions(unittest.TestCase):
             delete.to_dict(as_series=False),
             {"id": [4], "name": ["James"], "email": ["jane@test.com"]},
         )
+
+    def test_dry_run_sync(self):
+
+        beetl_config = beetl.BeetlConfig(to_static())
+        beetl_instance = beetl.Beetl(beetl_config)
+        comparison_results = beetl_instance.sync(dry_run=True)
+
+        self.assertTrue(len(comparison_results) > 0)
+        result = comparison_results[0]
+
+        self.assertTrue(isinstance(result, ComparisonResult))

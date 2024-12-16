@@ -2,7 +2,7 @@
 
 import os
 
-FALLBACK_VERSION = "1.0.0-rc.1"
+FALLBACK_VERSION = "1.0.0-rc.2"
 
 __title__ = "beetl"
 __description__ = """
