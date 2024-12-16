@@ -2,8 +2,6 @@ name: Deploy VitePress site to Pages
 
 on:
   push:
-    tags:
-      - "*"
     branches:
       - main
 
