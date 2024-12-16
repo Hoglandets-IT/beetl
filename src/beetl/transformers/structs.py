@@ -22,7 +22,13 @@ class StructTransformers(TransformerInterface):
         return data
 
     @staticmethod
-    def jsonpath(data: pl.DataFrame, inField: str, outField: str, jsonPath: str, defaultValue: str = ""):
+    def jsonpath(
+        data: pl.DataFrame,
+        inField: str,
+        outField: str,
+        jsonPath: str,
+        defaultValue: str = "",
+    ):
         """
         Retrieve a value from a jsonpath inside of a column and add it to a new column
 
@@ -34,20 +40,30 @@ class StructTransformers(TransformerInterface):
         """
         split_jsonpath = jsonPath.split(".")
 
+        if len(split_jsonpath) == 1 and "$" in split_jsonpath:
+            return data.with_columns(pl.Series(outField, data[inField]))
+
         def get_value_at_jsonpath(fData: Any, start_at: int = 0):
             if isinstance(fData, str):
                 fData = json.loads(fData)
 
             try:
-                for index, selector in enumerate(split_jsonpath[start_at:], start=start_at):
+                for index, selector in enumerate(
+                    split_jsonpath[start_at:], start=start_at
+                ):
                     if selector == "$":
                         continue
                     if selector == "*":
-                        if not isinstance(fData, list) and not isinstance(fData, pl.Series):
+                        if not isinstance(fData, list) and not isinstance(
+                            fData, pl.Series
+                        ):
                             raise NotImplementedError(
-                                "Wildcard selector is only supported for lists")
-                        fData = [get_value_at_jsonpath(fData[j], index + 1)
-                                 for j in range(len(fData))]
+                                "Wildcard selector is only supported for lists"
+                            )
+                        fData = [
+                            get_value_at_jsonpath(fData[j], index + 1)
+                            for j in range(len(fData))
+                        ]
                         return fData
                     try:
                         ix = int(selector)
@@ -87,8 +103,7 @@ class StructTransformers(TransformerInterface):
         rows = len(data)
         newStructs = []
         for i in range(rows):
-            newStructs.append({name: data[field][i]
-                              for name, field in map.items()})
+            newStructs.append({name: data[field][i] for name, field in map.items()})
 
         series = pl.Series(outField, newStructs)
         data = data.with_columns(series)

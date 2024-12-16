@@ -35,7 +35,7 @@ class ItopSourceConfiguration(SourceInterfaceConfiguration):
     datamodel: str = None
     oql_key: str = None
     soft_delete: dict = None
-    link_colums: list = []
+    link_columns: list = None
     comparison_columns: list = None
     unique_columns: list = None
     skip_columns: list = None
@@ -47,7 +47,7 @@ class ItopSourceConfiguration(SourceInterfaceConfiguration):
         soft_delete: dict = None,
         comparison_columns: list = None,
         unique_columns: list = None,
-        link_columns: list = None,
+        link_columns: list = [],
         skip_columns: list = None,
     ):
         super().__init__()
@@ -75,7 +75,7 @@ class ItopSourceConfiguration(SourceInterfaceConfiguration):
 
         self.soft_delete = soft_delete
 
-        self.link_colums = link_columns
+        self.link_columns = link_columns
 
 
 class ItopSourceConnectionSettings(SourceInterfaceConnectionSettings):
@@ -182,7 +182,7 @@ class ItopSource(SourceInterface):
         all_colums = (
             self.source_configuration.unique_columns
             + self.source_configuration.comparison_columns
-            + self.source_configuration.link_colums
+            + self.source_configuration.link_columns
         )
         files = self._create_body(
             "core/get",
@@ -240,7 +240,7 @@ class ItopSource(SourceInterface):
                 "fields": {
                     x: y
                     for x, y in data.items()
-                    if y is not None and x not in self.source_configuration.link_colums
+                    if y is not None and x not in self.source_configuration.link_columns
                 },
             },
         )
@@ -441,7 +441,7 @@ class ItopSource(SourceInterface):
             deleteMessage = "Soft deletion via API Sync"
 
         for column_name in deleteData.columns:
-            if column_name in self.source_configuration.link_colums:
+            if column_name in self.source_configuration.link_columns:
                 deleteData.drop_in_place(column_name)
 
         iters = (
