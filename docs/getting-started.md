@@ -219,11 +219,11 @@ If you use transformers that require the original data, for example the iTop rel
       - transformer: itop.relations
         config:
           field_relations:
-            source_field: org_id
-            source_comparison_field: name
-            target_class: Organization
-            target_comparison_field: name
-            use_like_operator: False
+            - source_field: org_id
+              source_comparison_field: name
+              target_class: Organization
+              target_comparison_field: name
+              use_like_operator: False
 
 ```
 :::
