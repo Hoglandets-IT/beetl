@@ -149,11 +149,11 @@ sync:
       - transformer: itop.relations
         config:
           field_relations: 
-            source_field: parent_id
-            source_comparison_field: parent_code
-            foreign_class_type: Organization
-            foreign_comparison_field: code
-            use_like_operator: false
+            - source_field: parent_id
+              source_comparison_field: parent_code
+              foreign_class_type: Organization
+              foreign_comparison_field: code
+              use_like_operator: false
 
 ```
 **links**:
