@@ -1,24 +1,22 @@
-"""Module information."""
+"""Module version information."""
 
 import os
+import re
 
-FALLBACK_VERSION = "1.0.0-rc.4"
+REGULAR_RELEASE = "(\d.\d.\d)"
+PRE_RELEASE = "(\d.\d.\d-rc.\d)"
 
-__title__ = "beetl"
-__description__ = """
-    BeETL is a Python package for extracting data from one datasource, 
-    transforming it and loading it into another datasource
-"""
+gh_tag = os.getenv("GHTAG")
+gh_branch = os.getenv("GHBRANCH")
+gh_run = os.getenv("GHRUN")
 
-__version__ = os.getenv("GHRELEASE", FALLBACK_VERSION)
-if os.getenv("GHRUN", False) and os.getenv("GHBRANCH", "develop") == "develop":
-    __version__ += f".{os.getenv('RUN_ID')}"
+__version__ = "0.0.1"
 
-if __version__ == "":
-    __version__ = FALLBACK_VERSION
-
-__author__ = "Lars Scheibling"
-__author_email__ = "lars.scheibling@hoglandet.se"
-__license__ = "GnuPG 3.0"
-
-__url__ = f"https://github.com/Hoglandets-IT/{__title__}"
+if gh_tag is not None:
+    matches = re.findall(PRE_RELEASE, gh_tag)
+    if matches and len(matches) == 1:
+        __version__ = matches[0]
+    else:
+        matches = re.findall(REGULAR_RELEASE, gh_tag)
+        if matches and len(matches) == 1:
+            __version__ = matches[0]
