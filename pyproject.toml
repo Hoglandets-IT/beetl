@@ -10,7 +10,6 @@ authors = [{ name = "Lars Scheibling", email = "lars.scheibling@hoglandet.se" }]
 license = { "text" = "GnuPG 3.0" }
 classifiers = [
   "programming language :: python :: 3",
-  "license :: osi approved :: gnu general public license v3 (gplv3)",
   "operating system :: os independent",
 ]
 dynamic = ["version", "readme"]
