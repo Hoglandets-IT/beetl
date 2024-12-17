@@ -9,8 +9,8 @@ description = "BeETL is a Python package for extracting data from one datasource
 authors = [{ name = "Lars Scheibling", email = "lars.scheibling@hoglandet.se" }]
 license = { "text" = "GnuPG 3.0" }
 classifiers = [
-  "programming language :: python :: 3",
-  "operating system :: os independent",
+  "Programming Language :: Python :: 3",
+  "Operating System :: OS Independent",
 ]
 dynamic = ["version", "readme"]
 urls = { "github" = "https://github.com/Hoglandets-IT/beetl" }
