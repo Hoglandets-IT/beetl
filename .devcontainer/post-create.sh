@@ -6,4 +6,5 @@ mkdir /tmp/beetl \
     && sudo apt-get update \
     && sudo ACCEPT_EULA=Y apt-get -y install libmariadb-dev libpq-dev unixodbc unixodbc-dev python3-venv msodbcsql18 libgssapi-krb5-2 \
     && sudo apt-get clean \
-    && pip3 install --user -r requirements.txt
+    && python -m pip install --user -r requirements.txt \
+    && python -m pip install wheel build setuptools twine

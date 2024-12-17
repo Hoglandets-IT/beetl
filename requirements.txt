@@ -1,7 +1,6 @@
 requests
 polars[all]==1.14.0
 sqlalchemy
-faker
 pandas==2.2.3
 psycopg
 pyyaml
@@ -11,8 +10,12 @@ pymssql
 mysql-connector-python
 alive-progress
 tabulate
-testcontainers==4.8.2
 pymongo==4.10.1
+
 # Below packages are subdependencies of sqlalchemy
 cryptography
 psycopg2
+
+# Only used for testing
+testcontainers==4.8.2
+faker

@@ -10,7 +10,7 @@ gh_tag = os.getenv("GHTAG")
 gh_branch = os.getenv("GHBRANCH")
 gh_run = os.getenv("GHRUN")
 
-__version__ = "0.0.0"
+__version__ = "0.0.1"
 
 if gh_tag is not None:
     matches = re.findall(PRE_RELEASE, gh_tag)
