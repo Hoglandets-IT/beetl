@@ -20,7 +20,8 @@
 				"ms-python.python",
 				"ms-python.debugpy",
 				"ms-python.autopep8",
-				"github.vscode-github-actions"
+				"github.vscode-github-actions",
+				"tamasfe.even-better-toml"
 			]
 		}
 	}
