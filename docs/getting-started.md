@@ -2,6 +2,28 @@
 
 This page demonstrates a couple of quick usage examples for BeETL together with how the flow happens
 
+## Installation
+
+### From PyPi
+```bash
+#/bin/bash
+python -m pip install beetl
+```
+
+### From Source
+```bash
+#/bin/bash
+# Clone and enter the repository
+git clone https://github.com/Hoglandets-IT/beetl.git
+cd ./beetl
+# Install the build tools
+python -m pip install build
+# Build beetl
+python -m build
+# Install beetl from locally built package
+python -m pip install ./dist/*.tar.gz
+```
+
 ## Sources
 To begin, choose your sources. In this example, we will use SQL Server and a CSV file.
 
@@ -278,3 +300,26 @@ Updated: 1
 Deleted: 1
 
 ```
+### Dry run
+
+While developing your integration it might be helpful to be able to see what is going to happen without applying any changes to your destination. You can do this by simply passing `dry_run=True` to the `sync` method like this.
+
+```python
+from beetl.beetl import Beetl
+
+sync = Beetl.from_yaml("config.yaml")
+results = sync.sync(dry_run=True)
+
+```
+
+The results is a list of ComparisonResult with the following schema
+
+```python
+{
+  "create": polars.DataFrame
+  "update": polars.DataFrame,
+  "delete": polars.DataFrame,
+}
+```
+
+If you print any of the dataframes you will be presented by an ascii table representation of what will be created, updated and deleted from the destination dataset.

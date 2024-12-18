@@ -27,12 +27,22 @@ jobs:
     - name: Upgrade pip
       run: |
         python -m pip install --upgrade pip
-        python -m pip install -r requirements.txt
-        python -m pip install build twine
+
+    - name: Install testing dependencies
+      run: |
+        python -m pip install pytest
+        curl https://packages.microsoft.com/keys/microsoft.asc | sudo tee /etc/apt/trusted.gpg.d/microsoft.asc
+        curl https://packages.microsoft.com/config/debian/11/prod.list | sudo tee /etc/apt/sources.list.d/mssql-release.list
+        sudo apt-get update
+        sudo ACCEPT_EULA=Y apt-get -y install libmariadb-dev libpq-dev unixodbc unixodbc-dev python3-venv msodbcsql18 libgssapi-krb5-2
 
     - name: Install install project dependencies
       run: |
         python -m pip install -r requirements.txt
+
+    - name: Run unit and integration tests (excluding itop)
+      run: |
+        python -m pytest ./tests/unit_testing ./tests/integration_testing
 
     - name: Install packaging dependencies
       run: |

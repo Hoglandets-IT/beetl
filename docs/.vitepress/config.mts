@@ -29,6 +29,12 @@ const config = defineConfig({
         ]
       },
       {
+        text: 'Schema specification',
+        items: [
+          { text: 'Configuration', link: '/schemas/configuration' },
+        ]
+      },
+      {
         text: 'Sources',
         items: [
           { text: 'iTop', link: '/sources/itop' },
