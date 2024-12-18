@@ -1,10 +1,12 @@
-# import unittest
-# from tests.test_functions import *
+import unittest
 
-# if __name__ == '__main__':
-#     unittest.main()
+
+if __name__ == '__main__':
+    unittest.main()
+
+# Some local test
+
 # import polars as pl
-
 
 # data = pl.DataFrame({
 #     "id": [7, 5, 6],
@@ -19,8 +21,10 @@
 #     if_exists="append"
 # )
 
-from src.beetl.beetl import Beetl, BeetlConfig
+# Another local test
 
-conf = BeetlConfig.from_yaml_file('localtest_binary.yaml')
-sync = Beetl(conf)
-sync.sync()
+# # from src.beetl.beetl import Beetl, BeetlConfig
+
+# # conf = BeetlConfig.from_yaml_file('localtest_binary.yaml')
+# # sync = Beetl(conf)
+# # sync.sync()

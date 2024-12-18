@@ -1,3 +1,4 @@
+from typing import Any
 from .interface import (
     register_transformer_class,
     TransformerInterface,
@@ -26,7 +27,9 @@ class ItopTransformer(TransformerInterface):
         def make_code(st):
             return concat_and_sha("-", toplevel, *st.values())
 
-        new = data.with_columns(pl.struct(inFields).apply(make_code).alias(outField))
+        new = data.with_columns(
+            pl.struct(inFields).map_elements(make_code).alias(outField)
+        )
 
         return new
 
@@ -68,7 +71,9 @@ class ItopTransformer(TransformerInterface):
         return pl.DataFrame(output)
 
     @staticmethod
-    def relations(data: pl.DataFrame, **kwargs) -> pl.DataFrame:
+    def relations(
+        data: pl.DataFrame, field_relations: list[dict[str, Any]]
+    ) -> pl.DataFrame:
         """Insert data into iTop
 
         Args:
@@ -79,43 +84,54 @@ class ItopTransformer(TransformerInterface):
         Returns:
             pl.DataFrame: The resulting DataFrame
         """
-        if not kwargs.get("sync", False):
-            raise Exception(
-                "Error: include_sync option is not set for transformer itop.relations"
-            )
 
-        if kwargs["sync"].destination.source_configuration.has_foreign and len(data.columns) > 1:
-            transformed = data.clone()
-            for field in kwargs["sync"].destination.source_configuration.columns:
-                fk_def = getattr(field, "custom_options", {})
-                if fk_def is not None:
-                    fk_def = fk_def.get("itop", None)
-                    if fk_def is not None:
-                        try:
-                            comparison = "="
-                            
-                            if fk_def.get('use_like'):
-                                comparison = "LIKE"
-                            
-                            query = (
-                                f'SELECT {fk_def["target_class"]}'
-                                + f' WHERE {fk_def["reconciliation_key"]} {comparison} '
-                            )
+        if not field_relations:
+            return data
 
-                            transformed = transformed.with_columns(
-                                transformed[fk_def["comparison_field"]]
-                                .apply(
-                                    lambda x: query + f"'{x}'"
-                                    if x is not None and x != ""
-                                    else None
-                                )
-                                .alias(field.name)
-                            )
-                        except KeyError as e:
-                            raise Exception(
-                                "Error: The key definition is not valid"
-                            ) from e
+        transformed = data.clone()
+        for field_relation in field_relations:
+            source_field = field_relation["source_field"]
+            source_comparison_field = field_relation["source_comparison_field"]
+            foreign_class_type = field_relation["foreign_class_type"]
+            foreign_comparison_field = field_relation["foreign_comparison_field"]
+            use_like_operator = field_relation.get("use_like_operator", False)
 
-            return transformed
+            if (
+                not source_field
+                or not source_comparison_field
+                or not foreign_class_type
+                or not foreign_comparison_field
+            ):
+                raise ValueError(
+                    "One of the field_relations config values for the itop.relations transformer is missing. All fields except use_like_operator are required."
+                )
 
-        return data
+            try:
+                comparison_operator = "LIKE" if use_like_operator else "="
+
+                query = (
+                    f"SELECT {foreign_class_type}"
+                    + f" WHERE {foreign_comparison_field} {comparison_operator} "
+                )
+
+                transformed = transformed.with_columns(
+                    transformed[source_comparison_field]
+                    .map_elements(
+                        lambda source_comparison_field_value: (
+                            query + f"'{source_comparison_field_value}'"
+                            if source_comparison_field_value is not None
+                            and source_comparison_field_value != ""
+                            else None
+                        ),
+                        return_dtype=str,
+                    )
+                    .alias(source_field)
+                )
+            except pl.exceptions.ColumnNotFoundError as e:
+                raise ValueError(
+                    f"Error: The source_comparison_field {source_comparison_field} is not present in DataFrame"
+                ) from e
+            except KeyError as e:
+                raise Exception("Error: The key definition is not valid") from e
+
+        return transformed

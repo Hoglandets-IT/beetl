@@ -1,8 +1,7 @@
 ignore/
 fakedatadst.json
 fakedatasrc.json
-.venv
-.vscode
+*venv
 mantest.py
 othertest
 gotest
@@ -25,3 +24,4 @@ node_modules
 /*.yaml
 !/.readthedocs.yaml
 /*.xml
+config.mts.timestamp*.mjs

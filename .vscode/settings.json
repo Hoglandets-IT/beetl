@@ -1,0 +1,13 @@
+{
+  "python.testing.unittestArgs": [
+    "-v",
+    "-s",
+    "./tests",
+    "-p",
+    "*.py"
+  ],
+  "python.testing.autoTestDiscoverOnSaveEnabled": true,
+  "python.testing.unittestEnabled": true,
+  "files.eol": "\n",
+  "remote.autoForwardPortsFallback": 0
+}

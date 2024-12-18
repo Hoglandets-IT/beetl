@@ -18,8 +18,7 @@ class FrameTransformer(TransformerInterface):
             pl.DataFrame: The filtered DataFrame
         """
         __class__._validate_fields(data.columns, [x for x in filter.keys()])
-        
-        
+
         for key, value in filter.items():
             if value is None and reverse:
                 data = data.filter(data[key].is_not_null())
@@ -29,11 +28,9 @@ class FrameTransformer(TransformerInterface):
                 data = data.filter(data[key] != value)
             else:
                 data = data.filter(data[key] == value)
-            
-                
-        
+
         return data
-    
+
     @staticmethod
     def conditional(data: pl.DataFrame, conditionField: str, ifTrue: str, ifFalse: str, targetField: str = ""):
         """Apply a conditional to a DataFrame
@@ -50,16 +47,16 @@ class FrameTransformer(TransformerInterface):
         """
         if targetField == "":
             targetField = conditionField
-        
+
         __class__._validate_fields(data.columns, [conditionField])
-        
-        
+
         data = data.with_columns(
-            pl.when(data[conditionField] == True).then(ifTrue).otherwise(ifFalse).alias(targetField if targetField is not None and targetField != "" else conditionField)
+            pl.when(data[conditionField] == True).then(ifTrue).otherwise(ifFalse).alias(
+                targetField if targetField is not None and targetField != "" else conditionField)
         )
-        
+
         return data
-    
+
     @staticmethod
     def rename_columns(data: pl.DataFrame, columns: List[dict]):
         """Rename columns in the dataset
@@ -73,7 +70,7 @@ class FrameTransformer(TransformerInterface):
         """
         __class__._validate_fields(data.columns, columns)
         ncolumns = columns
-        
+
         if isinstance(columns, dict):
             ncolumns = []
             for k, v in columns.items():
@@ -81,10 +78,10 @@ class FrameTransformer(TransformerInterface):
                     "from": k,
                     "to": v
                 })
-        
+
         for column in ncolumns:
             data = data.rename({column["from"]: column["to"]})
-            
+
         return data
 
     @staticmethod
@@ -119,6 +116,20 @@ class FrameTransformer(TransformerInterface):
         return data.drop(columns)
 
     @staticmethod
+    def project_columns(data: pl.DataFrame, columns: List[str]) -> pl.DataFrame:
+        """Project the DataFrame to only include the specified columns
+
+        Args:
+            data (pl.DataFrame): DataFrame to project
+            columns (List[str]): The columns to keep
+
+        Returns:
+            pl.DataFrame: The projected DataFrame
+        """
+        __class__._validate_fields(data.columns, columns)
+        return data.select(columns)
+
+    @staticmethod
     def distinct(data: pl.DataFrame, columns: List[str] = None) -> pl.DataFrame:
         """Only keep distinct rows in the dataframe. Optionally set a list of columns
 
@@ -131,7 +142,7 @@ class FrameTransformer(TransformerInterface):
         """
         if columns is not None and len(columns) > 0:
             __class__._validate_fields(data.columns, columns)
-        
+
         return data.unique(subset=columns if columns is not None and len(columns) > 0 else None, maintain_order=True)
 
     @staticmethod
@@ -148,7 +159,7 @@ class FrameTransformer(TransformerInterface):
         """
         __class__._validate_fields(data.columns, [x for x in colMap.keys()])
         new_obj = []
-        
+
         def extract_field(data: dict, path: str):
             splitPath = path.split(".")
             for segment in splitPath:
@@ -156,38 +167,37 @@ class FrameTransformer(TransformerInterface):
                     iSegment = int(segment)
                     if len(data) <= iSegment:
                         return ""
-                    
+
                     data = data[iSegment]
                 except Exception:
                     try:
                         data = data[segment]
                     except Exception:
                         return ""
-            
+
             return data
-        
+
         for row in data.iter_rows(named=True):
             cData = row[iterField]
             if isinstance(cData, str):
                 cData = json.loads(cData)
-            
+
             for i in range(len(cData)):
                 new_row = {}
-                
+
                 if fieldMap is None or len(fieldMap) == 0:
                     new_row["value"] = cData[i]
-                
+
                 if isinstance(cData[i], str):
                     if len(fieldMap) == 1:
                         new_row[list(fieldMap.values())[0]] = cData[i]
                 else:
                     for field, path in fieldMap.items():
                         new_row[field] = extract_field(cData[i], path)
-                
+
                 for dst, src in colMap.items():
                     new_row[dst] = row[src]
-            
-            
+
                 new_obj.append(new_row)
-        
+
         return pl.DataFrame(new_obj)

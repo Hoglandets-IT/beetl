@@ -2,6 +2,28 @@
 
 This page demonstrates a couple of quick usage examples for BeETL together with how the flow happens
 
+## Installation
+
+### From PyPi
+```bash
+#/bin/bash
+python -m pip install beetl
+```
+
+### From Source
+```bash
+#/bin/bash
+# Clone and enter the repository
+git clone https://github.com/Hoglandets-IT/beetl.git
+cd ./beetl
+# Install the build tools
+python -m pip install build
+# Build beetl
+python -m build
+# Install beetl from locally built package
+python -m pip install ./dist/*.tar.gz
+```
+
 ## Sources
 To begin, choose your sources. In this example, we will use SQL Server and a CSV file.
 
@@ -40,7 +62,6 @@ sources:
     connection:
       settings:
         connection_string: "Server=myServerAddress;Database=myDataBase;User Id=myUsername;Password=myPassword;"
-        fast_executemany: False
 sync:
   - source: csv
     sourceConfig:
@@ -48,35 +69,25 @@ sync:
         path: /path/to/users.csv
         separator: ","
         qualifier: '"'
-      columns:
-        - name: id
-          type: Uint8
-          unique: True
-        - name: name
-          type: Utf8
-        - name: age
-          type: Uint8
-        - name: email
-          type: Utf8
-        - name: phone
-          type: Utf8
     destination: sqlserver
     destinationConfig:
       table: users
       query: |
         SELECT id, name, age, email, phone FROM [DATABASE].dbo.[users]
-      columns:
-        - name: id
-          type: Uint8
-          unique: True
-        - name: name
-          type: Utf8
-        - name: age
-          type: Uint8
-        - name: email
-          type: Utf8
-        - name: phone
-          type: Utf8
+      unique_columns:
+        - id
+    comparisonColumns:
+      - name: id
+        type: Uint8
+        unique: True
+      - name: name
+        type: Utf8
+      - name: age
+        type: Uint8
+      - name: email
+        type: Utf8
+      - name: phone
+        type: Utf8
     sourceTransformers:
       - transformer: strings.replace_all
         config:
@@ -116,7 +127,6 @@ sources:
     connection:
       settings:
         connection_string: "Server=myServerAddress;Database=myDataBase;User Id=myUsername;Password=myPassword;"
-        fast_executemany: False
 ```
 
 ### Source/Destination
@@ -141,21 +151,8 @@ sync:
         path: /path/to/users.csv
         separator: ","
         qualifier: '"'
-      # The columns to use from the source, their data types and whether the column is unique
-      # There should be a minimum of one unique column per dataset
-      # These columns don't yet need to match the destination columns, as we can transform them later
-      columns:
-        - name: id
-          type: Uint8
-          unique: True
-        - name: name
-          type: Utf8
-        - name: age
-          type: Uint8
-        - name: email
-          type: Utf8
-        - name: phone
-          type: Utf8
+      # The csv source will fetch all the columns from the source
+      # For other sources you can provide what columns to fetch
     # The destination name
     destination: sqlserver
     destinationConfig:
@@ -166,18 +163,18 @@ sync:
       # The columns to use from the destination, their data types and whether the column is unique
       # There should be a minimum of one unique column per dataset
       # These columns don't yet need to match the source columns, as we can transform them later
-      columns:
-        - name: id
-          type: Uint8
-          unique: True
-        - name: name
-          type: Utf8
-        - name: age
-          type: Uint8
-        - name: email
-          type: Utf8
-        - name: phone
-          type: Utf8
+    comparisonColumns:
+      - name: id
+        type: Uint8
+        unique: True
+      - name: name
+        type: Utf8
+      - name: age
+        type: Uint8
+      - name: email
+        type: Utf8
+      - name: phone
+        type: Utf8
 ```
 
 ### Source Transformers
@@ -216,7 +213,7 @@ This could be used in instances where you, for example, want to compare the data
 You could then via the insertion transformers transform the name_backup column back to the name column.
 
 ::: warning
-If you use transformers that require the original data, for example the iTop relations transformer under insertions, make sure that you restore the fields to their original state before running that transformer transformers, like in the example below.
+If you use transformers that require the original data, for example the iTop relations transformer under insertions, make sure that you restore the fields to their original state before running that transformer, like in the example below.
 
 ```yaml
     sourceTransformers:
@@ -242,19 +239,26 @@ If you use transformers that require the original data, for example the iTop rel
           outField: name
       
       - transformer: itop.relations
-        include_sync: true
+        config:
+          field_relations:
+            - source_field: org_id
+              source_comparison_field: name
+              target_class: Organization
+              target_comparison_field: name
+              use_like_operator: False
 
 ```
+:::
 
-### Insertion Transformers
+### Insertion/Deletion Transformers
 
-This basic flow has no insertion transformers defined, since they are a more advanced feature. You can read more about them in the insertion transformers documentation (/transformers/pre-insertion)
+This basic flow has no insertion transformers defined, since they are a more advanced feature. You can read more about them in the  [transformers documentation](/transformers/using-transformers.html).
 
 ::: tip
 
 **Under the hood**
 
-BeETL will run the insertion transformers when the changes have been determined, and the data is ready to be inserted
+BeETL will run the insertion/deletion transformers when the changes have been determined, and the data is ready to be inserted/deleted.
 
 :::
 
@@ -296,3 +300,26 @@ Updated: 1
 Deleted: 1
 
 ```
+### Dry run
+
+While developing your integration it might be helpful to be able to see what is going to happen without applying any changes to your destination. You can do this by simply passing `dry_run=True` to the `sync` method like this.
+
+```python
+from beetl.beetl import Beetl
+
+sync = Beetl.from_yaml("config.yaml")
+results = sync.sync(dry_run=True)
+
+```
+
+The results is a list of ComparisonResult with the following schema
+
+```python
+{
+  "create": polars.DataFrame
+  "update": polars.DataFrame,
+  "delete": polars.DataFrame,
+}
+```
+
+If you print any of the dataframes you will be presented by an ascii table representation of what will be created, updated and deleted from the destination dataset.

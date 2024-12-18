@@ -19,59 +19,63 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 BULK_CUTOFF = 300
 
+DATAMODELS_WITHOUT_SOFT_DELETE = (
+    "NutanixCluster",
+    "NutanixClusterHost",
+    "NutanixVM",
+    "NutanixVMDisk",
+    "NutanixNetwork",
+    "NutanixNetworkInterface",
+)
+
 
 class ItopSourceConfiguration(SourceInterfaceConfiguration):
     """The configuration class used for iTop sources"""
 
     datamodel: str = None
     oql_key: str = None
-    has_foreign: bool = None
     soft_delete: dict = None
-    are_link_cols: list = []
+    link_columns: list = None
+    comparison_columns: list = None
+    unique_columns: list = None
+    skip_columns: list = None
 
     def __init__(
         self,
-        columns: list,
         datamodel: str = None,
         oql_key: str = None,
         soft_delete: dict = None,
         comparison_columns: list = None,
         unique_columns: list = None,
+        link_columns: list = [],
+        skip_columns: list = None,
     ):
-        super().__init__(columns)
+        super().__init__()
         self.datamodel = datamodel
         self.oql_key = oql_key
-        self.has_foreign = False
-        self.comparison_columns = (
-            self.get_output_fields_for_request()
-            if comparison_columns is None
-            else comparison_columns
-        )
-        if unique_columns is not None and len(unique_columns) > 0:
-            self.unique_columns = unique_columns
-        
+
+        if comparison_columns is None:
+            raise Exception("Comparison columns must be provided")
+        self.comparison_columns = comparison_columns
+
+        if unique_columns is None:
+            raise Exception("Unique columns must be provided")
+        self.unique_columns = unique_columns
+
+        self.skip_columns = skip_columns
+
+        if soft_delete is not None:
+            if (
+                soft_delete.get("enabled", False)
+                and datamodel in DATAMODELS_WITHOUT_SOFT_DELETE
+            ):
+                raise Exception(
+                    f"Soft delete is not supported for {datamodel} datamodel"
+                )
+
         self.soft_delete = soft_delete
-        
-        for field in self.columns:
-            if field.custom_options is not None:
-                if field.custom_options.get("itop", {}).get("comparison_field", False):
-                    self.has_foreign = True
-        
-        self.are_link_cols = [x.custom_options['itop']['comparison_field'] for x in self.columns if x.custom_options is not None and x.custom_options.get("itop", {}).get("comparison_field", False)]
 
-    def get_output_fields_for_request(self):
-        output = []
-        for field in self.columns:
-            if field.custom_options is not None:
-                if field.custom_options.get("itop", {}).get("comparison_field", False):
-                    self.has_foreign = True
-                    output.append(field.custom_options["itop"]["comparison_field"])
-                    continue
-
-            if not field.unique:
-                output.append(field.name)
-
-        return output
+        self.link_columns = link_columns
 
 
 class ItopSourceConnectionSettings(SourceInterfaceConnectionSettings):
@@ -94,7 +98,7 @@ class ItopSource(SourceInterface):
     ConnectionSettingsClass = ItopSourceConnectionSettings
     SourceConfigClass = ItopSourceConfiguration
     auth_data: dict = None
-    
+
     """ A source for Combodo iTop Data data """
 
     def soft_delete_active(self) -> bool:
@@ -114,11 +118,7 @@ class ItopSource(SourceInterface):
             "auth_pwd": self.connection_settings.password,
         }
 
-        self.url = os.path.join(
-            f"https://{self.connection_settings.host}",
-            "webservices",
-            "rest.php?version=1.3&login_mode=form",
-        )
+        self.url = f"https://{self.connection_settings.host}/webservices/rest.php?version=1.3&login_mode=form"
 
         # Test Connection
         files = self._create_body(
@@ -150,15 +150,9 @@ class ItopSource(SourceInterface):
             )
 
     def _create_body(self, operation: str, params: dict = None):
-        data = {}
-        if params is not None:
-            data = params
+        data = params or {}
 
         data["operation"] = operation
-
-        if params is not None:
-            for key, value in params.items():
-                data[key] = value
 
         return {"json_data": json.dumps(data)}
 
@@ -178,21 +172,24 @@ class ItopSource(SourceInterface):
         oql = self.source_configuration.oql_key
         if self.soft_delete_active():
             soft_delete = self.source_configuration.soft_delete
-            if f"where {soft_delete.get('field', 'status').lower()}" not in oql:
+            if f"{soft_delete.get('field', 'status').lower()}" not in oql.lower():
+                combining_word = "WHERE" if "WHERE" not in oql.upper() else "AND"
                 oql += (
-                    f" WHERE {soft_delete.get('field', 'status')} "
+                    f" {combining_word} {soft_delete.get('field', 'status')} "
                     + f"= '{soft_delete.get('active_value', 'enabled')}'"
                 )
 
+        all_colums = (
+            self.source_configuration.unique_columns
+            + self.source_configuration.comparison_columns
+            + self.source_configuration.link_columns
+        )
         files = self._create_body(
             "core/get",
             {
                 "class": self.source_configuration.datamodel,
                 "key": oql,
-                "output_fields": ",".join(
-                    self.source_configuration.unique_columns
-                    + self.source_configuration.comparison_columns
-                ),
+                "output_fields": ",".join(all_colums),
             },
         )
 
@@ -210,24 +207,22 @@ class ItopSource(SourceInterface):
             )
 
         re_obj = []
-        
-        all_cols = [x.name for x in self.source_configuration.columns]
 
         try:
             res_json = res.json()
             objects = res_json.get("objects", None)
+            if objects is None:
+                return pl.DataFrame()
 
-            if objects is not None:
-                for _, item in res_json.get("objects", {}).items():
-                    if "id" in all_cols:
-                        re_obj.append({"id": item["key"], **item["fields"]})
-                    elif "key" in all_cols:
-                        re_obj.append({"key": item["key"], **item["fields"]})
-                    else:
-                        re_obj.append(item["fields"])
+            for _, item in res_json.get("objects", {}).items():
+                if "id" in all_colums:
+                    re_obj.append({"id": item["key"], **item["fields"]})
+                elif "key" in all_colums:
+                    re_obj.append({"key": item["key"], **item["fields"]})
+                else:
+                    re_obj.append(item["fields"])
 
-                return pl.DataFrame(re_obj)
-            return pl.DataFrame()
+            return pl.DataFrame(re_obj)
 
         except Exception as e:
             raise Exception(
@@ -235,7 +230,6 @@ class ItopSource(SourceInterface):
             ) from e
 
     def create_item(self, type: str, data: dict, comment: str = ""):
-        
 
         body = self._create_body(
             "core/create",
@@ -243,7 +237,11 @@ class ItopSource(SourceInterface):
                 "comment": comment,
                 "class": type,
                 "output_fields": "*",
-                "fields": {x: y for x, y in data.items() if y is not None and x not in self.source_configuration.are_link_cols},
+                "fields": {
+                    x: y
+                    for x, y in data.items()
+                    if y is not None and x not in self.source_configuration.link_columns
+                },
             },
         )
 
@@ -271,18 +269,17 @@ class ItopSource(SourceInterface):
     def update_item(self, type: str, data: dict, comment: str = ""):
         identifiers = {}
 
-        for k in tuple(data.keys()):
-            if k in self.source_configuration.unique_columns:
-                identifiers[k] = data.pop(k)
+        for column_name in tuple(data.keys()):
+            if column_name in self.source_configuration.unique_columns:
+                identifiers[column_name] = data.pop(column_name)
 
-        if len(identifiers) == 0:
-            dKeys = tuple(data.keys())
-            for k in self.source_configuration.columns:
-                if k.unique and k.name in dKeys :
-                    identifiers[k.name] = data.pop(k.name)
-                    
+        # if len(identifiers) == 0:
+        #    dKeys = tuple(data.keys())
+        #    for column_name in self.source_configuration.unique_columns:
+        #        if column_name in dKeys:
+        #            identifiers[column_name] = data.pop(column_name)
 
-        wh_string = " AND ".join(
+        where_clause_conditions = " AND ".join(
             [f"{key} = '{value}'" for key, value in identifiers.items()]
         )
 
@@ -291,8 +288,10 @@ class ItopSource(SourceInterface):
             {
                 "comment": comment,
                 "class": type,
-                "key": f"SELECT {type} WHERE {wh_string}",
-                "fields": {x: y for x, y in data.items() if y is not None},
+                "key": f"SELECT {type} WHERE {where_clause_conditions}",
+                "fields": {
+                    key: value for key, value in data.items() if value is not None
+                },
             },
         )
 
@@ -319,11 +318,11 @@ class ItopSource(SourceInterface):
     def delete_item(self, type: str, data: dict, comment: str = ""):
         identifiers = {}
 
-        for k in tuple(data.keys()):
-            if k in self.source_configuration.unique_columns:
-                identifiers[k] = data.pop(k)
+        for key in tuple(data.keys()):
+            if key in self.source_configuration.unique_columns:
+                identifiers[key] = data.pop(key)
 
-        wh_string = " AND ".join(
+        where_clause_conditions = " AND ".join(
             [f"{key} = '{value}'" for key, value in identifiers.items()]
         )
 
@@ -332,7 +331,7 @@ class ItopSource(SourceInterface):
             {
                 "comment": comment,
                 "class": type,
-                "key": f"SELECT {type} WHERE {wh_string}",
+                "key": f"SELECT {type} WHERE {where_clause_conditions}",
             },
         )
 
@@ -359,7 +358,10 @@ class ItopSource(SourceInterface):
     def insert(self, data: pl.DataFrame):
         insertData = data.clone()
 
-        insert_cols = tuple(x.name for x in self.source_configuration.columns)
+        insert_cols = tuple(
+            self.source_configuration.unique_columns
+            + self.source_configuration.comparison_columns
+        )
 
         for column in data.columns:
             if column not in insert_cols:
@@ -390,7 +392,10 @@ class ItopSource(SourceInterface):
         updateData = data.clone()
 
         update_cols = tuple(
-            x.name for x in self.source_configuration.columns if x.skip_update is False
+            column_name
+            for column_name in self.source_configuration.unique_columns
+            + self.source_configuration.comparison_columns
+            if column_name not in (self.source_configuration.skip_columns or [])
         )
 
         for column in data.columns:
@@ -434,6 +439,10 @@ class ItopSource(SourceInterface):
             )
             deleteFunc = self.update_item
             deleteMessage = "Soft deletion via API Sync"
+
+        for column_name in deleteData.columns:
+            if column_name in self.source_configuration.link_columns:
+                deleteData.drop_in_place(column_name)
 
         iters = (
             {

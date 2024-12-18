@@ -1,8 +1,17 @@
 name: "Publish Application"
+
 on:
-  workflow_dispatch:
-  release:
-    types: [published]
+  push:
+    tags:
+      - "*"
+  pull_request:
+    branches:
+      - main
+      - develop
+
+permissions:
+  contents: write # mandatory for making github releases
+  packages: write # mandatory for publishing to ghcr.io
 
 jobs:
   package:
@@ -15,28 +24,82 @@ jobs:
       with:
         python-version: '3.10'
 
-    - name: Install dependencies
+    - name: Upgrade pip
       run: |
         python -m pip install --upgrade pip
-        pip install -r requirements.txt
-        pip install setuptools wheel twine
 
-    - name: Build and publish
+    - name: Install testing dependencies
+      run: |
+        python -m pip install pytest
+        curl https://packages.microsoft.com/keys/microsoft.asc | sudo tee /etc/apt/trusted.gpg.d/microsoft.asc
+        curl https://packages.microsoft.com/config/debian/11/prod.list | sudo tee /etc/apt/sources.list.d/mssql-release.list
+        sudo apt-get update
+        sudo ACCEPT_EULA=Y apt-get -y install libmariadb-dev libpq-dev unixodbc unixodbc-dev python3-venv msodbcsql18 libgssapi-krb5-2
+
+    - name: Install install project dependencies
+      run: |
+        python -m pip install -r requirements.txt
+
+    - name: Run unit and integration tests (excluding itop)
+      run: |
+        python -m pytest ./tests/unit_testing ./tests/integration_testing
+
+    - name: Install packaging dependencies
+      run: |
+        python -m pip install build twine
+        
+    - name: Build and package project
       env:
         GHRUN: ${{ github.run_id }}
         GHBRANCH: ${{ github.ref }}
-        GHRELEASE: ${{ github.event.release.tag_name }}
+        GHTAG: ${{ github.ref_name }}
+      run: |
+        python -m build
+
+    - name: Sanity test the built package
+      run: |
+        python -m pip install ./dist/beetl-*.tar.gz
+        python ./tests/distribution_testing/test_distribution.py
+
+    - name: Publish to pypi
+      if: github.event_name != 'pull_request'
+      env:
         TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
         TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
       run: |
-        python setup.py sdist bdist_wheel
-        twine upload dist/*
+        twine upload --skip-existing dist/*
+
+    - name: Store the distribution packages
+      if: github.event_name != 'pull_request'
+      uses: actions/upload-artifact@v4
+      with:
+        name: python-package-distributions
+        path: dist/
+
+    - name: Create GitHub Release
+      if: github.event_name != 'pull_request'
+      env:
+        GITHUB_TOKEN: ${{ github.token }}
+      run: >-
+        gh release create
+        '${{ github.ref_name }}'
+        --repo '${{ github.repository }}'
+        --notes ""
+
+    - name: Upload artifacts to GitHub Release
+      if: github.event_name != 'pull_request'
+      env:
+        GITHUB_TOKEN: ${{ github.token }}
+      run: >-
+        gh release upload
+        '${{ github.ref_name }}' dist/**
+        --repo '${{ github.repository }}'
   
   build:
     runs-on: ubuntu-latest
     needs: package
     steps:
-      - name: Checkout
+      - name: Checkout repository
         uses: actions/checkout@v2
 
       - name: Set up QEMU
@@ -44,8 +107,21 @@ jobs:
       
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
-      
+
+      - name: Generate docker tags and labels from current ref
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: |
+            ghcr.io/hoglandets-it/beetl
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+
       - name: Login to GHCR
+        if: github.event_name != 'pull_request'
         uses: docker/login-action@v2
         with:
           registry: ghcr.io
@@ -53,10 +129,11 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
       
       - name: Build and push image
+        if: github.event_name != 'pull_request'
         uses: docker/build-push-action@v2
         with:
           context: docker
           file: docker/Dockerfile
           push: true
-          # Push to latest on develop, otherwise push to the tag
-          tags: ghcr.io/hoglandets-it/beetl:${{ github.ref == 'refs/heads/develop' && 'latest' || github.event.release.tag_name }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}

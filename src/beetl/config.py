@@ -1,10 +1,12 @@
 import os
 import yaml
 import json
-from typing import List, Dict
+from typing import Any, List, Dict
 from dataclasses import dataclass
 import copy
+import polars as pl
 from .sources.interface import (
+    ColumnDefinition,
     SourceInterfaceConfiguration,
     SourceInterfaceConnectionSettings,
 )
@@ -30,7 +32,7 @@ class SourceSettings:
         )(**connection)
 
         self.config = getattr(source_class, f"{source_type}SourceConfig")(**config)
-    
+
 
 @dataclass
 class ChangeDetectionConfig:
@@ -40,19 +42,33 @@ class ChangeDetectionConfig:
     webhookHeaders: Dict[str, str] = None
     webhookPayload: Dict[str, str] = None
 
+
+@dataclass
+class ComparisonColumn:
+    name: str
+    type: pl.DataType
+    unique: bool = False
+
+    def __init__(self, name: str, type: Any, unique: bool = False) -> None:
+        self.name, self.unique = name, unique
+        self.type = getattr(pl, type)
+
+
 @dataclass
 class SyncConfiguration:
     """The configuration for a single sync between two sources"""
-    
+
     source: SourceSettings
     sourceConfig: SourceInterfaceConfiguration
     destination: SourceSettings
     destinationConfig: SourceInterfaceConfiguration
+    comparisonColumns: List[ComparisonColumn]
     name: str = ""
     changeDetection: ChangeDetectionConfig = None
     sourceTransformers: TransformerConfiguration = None
     destinationTransformers: TransformerConfiguration = None
     insertionTransformers: List[TransformerConfiguration] = None
+    deletionTransformers: List[TransformerConfiguration] = None
 
     def __post_init__(self) -> None:
         self.source.config = self.sourceConfig
@@ -80,7 +96,6 @@ class BeetlConfig:
         self.__class__ = config_class
         self.__dict__ = config_class(config).__dict__
         self.version = config.get("configVersion", "V1")
-
 
     @classmethod
     def from_yaml(cls, yamlData: str) -> "BeetlConfig":
@@ -162,10 +177,8 @@ class BeetlConfigV1(BeetlConfig):
         self.sources, self.sync_list = {}, []
 
         if len(config.get("sync", "")) == 0:
-            raise Exception(
-                "The configuration file is missing the 'sync' section."
-            )
-        
+            raise Exception("The configuration file is missing the 'sync' section.")
+
         if len(config.get("sources", "")) == 0:
             if config.get("sourcesFromEnv", "") in [None, ""]:
                 raise Exception(
@@ -174,7 +187,7 @@ class BeetlConfigV1(BeetlConfig):
                     "please set the 'sourcesFromEnv' property to the name"
                     "of the environment variable."
                 )
-            
+
             sourcesFromEnv = config.pop("sourcesFromEnv")
             envJson = os.environ.get(sourcesFromEnv)
             try:
@@ -184,9 +197,8 @@ class BeetlConfigV1(BeetlConfig):
                     "The environment variable specified in 'sourcesFromEnv' "
                     "is not a valid JSON string or does not exist."
                 ) from e
-            
+
             config["sources"] = envConfig
-            
 
         for source in config["sources"]:
             name = source.pop("name")
@@ -211,23 +223,37 @@ class BeetlConfigV1(BeetlConfig):
                     "in the sources section."
                     "Please check your configuration.",
                 )
-            
+
             tmpSource = copy.deepcopy(self.sources[sync["source"]])
             tmpSource.set_sourceconfig(sync["sourceConfig"])
             tmpDestination = copy.deepcopy(self.sources[sync["destination"]])
             tmpDestination.set_sourceconfig(sync["destinationConfig"])
 
+            try:
+                comparisonColumns = [
+                    ComparisonColumn(**args) for args in sync["comparisonColumns"]
+                ]
+            except KeyError as e:
+                raise Exception(
+                    "The comparisonColumns key is missing from the sync configuration."
+                ) from e
+            except TypeError as e:
+                raise Exception(
+                    "The comparisonColumns must be a list of dictionaries containing the mandatory keys 'name', 'type', and optionally 'unique'."
+                ) from e
+
             syncConfig = SyncConfiguration(
-                name=sync.get('name', ''),
+                name=sync.get("name", ""),
                 source=tmpSource,
                 sourceConfig=sync["sourceConfig"],
                 destination=tmpDestination,
                 destinationConfig=sync["destinationConfig"],
+                comparisonColumns=comparisonColumns,
             )
 
             tmpSource = tmpDestination = None
 
-            if sync.get("sourceTransformer", None):
+            if sync.get("sourceTransformer", None) is not None:
                 syncConfig.sourceTransformer = TransformerConfiguration(
                     "source", sync["sourceTransformer"], {}
                 )
@@ -241,7 +267,7 @@ class BeetlConfigV1(BeetlConfig):
                             transformer.get("config", None),
                         )
                     )
-            
+
             if sync.get("destinationTransformers", None) is not None:
                 syncConfig.destinationTransformers = []
                 for transformer in sync["destinationTransformers"]:
@@ -256,6 +282,17 @@ class BeetlConfigV1(BeetlConfig):
                 syncConfig.insertionTransformers = []
                 for transformer in sync["insertionTransformers"]:
                     syncConfig.insertionTransformers.append(
+                        TransformerConfiguration(
+                            transformer.get("transformer"),
+                            transformer.get("config", None),
+                            transformer.get("include_sync", False),
+                        )
+                    )
+
+            if sync.get("deletionTransformers", None) is not None:
+                syncConfig.deletionTransformers = []
+                for transformer in sync["deletionTransformers"]:
+                    syncConfig.deletionTransformers.append(
                         TransformerConfiguration(
                             transformer.get("transformer"),
                             transformer.get("config", None),

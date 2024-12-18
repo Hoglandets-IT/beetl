@@ -4,7 +4,6 @@ from typing import List
 from .interface import (
     register_source,
     SourceInterface,
-    ColumnDefinition,
     SourceInterfaceConfiguration,
     SourceInterfaceConnectionSettings,
 )
@@ -13,16 +12,17 @@ from .interface import (
 class MysqlSourceConfiguration(SourceInterfaceConfiguration):
     """The configuration class used for MySQL sources"""
 
-    columns: List[ColumnDefinition]
     unique_columns: List[str] = None
     skip_columns: List[str] = None
     table: str = None
     query: str = None
 
-    def __init__(self, columns: list, table: str = None, query: str = None):
-        super().__init__(columns)
+    def __init__(self, table: str = None, query: str = None, uniqueColumns: List[str] = [], skipColumns: List[str] = []):
+        super().__init__()
         self.table = table
         self.query = query
+        self.unique_columns = uniqueColumns
+        self.skip_columns = skipColumns
 
 
 class MysqlSourceConnectionSettings(SourceInterfaceConnectionSettings):
@@ -71,22 +71,18 @@ class MysqlSource(SourceInterface):
                 if self.source_configuration.table is None:
                     raise Exception("No query or table specified")
 
-                cols = ",".join(
-                    ["`" + col.name + "`" for col in self.source_configuration.columns]
-                )
-
-                query = f"SELECT {cols} FROM {self.source_configuration.table}"
+                query = f"SELECT * FROM {self.source_configuration.table}"
 
         if returnData:
             try:
-                df = pl.read_sql(
+                df = pl.read_database_uri(
                     query=query,
-                    connection_uri=self.connection_settings.connection_string,
+                    uri=self.connection_settings.connection_string,
                 )
             except ModuleNotFoundError:
-                df = pl.read_sql(
+                df = pl.read_database_uri(
                     query=query,
-                    connection_uri=self.connection_settings.connection_string.replace(
+                    uri=self.connection_settings.connection_string.replace(
                         "mysql://", "mysql+pymysql://"
                     ),
                 )
@@ -118,7 +114,7 @@ class MysqlSource(SourceInterface):
 
         try:
             data.write_database(
-                table, self.connection_settings.connection_string, if_exists="append"
+                table, self.connection_settings.connection_string, if_table_exists="append"
             )
         except ModuleNotFoundError:
             data.write_database(
@@ -126,15 +122,18 @@ class MysqlSource(SourceInterface):
                 self.connection_settings.connection_string.replace(
                     "mysql://", "mysql+pymysql://"
                 ),
-                if_exists="append",
+                if_table_exists="append",
             )
 
         return len(data)
 
     def insert(self, data: pl.DataFrame):
+        self._validate_unique_columns()
         return self._insert(data)
 
     def update(self, data: pl.DataFrame):
+        self._validate_unique_columns()
+
         tempDB = self.source_configuration.table + "_udTemp"
         try:
             with sqla.create_engine(
@@ -167,13 +166,11 @@ class MysqlSource(SourceInterface):
         # Insert data into temporary table
         self._insert(data, table=tempDB)
 
+        fields_to_update = [field.name for field in data.get_columns(
+        ) if not field.name in self.source_configuration.skip_columns or not field.name in self.source_configuration.unique_columns]
+
         field_spec = ", ".join(
-            (
-                f"`{fld.name}`"
-                for fld in self.source_configuration.columns
-                if (not fld.skip_update or fld.unique)
-            )
-        )
+            (f"`{fieldName}`" for fieldName in fields_to_update))
 
         query = f"""
             REPLACE INTO {self.source_configuration.table} ({field_spec})
@@ -192,14 +189,13 @@ class MysqlSource(SourceInterface):
             batches = []
 
             for i in range(0, len(data), batch_size):
-                batches.append(data[i : i + batch_size])
+                batches.append(data[i: i + batch_size])
 
         for batch in batches:
             id_clause = " AND ".join(
                 (
-                    f"`{fld.name}` IN ({','.join([str(x) for x in batch[fld.name].to_list()])})"
-                    for fld in self.source_configuration.columns
-                    if fld.unique
+                    f"`{fieldName}` IN ({','.join([self._quote_if_needed(x) for x in batch[fieldName].to_list()])})"
+                    for fieldName in self.source_configuration.unique_columns
                 )
             )
 
@@ -211,3 +207,13 @@ class MysqlSource(SourceInterface):
             self._query(customQuery=query, returnData=False)
 
         return len(data)
+
+    def _validate_unique_columns(self):
+        if not self.source_configuration.unique_columns:
+            raise ValueError(
+                "MySQL source requires the unique_columns to be set if used as a destination")
+
+    def _quote_if_needed(self, id: any) -> str:
+        if isinstance(id, str):
+            return f"'{id}'"
+        return str(id)

@@ -1,0 +1,37 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "beetl"
+keywords = ["python", "template", "package", "module", "cli"]
+description = "BeETL is a Python package for extracting data from one datasource, transforming it and loading it into another datasource."
+authors = [{ name = "Lars Scheibling", email = "lars.scheibling@hoglandet.se" }]
+license = { "text" = "GnuPG 3.0" }
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "Operating System :: OS Independent",
+]
+dynamic = ["version", "readme"]
+urls = { "github" = "https://github.com/Hoglandets-IT/beetl" }
+requires-python = ">=3.8"
+dependencies = [
+  "requests",
+  "polars[all]>=1.14.0",
+  "sqlalchemy",
+  "pandas>=2.2.3",
+  "psycopg",
+  "psycopg2",
+  "pyyaml",
+  "pymysql",
+  "pyodbc",
+  "pymssql",
+  "mysql-connector-python",
+  "alive-progress",
+  "tabulate",
+  "pymongo>=4.10.1",
+  "cryptography",
+]
+
+[tool.setuptools]
+package-dir = { "" = "src" }

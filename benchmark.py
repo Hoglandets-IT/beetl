@@ -1,14 +1,15 @@
 import statistics
 import pandas as pd
 from src.beetl import beetl
-from tests.benchmarks.mysql import MySQLBenchmark
-from tests.benchmarks.mssql import MsSQLBenchmark
+from tests.benchmark_testing.tools.mysql import MySQLBenchmark
+from tests.benchmark_testing.tools.mssql import MsSQLBenchmark
+
 
 def runBenchmark(kind):
     amounts = [
-        100, 
-        1000, 
-        10000, 
+        100,
+        1000,
+        10000,
         20000,
         40000,
         # 60000,
@@ -19,13 +20,13 @@ def runBenchmark(kind):
     ]
     betl = beetl.Beetl(beetl.BeetlConfig(kind.BASIC_CONFIG))
     times = []
-    
+
     for amount in amounts:
         avv = []
         # for tr in range(0, 10):
         amn = kind.runTestnum(amount, betl)
         avv.append(amn)
-            
+
         times.append({
             "amount": amount,
             "meanTime": round(statistics.mean(avv), 4),
@@ -33,14 +34,15 @@ def runBenchmark(kind):
             "minTime": round(min(avv), 4)
         })
         print(pd.DataFrame(times))
-    
+
     print(pd.DataFrame(times))
+
 
 if __name__ == '__main__':
     """
     podman run --rm -it -e MARIADB_ROOT_PASSWORD=password \
     -e MARIADB_DATABASE=database -p 3333:3306 mariadb:latest
-    
+
     docker run --rm -it -e MARIADB_ROOT_PASSWORD=password \
     -e MARIADB_DATABASE=database -p 3333:3306 mariadb:latest
     """

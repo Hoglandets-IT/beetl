@@ -38,6 +38,34 @@ Filter away rows that (do not) match the given condition. Use the "reverse: true
       fieldB: false
 ```
 
+## Project Columns
+Removes all columns from the DataFrame not specified in the columns input parameter.
+
+```yaml
+- transformer: structs.project_columns
+  config:
+    # columns, The columns that will be left on the DataFrame (Mandatory)
+    columns: ["id", "name"]
+```
+### Example
+
+**DataFrame before transformation**
+
+| id | name       | email                 |
+| -- | ---------- | --------------------- |
+| 1  | "John Doe" | "johndoe@example.com" |
+| 1  | "Jane Doe" | "janedoe@example.com" |
+
+*Projection with columns id and name*
+
+**DataFrame after transformation**
+
+| id | name       |
+| -- | ---------- |
+| 1  | "John Doe" |
+| 1  | "Jane Doe" |
+
+
 ## Conditional
 Set a field to a value based on a condition (only boolean fields supported)
 
