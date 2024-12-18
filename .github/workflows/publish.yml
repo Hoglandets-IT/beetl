@@ -1,4 +1,5 @@
 name: "Publish Application"
+
 on:
   push:
     tags:
@@ -7,9 +8,10 @@ on:
     branches:
       - main
       - develop
+
 permissions:
   contents: write # mandatory for making github releases
-  packages: write
+  packages: write # mandatory for publishing to ghcr.io
 
 jobs:
   package:
@@ -43,6 +45,11 @@ jobs:
         GHTAG: ${{ github.ref_name }}
       run: |
         python -m build
+
+    - name: Sanity test the built package
+      run: |
+        python -m pip install ./dist/beetl-*.tar.gz
+        python ./tests/distribution_testing/test_distribution.py
 
     - name: Publish to pypi
       if: github.event_name != 'pull_request'
@@ -82,7 +89,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: package
     steps:
-      - name: Checkout
+      - name: Checkout repository
         uses: actions/checkout@v2
 
       - name: Set up QEMU
@@ -91,7 +98,7 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
 
-      - name: Docker meta
+      - name: Generate docker tags and labels from current ref
         id: meta
         uses: docker/metadata-action@v5
         with:
@@ -102,9 +109,6 @@ jobs:
             type=ref,event=pr
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
-
-      - name: print tags
-        run: echo "${{ steps.meta.outputs.tags }}"
 
       - name: Login to GHCR
         if: github.event_name != 'pull_request'
@@ -121,6 +125,5 @@ jobs:
           context: docker
           file: docker/Dockerfile
           push: true
-          # Push to latest on main, otherwise push to the tag
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
