@@ -99,8 +99,11 @@ class PostgresqlSource(SourceInterface):
         if connection_string is None:
             connection_string = self.connection_settings.connection_string
 
+        connection_string = connection_string.replace(
+            "postgresql://", "postgresql+psycopg://")
+
         data.write_database(
-            table, self.connection_settings.connection_string, if_table_exists="append"
+            table, connection_string, if_table_exists="append"
         )
 
         return len(data)
@@ -122,7 +125,8 @@ class PostgresqlSource(SourceInterface):
             ) as connection:
                 with connection.cursor() as cursor:
                     create_temp_table_with_same_structure_as_destination = f"CREATE TABLE {temp_table_name} AS SELECT * FROM {self.source_configuration.table} where 1=0"
-                    cursor.execute(create_temp_table_with_same_structure_as_destination)
+                    cursor.execute(
+                        create_temp_table_with_same_structure_as_destination)
 
             self._insert(data, table=temp_table_name)
 
@@ -175,7 +179,7 @@ class PostgresqlSource(SourceInterface):
             batches = []
 
             for i in range(0, len(data), batch_size):
-                batches.append(data[i : i + batch_size])
+                batches.append(data[i: i + batch_size])
 
         for batch in batches:
             id_clause = " AND ".join(

@@ -21,7 +21,6 @@ dependencies = [
   "sqlalchemy",
   "pandas>=2.2.3",
   "psycopg",
-  "psycopg2",
   "pyyaml",
   "pymysql",
   "pyodbc",

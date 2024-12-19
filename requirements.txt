@@ -14,7 +14,6 @@ pymongo==4.10.1
 
 # Below packages are subdependencies of sqlalchemy
 cryptography
-psycopg2
 
 # Only used for testing
 testcontainers==4.8.2
