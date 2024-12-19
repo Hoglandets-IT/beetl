@@ -7,17 +7,21 @@ import json
 @register_transformer_class("structs")
 class StructTransformers(TransformerInterface):
     @staticmethod
-    def staticfield(data: pl.DataFrame, field: str, value):
+    def staticfield(data: pl.DataFrame, field: str, value: Any, only_add_if_missing: bool = False):
         """Add a struct field to the DataFrame
 
         Args:
             data (pl.DataFrame): The dataFrame to modify
             field (str): The field to add
             value (str): The value of the field to add
+            only_add_if_missing (bool, optional): If true, the field will only be added if it does not already exist. Defaults to False.
 
         Returns:
             pl.DataFrame: The resulting DataFrame
         """
+        if only_add_if_missing and field in data.columns:
+            return data
+
         data = data.with_columns(pl.Series(field, [value] * len(data)))
         return data
 
@@ -103,7 +107,8 @@ class StructTransformers(TransformerInterface):
         rows = len(data)
         newStructs = []
         for i in range(rows):
-            newStructs.append({name: data[field][i] for name, field in map.items()})
+            newStructs.append({name: data[field][i]
+                              for name, field in map.items()})
 
         series = pl.Series(outField, newStructs)
         data = data.with_columns(series)
