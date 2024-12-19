@@ -6,7 +6,7 @@ from src.beetl.transformers.structs import StructTransformers
 
 
 class UnitTestStructsTransformers(unittest.TestCase):
-    def test_jsonpath__single_dollar_seletor__sets_out_field_to_in_field(self):
+    def test_jsonpath__single_dollar_selector__sets_out_field_to_in_field(self):
         # arrange
         inField = "field1"
         outField = "field2"
