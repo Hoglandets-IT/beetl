@@ -6,7 +6,7 @@ from src.beetl.transformers.structs import StructTransformers
 
 
 class UnitTestStructsTransformers(unittest.TestCase):
-    def test_jsonpath_single_dollar_seletor(self):
+    def test_jsonpath__single_dollar_seletor__sets_out_field_to_in_field(self):
         # arrange
         inField = "field1"
         outField = "field2"
@@ -24,7 +24,7 @@ class UnitTestStructsTransformers(unittest.TestCase):
         resultingString = result[outField][0]
         self.assertEqual(expected, resultingString)
 
-    def test_jsonpath_property_in_object(self):
+    def test_jsonpath__property_selector_on_root__sets_out_field_to_value_of_property_on_object(self):
         # arrange
         inField = "field1"
         outField = "field2"
@@ -44,7 +44,7 @@ class UnitTestStructsTransformers(unittest.TestCase):
         resultingString = result[outField][0]
         self.assertEqual(expected, resultingString)
 
-    def test_jsonpath_property_in_object_in_list(self):
+    def test_jsonpath__property_selector_on_object_in_list__sets_out_field_to_value_of_property_on_object_in_list(self):
         # arrange
         inField = "field1"
         outField = "field2"
