@@ -1,7 +1,7 @@
 from beetl.beetl import Beetl, BeetlConfig, Result
 
 
-def test_distribution():
+def distribution_test():
     """Simple test just to make sure that we can import beetl, create a config and run the sync.
     It uses the installed version of beetl, not the source files."""
     config = BeetlConfig(get_config())
@@ -76,4 +76,4 @@ class ManualResult(Result):
 
 
 if __name__ == "__main__":
-    test_distribution()
+    distribution_test()

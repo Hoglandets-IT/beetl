@@ -31,7 +31,8 @@ class SourceSettings:
             source_class, f"{source_type}SourceConnectionSettings"
         )(**connection)
 
-        self.config = getattr(source_class, f"{source_type}SourceConfig")(**config)
+        self.config = getattr(
+            source_class, f"{source_type}SourceConfig")(**config)
 
 
 @dataclass
@@ -177,7 +178,8 @@ class BeetlConfigV1(BeetlConfig):
         self.sources, self.sync_list = {}, []
 
         if len(config.get("sync", "")) == 0:
-            raise Exception("The configuration file is missing the 'sync' section.")
+            raise Exception(
+                "The configuration file is missing the 'sync' section.")
 
         if len(config.get("sources", "")) == 0:
             if config.get("sourcesFromEnv", "") in [None, ""]:
@@ -229,18 +231,37 @@ class BeetlConfigV1(BeetlConfig):
             tmpDestination = copy.deepcopy(self.sources[sync["destination"]])
             tmpDestination.set_sourceconfig(sync["destinationConfig"])
 
-            try:
-                comparisonColumns = [
-                    ComparisonColumn(**args) for args in sync["comparisonColumns"]
-                ]
-            except KeyError as e:
+            comparisonColumnsConf = sync.get("comparisonColumns", None)
+            if not comparisonColumnsConf:
                 raise Exception(
-                    "The comparisonColumns key is missing from the sync configuration."
-                ) from e
-            except TypeError as e:
+                    "The sync configuration is missing the 'comparisonColumns' key."
+                )
+            if type(comparisonColumnsConf) is list:
+                try:
+                    comparisonColumns = [
+                        ComparisonColumn(**args) for args in sync["comparisonColumns"]
+                    ]
+                except TypeError as e:
+                    raise Exception(
+                        "When passing the comparisonColumns as a list it must be a list of dictionaries containing the mandatory keys 'name', 'type', and optionally 'unique'."
+                    ) from e
+            elif type(comparisonColumnsConf) is dict:
+                try:
+                    comparisonColumns = []
+                    unique_column_name, _ = list(
+                        comparisonColumnsConf.items())[0]
+                    for key, value in comparisonColumnsConf.items():
+                        comparisonColumns.append(ComparisonColumn(
+                            key, value, key == unique_column_name))
+
+                except Exception as e:
+                    raise Exception(
+                        "The comparisonColumns must be a list of dictionaries containing the mandatory keys 'name', 'type', and optionally 'unique'."
+                    ) from e
+            else:
                 raise Exception(
-                    "The comparisonColumns must be a list of dictionaries containing the mandatory keys 'name', 'type', and optionally 'unique'."
-                ) from e
+                    "The comparisonColumns must be a list of dictionaries containing the mandatory keys 'name', 'type', and optionally 'unique'. Or a dictionary with the column names as key and types as values, where the first key is treated as the unique column."
+                )
 
             syncConfig = SyncConfiguration(
                 name=sync.get("name", ""),

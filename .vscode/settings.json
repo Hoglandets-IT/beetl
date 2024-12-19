@@ -4,7 +4,7 @@
     "-s",
     "./tests",
     "-p",
-    "*.py"
+    "test_*.py"
   ],
   "python.testing.autoTestDiscoverOnSaveEnabled": true,
   "python.testing.unittestEnabled": true,

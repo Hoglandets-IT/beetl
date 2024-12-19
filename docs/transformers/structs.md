@@ -94,4 +94,7 @@ Adds a static field to the dataset
   config:
     field: new_field
     value: "static_value"
+    # only add the static field if it is missing from the dataset
+    # default=False
+    only_add_if_missing: False
 ```

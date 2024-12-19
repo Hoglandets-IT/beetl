@@ -59,7 +59,7 @@ jobs:
     - name: Sanity test the built package
       run: |
         python -m pip install ./dist/beetl-*.tar.gz
-        python ./tests/distribution_testing/test_distribution.py
+        python ./tests/distribution_testing/run_distribution_test.py
 
     - name: Publish to pypi
       if: github.event_name != 'pull_request'
