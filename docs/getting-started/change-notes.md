@@ -1,5 +1,18 @@
 # Change Notes
 
+## 1.0.1
+
+### New features ⭐
+- [structs.staticfield](/transformers/structs.html#staticfield) now has an optional argument `only_add_if_missing` that defaults to `False`. When set to true the static field is only added if it missing from the data frame, compared to before where it would always overwrite it.
+
+### Bugfixes 🐛
+- In the 1.0.0 release a dependency was updated that caused the default behavior of the data frame comparer functionality to change so that null values were never considered equal, causing updates to be made on rows where there wasn't any change in values. This behavior has been fixed and nulls are now considered equal again.
+- In the 1.0.0 release the support for the [alternate column definition](/getting-started/columns.html#alternate-column-declaration) was accidentally removed. Support for them has been added again.
+- Some minor typos in the documentation was fixed.
+
+### Quality control 🧐
+- Unit tests has been implemented for all new and fixed functionality to ensure they continue to work the way they intend to.
+
 ## 1.0.0
 
 ### New features ⭐
