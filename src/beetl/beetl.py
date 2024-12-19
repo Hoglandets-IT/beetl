@@ -123,7 +123,7 @@ class Beetl:
 
             # Get rows that exist in both and have differing values (Updates)
             update = source.join(destination, on=keys, how="semi").join(
-                destination, on=column_names, how="anti"
+                destination, on=column_names, how="anti", join_nulls=True
             )
 
             # Get rows that only exist in destination (Deletes)
@@ -154,7 +154,8 @@ class Beetl:
     def _initialize_columns_if_empty(source, columns):
         if len(source) == 0 and source.width == 0:
             for col in columns:
-                source = source.with_columns(pl.Series(col.name, dtype=col.type))
+                source = source.with_columns(
+                    pl.Series(col.name, dtype=col.type))
         return source
 
     @staticmethod
@@ -270,9 +271,12 @@ class Beetl:
             if dry_run:
                 dry_run_results.append(
                     ComparisonResult(
-                        self.runTransformers(create, sync.insertionTransformers, sync),
-                        self.runTransformers(update, sync.insertionTransformers, sync),
-                        self.runTransformers(delete, sync.deletionTransformers, sync),
+                        self.runTransformers(
+                            create, sync.insertionTransformers, sync),
+                        self.runTransformers(
+                            update, sync.insertionTransformers, sync),
+                        self.runTransformers(
+                            delete, sync.deletionTransformers, sync),
                     )
                 )
                 continue
@@ -281,7 +285,8 @@ class Beetl:
             amount["inserts"] = 0
             if len(create):
                 amount["inserts"] = sync.destination.insert(
-                    self.runTransformers(create, sync.insertionTransformers, sync)
+                    self.runTransformers(
+                        create, sync.insertionTransformers, sync)
                 )
 
             self.benchmark("Finished inserts, starting updates")
@@ -289,14 +294,16 @@ class Beetl:
             amount["updates"] = 0
             if len(update):
                 amount["updates"] = sync.destination.update(
-                    self.runTransformers(update, sync.insertionTransformers, sync)
+                    self.runTransformers(
+                        update, sync.insertionTransformers, sync)
                 )
 
             self.benchmark("Finished updates, starting deletes")
             amount["deletes"] = 0
             if len(delete):
                 amount["deletes"] = sync.destination.delete(
-                    self.runTransformers(delete, sync.deletionTransformers, sync)
+                    self.runTransformers(
+                        delete, sync.deletionTransformers, sync)
                 )
 
             self.benchmark("Finished deletes, sync finished")
@@ -312,7 +319,8 @@ class Beetl:
 
         print(
             "\r\n\r\n"
-            + tabulate(allAmounts, headers=["Sync", "Inserts", "Updates", "Deletes"])
+            + tabulate(allAmounts,
+                       headers=["Sync", "Inserts", "Updates", "Deletes"])
         )
 
         return SyncResult(allAmounts)

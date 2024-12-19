@@ -134,7 +134,7 @@ sourceTransformers:
       # The fields to copy from the parent object
       colMap:
         name: vm_name
-  - transformer: string.substring
+  - transformer: strings.substring
     config:
       inField: disk_name
       start: -2
