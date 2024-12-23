@@ -14,6 +14,7 @@ Note: Even though some of the configuration below is in YAML format, you can als
 - [Getting Started](#getting-started)
 - [Development Environment](#development-environment)
 - [Documentation](https://beetl.docs.hoglan.dev/)
+- [Change Notes](https://beetl.docs.hoglan.dev/getting-started/change-notes.html)
 - [Source Code](https://github.com/hoglandets-it/beetl)
 
 ## Minimal example

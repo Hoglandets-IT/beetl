@@ -1,8 +1,13 @@
 # Change Notes
 
+## 1.0.3
+
+### Changes 🔄️
+- Dependency psycopg updated to install from binary plus installing dependencies.
+
 ## 1.0.2
 
-### Changes
+### Changes 🔄️
 - Dependency to psycopg2 for postgresql connections was removed. Beetl now only requires psycopg.
 
 ## 1.0.1

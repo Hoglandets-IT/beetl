@@ -164,6 +164,12 @@ class SourceInterface:
         """
         raise NotImplementedError
 
+    def connect(self):
+        self._connect()
+
+    def disconnect(self):
+        self._disconnect()
+
     def query(self, params=None):
         """Formats the query according to the column specification
 
