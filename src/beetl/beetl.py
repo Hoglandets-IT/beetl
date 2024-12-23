@@ -224,9 +224,12 @@ class Beetl:
                 print(f"Starting sync: {sync.name}")
             else:
                 print(f"Starting sync {i}")
+            sync.source.connect()
             source_data = sync.source.query(sync.sourceConfig)
+            sync.source.disconnect()
             self.benchmark("Finished data retrieval from source")
 
+            sync.destination.connect()
             destination_data = sync.destination.query(sync.destinationConfig)
             self.benchmark("Finished data retrieval from destination")
 
@@ -279,6 +282,7 @@ class Beetl:
                             delete, sync.deletionTransformers, sync),
                     )
                 )
+                sync.destination.disconnect()
                 continue
 
             self.benchmark("Starting database operations")
@@ -313,6 +317,8 @@ class Beetl:
             print("Deleted: " + str(amount["deletes"]))
 
             allAmounts.append([sync.name, *amount.values()])
+
+            sync.destination.disconnect()
 
         if dry_run:
             return dry_run_results
