@@ -3,7 +3,12 @@
 ## 1.0.3
 
 ### Changes 🔄️
-- Dependency psycopg updated to install from binary plus installing dependencies.
+- Started using connect and disconnect on sources before and after syncing to enable atomic operations for the sources that support it. Currently only Sqlserver supports this.
+- Defined psycopg dependency as per their documentation.
+
+### Bugfixes 🐛
+- Fixed bug where the transformer int.fillna did not fill nulls.
+- Fixed bug where multiple invocations of `Beetl.sync` run after each other aggregated the number of syncs instead of creating separate results.
 
 ## 1.0.2
 

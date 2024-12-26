@@ -42,7 +42,6 @@ class IntegerTransformer(TransformerInterface):
             pl.DataFrame: The resulting DataFrame
         """
 
-        # TODO: Test
         data = data.with_columns(data[inField].fill_null(
             value).alias(outField or inField))
 
