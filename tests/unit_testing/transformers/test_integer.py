@@ -22,7 +22,7 @@ class UnitTestIntegerTransformers(unittest.TestCase):
         self.assertEqual([value, value, value],
                          result[inField].to_list())
 
-    def test_fillna__integer_field_with_nans_and_is_nan_supported_type__nans_are_filled_with_value(self):
+    def test_fillna__nan_supported_field_type_with_nans__nans_are_filled_with_value(self):
         # arrange
         inField = "field1"
         value = 1
@@ -38,7 +38,7 @@ class UnitTestIntegerTransformers(unittest.TestCase):
         self.assertEqual([value, value, value],
                          result[inField].to_list())
 
-    def test_fillna__integer_field_with_nans_and_is_not_nan_supported_type__nans_are_not_filled_with_value(self):
+    def test_fillna__not_nan_supported_field_type_with_nans__nans_are_not_filled_with_value(self):
         # arrange
         inField = "field1"
         value = "value"
