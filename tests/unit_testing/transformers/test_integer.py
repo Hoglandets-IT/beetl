@@ -42,14 +42,15 @@ class UnitTestIntegerTransformers(unittest.TestCase):
         # arrange
         inField = "field1"
         value = "value"
-        nan = float("nan")
+        nan_value = float("nan")
         data = DataFrame().with_columns(
-            Series(inField, [nan, nan, value], dtype=Utf8, strict=False))
+            Series(inField, [nan_value, nan_value, value], dtype=Utf8, strict=False))
         transformer = IntegerTransformer()
 
         # act
         result = transformer.fillna(data, inField, value=value)
 
         # assert
-        self.assertEqual([nan, nan, value],
+        nan_string = 'NaN'
+        self.assertEqual([nan_string, nan_string, value],
                          result[inField].to_list())
