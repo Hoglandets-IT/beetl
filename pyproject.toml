@@ -20,7 +20,7 @@ dependencies = [
   "polars[all]>=1.14.0",
   "sqlalchemy",
   "pandas>=2.2.3",
-  "psycopg",
+  "psycopg[binary,pool]>=3.2.3",
   "pyyaml",
   "pymysql",
   "pyodbc",

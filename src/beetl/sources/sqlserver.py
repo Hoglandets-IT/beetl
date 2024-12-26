@@ -86,6 +86,7 @@ class SqlserverConnectionSettings(SourceInterfaceConnectionSettings):
 class SqlserverSource(SourceInterface):
     ConnectionSettingsClass = SqlserverConnectionSettings
     SourceConfigClass = SqlserverConfiguration
+    connection: pyodbc.Connection = None
 
     """ A source for SqlServer data """
 
@@ -93,10 +94,19 @@ class SqlserverSource(SourceInterface):
         pass
 
     def _connect(self):
-        pass
+        try:
+            engine = sqla.create_engine(
+                self.connection_settings.connection_string)
+        except ModuleNotFoundError:
+            engine = sqla.create_engine(
+                self.connection_settings.connection_string.replace(
+                    "mysql://", "mysql+pymysql://"
+                ))
+        self.connection = engine.connect()
 
     def _disconnect(self):
-        pass
+        self.connection.commit()
+        self.connection.close()
 
     def _query(
         self, params=None, customQuery: str = None, returnData: bool = True
@@ -114,25 +124,17 @@ class SqlserverSource(SourceInterface):
                 query = f"SELECT * FROM [{self.source_configuration.table}]"
 
         if returnData:
-            with sqla.create_engine(
-                self.connection_settings.connection_string
-            ).connect() as con:
-                pdd = pd.read_sql_query(sql=query, con=con)
-
+            pdd = pd.read_sql_query(sql=query, con=self.connection)
             return pl.from_pandas(pdd)
-        with sqla.create_engine(
-            self.connection_settings.connection_string
-        ).connect() as con:
-            if isinstance(query, str):
-                query = sqla.text(query)
 
-            con.execute(query)
+        if isinstance(query, str):
+            query = sqla.text(query)
+        self.connection.execute(query)
 
     def _insert(
         self,
         data: pl.DataFrame,
         table: str = None,
-        connection_string: str = None,
         tempDB: bool = False,
     ):
         # Check for binary tables
@@ -148,26 +150,18 @@ class SqlserverSource(SourceInterface):
         if table is None:
             table = self.source_configuration.table
 
-        if connection_string is None:
-            connection_string = self.connection_settings.connection_string
-
         pand_df = data.to_pandas()
         try:
-            engine = sqla.create_engine(connection_string)
-            with engine.connect() as con:
-                pand_df.to_sql(
-                    table,
-                    if_exists="append" if not tempDB else "replace",
-                    index=False,
-                    con=con,
-                )
-                con.commit()
+            pand_df.to_sql(
+                table,
+                if_exists="append" if not tempDB else "replace",
+                index=False,
+                con=self.connection,
+            )
         except ModuleNotFoundError:
             data.write_database(
                 table,
-                self.connection_settings.connection_string.replace(
-                    "mysql://", "mysql+pymysql://"
-                ),
+                connection=self.connection,
                 if_exists="append" if not tempDB else "replace",
             )
 
@@ -284,4 +278,4 @@ class SqlserverSource(SourceInterface):
             )
 
     def _get_temp_table_name(self, table_name: str):
-        return f"{table_name}_{str(uuid4()).replace('-', '')}_temp"
+        return f"##{table_name}_{str(uuid4()).replace('-', '')}_temp"

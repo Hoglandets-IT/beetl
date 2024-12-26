@@ -1,6 +1,9 @@
 import polars as pl
 from .interface import TransformerInterface, register_transformer_class
 
+NAN_SUPPORTED_TYPES = [pl.Decimal, pl.Float32, pl.Float64, pl.Int8,
+                       pl.Int16, pl.Int32, pl.Int64, pl.UInt8, pl.UInt16, pl.UInt32, pl.UInt64]
+
 
 @register_transformer_class("int")
 class IntegerTransformer(TransformerInterface):
@@ -27,7 +30,7 @@ class IntegerTransformer(TransformerInterface):
 
     @staticmethod
     def fillna(data: pl.DataFrame, inField: str, outField: str = None, value: int = 0) -> pl.DataFrame:
-        """Fill the missing values in a given column with the given value
+        """Fill the missing NaN and null values in a given column with the given value
 
         Args:
             data (pl.DataFrame): The dataFrame to modify
@@ -39,11 +42,11 @@ class IntegerTransformer(TransformerInterface):
             pl.DataFrame: The resulting DataFrame
         """
 
-        try:
+        data = data.with_columns(data[inField].fill_null(
+            value).alias(outField or inField))
+
+        if data[inField].dtype in NAN_SUPPORTED_TYPES:
             data = data.with_columns(data[inField].fill_nan(
-                value).alias(outField or inField))
-        except Exception:
-            data = data.with_columns(data[inField].fill_null(
                 value).alias(outField or inField))
 
         return data
