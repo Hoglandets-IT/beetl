@@ -21,21 +21,31 @@ def to_xml(source_file_path: str, destination_file_path: str) -> dict:
             {
                 "source": "src",
                 "destination": "dst",
-                "sourceConfig": {},
-                "destinationConfig": {},
+                "sourceConfig": {
+                    # TODO: Include in documentation
+                    # https://docs.python.org/3/library/xml.etree.elementtree.html#supported-xpath-syntax
+                    # Defaults to "./*"
+                    "xpath": ".//PERSON"
+                },
+                "destinationConfig": {
+                    "xpath": ".//Person",
+                    "root_name": "PersonExport",
+                    "row_name": "Person",
+                    "unique_columns": ("Id")
+                },
                 "comparisonColumns": [
                     {
-                        "name": "id",
+                        "name": "Id",
                         "type": "Int64",
                         "unique": True,
                     },
                     {
-                        "name": "name",
+                        "name": "Name",
                         "type": "Utf8",
                     },
                     {
-                        "name": "email",
-                        "type": "Utf8",
+                        "name": "Age",
+                        "type": "UInt8",
                     },
                 ],
                 "sourceTransformers": [],

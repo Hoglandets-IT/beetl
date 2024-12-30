@@ -63,7 +63,8 @@ class FrameTransformer(TransformerInterface):
 
         Args:
             data (pl.DataFrame): The dataset
-            columns (List[dict]): A list of dicts (from: col1, to: col2)
+            columns (List[dict]): A list of dicts (from: col1, to: col2), or a dict (Dict[string, string]) {from_column: to_column}
+
 
         Returns:
             pl.DataFrame: DataFrame with renamed columns
