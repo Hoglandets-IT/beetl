@@ -98,7 +98,9 @@ class FrameTransformer(TransformerInterface):
         """
         __class__._validate_fields(data.columns, [x["from"] for x in columns])
         for column in columns:
-            data[column["to"]] = data[column["from"]]
+            fromField = column["from"]
+            toField = column["to"]
+            data = data.with_columns(data[fromField].alias(toField))
 
         return data
 
