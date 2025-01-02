@@ -277,3 +277,25 @@ class StringTransformer(TransformerInterface):
             data[inField].map_elements(lambda oid: ObjectId(oid)))
 
         return data
+
+    @staticmethod
+    def format(data: pl.DataFrame, inField: str, outField: str = "", format_string: str = "{value}"):
+        """
+        Formats the value in a string
+
+        Args:
+            data (pl.DataFrame): The dataFrame to modify
+            inField (str): The field to format
+            outField (str): The field to put the result in
+            format_string (str): The format string using {value} as the placeholder for the value. Defaults to "{value}". Example: "_{value}_.
+
+        Returns:
+            pl.DataFrame: The resulting DataFrame
+        """
+
+        if not outField:
+            outField = inField
+
+        data = data.with_columns(
+            data[inField].map_elements(lambda val: format_string.format(**{"value": val})).alias(outField))
+        return data
