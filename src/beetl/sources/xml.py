@@ -150,7 +150,7 @@ class XmlSource(SourceInterface):
                 file.flush()
 
         data.to_pandas().to_xml(self.connection_settings.path,
-                                encoding=self.connection_settings.encoding, root_name=self.source_configuration.root_name, row_name=self.source_configuration.row_name, index=False)
+                                encoding=self.connection_settings.encoding, root_name=self.source_configuration.root_name, row_name=self.source_configuration.row_name, index=False, parser="etree")
 
     def get_unique_columns(self):
         if not self.source_configuration.unique_columns:
