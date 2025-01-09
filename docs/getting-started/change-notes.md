@@ -3,6 +3,7 @@
 ## 1.0.4
 ### Changes ️️🔄️
 - It is now possible to use Xml files as a data source and destination. Read more about it in the [docs](/sources/xml.html).
+- The transformer [strings.format](/transformers/strings.html#Format) has been added, allowing values to be interpolated into string templates.
 - `ComparisonResult` returned when running beetl in `dry-run` mode now has a __str__ and __repr__ implementation describing the changes in plane text, making them printable.
 
 ### Bugfixes 🐛
