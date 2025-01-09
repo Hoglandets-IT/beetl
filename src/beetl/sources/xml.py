@@ -1,4 +1,4 @@
-from typing import IO, Any, Tuple
+from typing import Tuple
 import os
 import pandas as pd
 import polars as pl
@@ -9,6 +9,24 @@ from .interface import (
     SourceInterfaceConnectionSettings,
 )
 
+polar_to_xml_type_map = {
+    "Float32": "Float32",
+    "Float64": "Float64",
+    "Int8": "Int8",
+    "Int16": "Int16",
+    "Int32": "Int32",
+    "Int64": "Int64",
+    "Int128": "Int128",
+    "UInt8": "UInt8",
+    "UInt16": "UInt16",
+    "UInt32": "UInt32",
+    "UInt64": "UInt64",
+    "String": "str",
+    "str": "str",
+    "Utf8": "str",
+    "Boolean": "bool",
+}
+
 
 class XmlSyncConfiguration(SourceInterfaceConfiguration):
     """The configuration class used for XML file sources"""
@@ -17,12 +35,22 @@ class XmlSyncConfiguration(SourceInterfaceConfiguration):
     unique_columns: Tuple[str] = ()
     root_name: str = ""
     row_name: str = ""
+    types: dict = None
 
-    def __init__(self, xpath: str = "./*", unique_columns: Tuple[str] = (), root_name: str = "root", row_name: str = "row"):
+    def __init__(self, xpath: str = "./*", unique_columns: Tuple[str] = (), root_name: str = "root", row_name: str = "row", types: dict = None):
         self.xpath = xpath
         self.unique_columns = unique_columns
         self.root_name = root_name
         self.row_name = row_name
+
+        if types is not None:
+            for key, value in types.items():
+                if value not in polar_to_xml_type_map:
+                    raise ValueError(
+                        f"Type {value} is not supported for XML files")
+                types[key] = polar_to_xml_type_map[value]
+
+        self.types = types
 
 
 class XmlConnectionSettings(SourceInterfaceConnectionSettings):
@@ -68,7 +96,7 @@ class XmlSource(SourceInterface):
             return pl.DataFrame()
 
         data = pl.from_pandas(pd.read_xml(self.connection_settings.path,
-                              encoding=self.connection_settings.encoding, parser="etree", xpath=self.source_configuration.xpath))
+                              encoding=self.connection_settings.encoding, parser="etree", xpath=self.source_configuration.xpath, dtype=self.source_configuration.types))
 
         return data
 

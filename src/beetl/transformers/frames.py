@@ -69,7 +69,13 @@ class FrameTransformer(TransformerInterface):
         Returns:
             pl.DataFrame: DataFrame with renamed columns
         """
-        __class__._validate_fields(data.columns, columns)
+        columns_to_validate = []
+        if isinstance(columns, dict):
+            columns_to_validate = list(columns.keys())
+        else:
+            columns_to_validate = [x["from"] for x in columns]
+
+        __class__._validate_fields(data.columns, columns_to_validate)
         ncolumns = columns
 
         if isinstance(columns, dict):

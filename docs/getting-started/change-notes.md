@@ -1,5 +1,17 @@
 # Change Notes
 
+## 1.0.4
+### Changes ️️🔄️
+- It is now possible to use Xml files as a data source and destination. Read more about it in the [docs](/sources/xml.html).
+- `ComparisonResult` returned when running beetl in `dry-run` mode now has a __str__ and __repr__ implementation describing the changes in plane text, making them printable.
+
+### Bugfixes 🐛
+- Fixed a bug where the Sqlserver source incorrectly replaced the `mysql://` protocol part of the connection string instead of `mssql://`.
+- Fixed a bug in the underlying column validation logic for transformers that raised an exception if the amount of columns to validate was the same as the total amount of columns on the dataframe.
+
+### For developers 🧑‍💻
+- Added new update diff tool in `compare.py` that can be used to figure out why a row needs updating. Read the docstring for the `diff_update` tool to understand how to use it. As of right now this is just an internal tool.
+
 ## 1.0.3
 
 ### Changes 🔄️

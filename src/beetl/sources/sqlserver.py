@@ -98,10 +98,16 @@ class SqlserverSource(SourceInterface):
             engine = sqla.create_engine(
                 self.connection_settings.connection_string)
         except ModuleNotFoundError:
-            engine = sqla.create_engine(
-                self.connection_settings.connection_string.replace(
-                    "mysql://", "mysql+pymysql://"
-                ))
+            try:
+                engine = sqla.create_engine(
+                    self.connection_settings.connection_string.replace(
+                        "mssql://", "mssql+pyodbc://"
+                    ))
+            except ModuleNotFoundError:
+                engine = sqla.create_engine(
+                    self.connection_settings.connection_string.replace(
+                        "mssql://", "mssql+pymssql://"
+                    ))
         self.connection = engine.connect()
 
     def _disconnect(self):

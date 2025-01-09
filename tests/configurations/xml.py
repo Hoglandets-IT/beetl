@@ -22,10 +22,12 @@ def to_xml(source_file_path: str, destination_file_path: str) -> dict:
                 "source": "src",
                 "destination": "dst",
                 "sourceConfig": {
-                    # TODO: Include in documentation
-                    # https://docs.python.org/3/library/xml.etree.elementtree.html#supported-xpath-syntax
-                    # Defaults to "./*"
-                    "xpath": ".//PERSON"
+                    "xpath": ".//PERSON",
+                    "types": {
+                        "Id": "Int64",
+                        "Name": "Utf8",
+                        "Age": "UInt8",
+                    }
                 },
                 "destinationConfig": {
                     "xpath": ".//Person",
