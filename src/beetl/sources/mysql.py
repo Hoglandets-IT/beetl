@@ -134,7 +134,7 @@ class MysqlSource(SourceInterface):
     def update(self, data: pl.DataFrame):
         self._validate_unique_columns()
 
-        tempDB = self.source_configuration.table + "_udTemp"
+        tempDB = (self.source_configuration.table + "_udTemp").lower()
         try:
             with sqla.create_engine(
                 self.connection_settings.connection_string

@@ -284,4 +284,4 @@ class SqlserverSource(SourceInterface):
             )
 
     def _get_temp_table_name(self, table_name: str):
-        return f"##{table_name}_{str(uuid4()).replace('-', '')}_temp"
+        return f"##{table_name}_{str(uuid4()).replace('-', '')}_temp".lower()

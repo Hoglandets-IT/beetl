@@ -274,7 +274,7 @@ class StringTransformer(TransformerInterface):
         """
 
         data = data.with_columns(
-            data[inField].map_elements(lambda oid: ObjectId(oid)))
+            data[inField].map_elements(lambda oid: ObjectId(oid), return_dtype=pl.Object))
 
         return data
 
@@ -297,5 +297,5 @@ class StringTransformer(TransformerInterface):
             outField = inField
 
         data = data.with_columns(
-            data[inField].map_elements(lambda val: format_string.format(**{"value": val})).alias(outField))
+            data[inField].map_elements(lambda val: format_string.format(**{"value": val}), return_dtype=pl.Utf8).alias(outField))
         return data

@@ -86,7 +86,7 @@ class MongodbSource(SourceInterface):
                 self.source_configuration.filter, projection=self.source_configuration.projection))
             if "_id" in polar.columns and polar["_id"].dtype == Object:
                 polar = polar.with_columns(
-                    polar["_id"].map_elements(lambda oid: str(oid)))
+                    polar["_id"].map_elements(lambda oid: str(oid), return_dtype=str))
             return polar
 
     def insert(self, data: DataFrame) -> int:
