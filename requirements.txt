@@ -12,6 +12,9 @@ alive-progress
 tabulate
 pymongo==4.10.1
 
+# subdependencies of pandas
+lxml
+
 # Below packages are subdependencies of sqlalchemy
 cryptography
 

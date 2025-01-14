@@ -32,5 +32,8 @@ dependencies = [
   "cryptography",
 ]
 
+[project.optional-dependencies]
+xsl = ["lxml"]
+
 [tool.setuptools]
 package-dir = { "" = "src" }

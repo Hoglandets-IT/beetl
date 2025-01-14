@@ -29,7 +29,7 @@ sync:
       # xpath: <string>, (optional, default="./*", only used when configured as source)
       # Querystring defining how the xml file should be read, see the link below.
       # Etree supported xpath syntax https://docs.python.org/3/library/xml.etree.elementtree.html#supported-xpath-syntax
-      # E.g: ".//People" will select all all People objects on all levels.
+      # E.g: ".//People" will select all all People objects on all levels.  
       xpath: ".//People"
       # type: <Dict[str, str]>, (optional, only used when configured as source)
       # Declares what types the properties will be parsed as.
@@ -38,6 +38,11 @@ sync:
       types:
         Name: Utf-8
         Age: Int32
+      # xsl: <string>, (optional, default=None)
+      # Can be used to perform transformations on the xml before parsing it.
+      # Recommended to use if you need to change the structure of your data.
+      # Requires lxml to be installed, see examples below.
+      xsl: null
     destination: dst
     destinationConfig:
       # unique_columns: <set[string]>, (mandatory, only used when configured as destination)
@@ -161,3 +166,84 @@ sync:
             - Name
             - Age
 ```
+
+### Using XSL to transform the data
+This is a short example showcasing how the xsl property can be used. This is not in any way, shape or form a guide to xsl's themselves.
+
+:::info
+To enable XSL you need to install the lxml parser. It can be done either by installing beetl using the xsl tag `pip install beetl[xsl]` or independently `pip install lxml`.
+:::
+
+The XSL tranformations are applied prior to beetl converting the XML to a dataframe.
+
+We're going to restructure this xml from being persons with addresses to addresses with person names.
+
+**Source**
+```xml
+<body>
+  <person>
+    <name>Sarah</name>
+    <address>
+      <street>1 main st</street>
+    </address>
+    <address>
+      <street>2 main st</street>
+    </address>
+  </person>
+  <person>
+    <name>Sophie</name>
+    <address>
+      <street>3 main st</street>
+    </address>
+    <address>
+      <street>4 main st</street>
+    </address>
+  </person>
+</body>
+```
+
+By specifying a xsl like this and providing it as a string to the xsl parameter:
+
+```xsl
+<?xml version="1.0" encoding="UTF-8"?>
+        <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">xsl
+            <xsl:output method="xml" indent="yes"/>
+            <xsl:template match="//body">
+                <Output>
+                    <xsl:for-each select=".//person">
+                        <xsl:variable name="person_name" select=".//name"/>
+                        <xsl:for-each select=".//address">
+                            <Record>
+                                <name><xsl:value-of select="$person_name"/></name>
+                                <street><xsl:value-of select=".//street"/></street>
+                            </Record>
+                        </xsl:for-each>
+                    </xsl:for-each>
+                </Output>
+            </xsl:template>
+        </xsl:stylesheet>
+```
+
+The transformed xml that will be parsed by beetl will be this:
+
+```xml
+<body>
+  <address>
+    <name>Sarah</name>
+    <street>1 main st</street>
+  </address>
+  <address>
+    <name>Sarah</name>
+    <street>2 main st</street>
+  </address>
+  <address>
+    <name>Sophie</name>
+    <street>3 main st</street>
+  </address>
+  <address>
+    <name>Sophie</name>
+    <street>4 main st</street>
+  </address>
+</body>
+```
+

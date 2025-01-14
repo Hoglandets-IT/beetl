@@ -1,4 +1,4 @@
-from typing import Tuple
+from typing import Literal, Tuple, Union
 import os
 import pandas as pd
 import polars as pl
@@ -36,12 +36,18 @@ class XmlSyncConfiguration(SourceInterfaceConfiguration):
     root_name: str = ""
     row_name: str = ""
     types: dict = None
+    xsl: Union[str, None] = None
+    parser: Literal["etree", "lxml"] = "etree"
 
-    def __init__(self, xpath: str = "./*", unique_columns: Tuple[str] = (), root_name: str = "root", row_name: str = "row", types: dict = None):
+    def __init__(self, xpath: str = "./*", unique_columns: Tuple[str] = (), root_name: str = "root", row_name: str = "row", types: dict = None, xsl: str = None):
         self.xpath = xpath
         self.unique_columns = unique_columns
         self.root_name = root_name
         self.row_name = row_name
+
+        if xsl is not None:
+            self.xsl = xsl
+            self.parser = "lxml"
 
         if types is not None:
             for key, value in types.items():
@@ -96,7 +102,7 @@ class XmlSource(SourceInterface):
             return pl.DataFrame()
 
         data = pl.from_pandas(pd.read_xml(self.connection_settings.path,
-                              encoding=self.connection_settings.encoding, parser="etree", xpath=self.source_configuration.xpath, dtype=self.source_configuration.types))
+                              encoding=self.connection_settings.encoding, parser=self.source_configuration.parser, xpath=self.source_configuration.xpath, dtype=self.source_configuration.types, stylesheet=self.source_configuration.xsl))
 
         return data
 
