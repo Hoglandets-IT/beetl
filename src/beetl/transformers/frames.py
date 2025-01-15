@@ -63,12 +63,19 @@ class FrameTransformer(TransformerInterface):
 
         Args:
             data (pl.DataFrame): The dataset
-            columns (List[dict]): A list of dicts (from: col1, to: col2)
+            columns (List[dict]): A list of dicts (from: col1, to: col2), or a dict (Dict[string, string]) {from_column: to_column}
+
 
         Returns:
             pl.DataFrame: DataFrame with renamed columns
         """
-        __class__._validate_fields(data.columns, columns)
+        columns_to_validate = []
+        if isinstance(columns, dict):
+            columns_to_validate = list(columns.keys())
+        else:
+            columns_to_validate = [x["from"] for x in columns]
+
+        __class__._validate_fields(data.columns, columns_to_validate)
         ncolumns = columns
 
         if isinstance(columns, dict):
@@ -97,7 +104,9 @@ class FrameTransformer(TransformerInterface):
         """
         __class__._validate_fields(data.columns, [x["from"] for x in columns])
         for column in columns:
-            data[column["to"]] = data[column["from"]]
+            fromField = column["from"]
+            toField = column["to"]
+            data = data.with_columns(data[fromField].alias(toField))
 
         return data
 

@@ -286,6 +286,15 @@ class Beetl:
                 continue
 
             self.benchmark("Starting database operations")
+            self.benchmark("Starting deletes")
+            amount["deletes"] = 0
+            if len(delete):
+                amount["deletes"] = sync.destination.delete(
+                    self.runTransformers(
+                        delete, sync.deletionTransformers, sync)
+                )
+
+            self.benchmark("Finished deletes, starting inserts")
             amount["inserts"] = 0
             if len(create):
                 amount["inserts"] = sync.destination.insert(
@@ -302,21 +311,14 @@ class Beetl:
                         update, sync.insertionTransformers, sync)
                 )
 
-            self.benchmark("Finished updates, starting deletes")
-            amount["deletes"] = 0
-            if len(delete):
-                amount["deletes"] = sync.destination.delete(
-                    self.runTransformers(
-                        delete, sync.deletionTransformers, sync)
-                )
-
-            self.benchmark("Finished deletes, sync finished")
+            self.benchmark("Finished updates, sync finished")
 
             print("Inserted: " + str(amount["inserts"]))
             print("Updated: " + str(amount["updates"]))
             print("Deleted: " + str(amount["deletes"]))
 
-            allAmounts.append([sync.name, *amount.values()])
+            allAmounts.append(
+                [sync.name, *[amount["inserts"], amount["updates"], amount["deletes"]]])
 
             sync.destination.disconnect()
 

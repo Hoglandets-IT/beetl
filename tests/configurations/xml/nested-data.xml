@@ -1,0 +1,20 @@
+<body>
+  <person>
+    <name>Sarah</name>
+    <address>
+      <street>1 main st</street>
+    </address>
+    <address>
+      <street>2 main st</street>
+    </address>
+  </person>
+  <person>
+    <name>Sophie</name>
+    <address>
+      <street>3 main st</street>
+    </address>
+    <address>
+      <street>4 main st</street>
+    </address>
+  </person>
+</body>

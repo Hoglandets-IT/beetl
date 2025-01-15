@@ -21,7 +21,8 @@
 				"ms-python.debugpy",
 				"ms-python.autopep8",
 				"github.vscode-github-actions",
-				"tamasfe.even-better-toml"
+				"tamasfe.even-better-toml",
+				"redhat.vscode-xml"
 			]
 		}
 	}
