@@ -74,6 +74,9 @@ Beetl(config).sync()
 ```bash
 #/bin/bash
 python -m pip install beetl
+
+# If you need to use xsl transformations
+python -m pip install beetl[xsl]
 ```
 
 ### From Source

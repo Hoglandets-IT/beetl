@@ -98,10 +98,16 @@ class SqlserverSource(SourceInterface):
             engine = sqla.create_engine(
                 self.connection_settings.connection_string)
         except ModuleNotFoundError:
-            engine = sqla.create_engine(
-                self.connection_settings.connection_string.replace(
-                    "mysql://", "mysql+pymysql://"
-                ))
+            try:
+                engine = sqla.create_engine(
+                    self.connection_settings.connection_string.replace(
+                        "mssql://", "mssql+pyodbc://"
+                    ))
+            except ModuleNotFoundError:
+                engine = sqla.create_engine(
+                    self.connection_settings.connection_string.replace(
+                        "mssql://", "mssql+pymssql://"
+                    ))
         self.connection = engine.connect()
 
     def _disconnect(self):
@@ -278,4 +284,4 @@ class SqlserverSource(SourceInterface):
             )
 
     def _get_temp_table_name(self, table_name: str):
-        return f"##{table_name}_{str(uuid4()).replace('-', '')}_temp"
+        return f"##{table_name}_{str(uuid4()).replace('-', '')}_temp".lower()

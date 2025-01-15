@@ -176,3 +176,24 @@ Casts values of a string column into [bson.ObjectId's](https://pymongo.readthedo
     inField: field_name
 
 ```
+
+## Format
+Interpolates the original value into a string template.
+
+If you have the value `123` and the template `The value is {value}!` the resulting string will be `The value is 123!`.
+
+You can place `{value}` anywhere in the string and it will be substituted with the actual value.
+
+```yaml
+- transformer: strings.format
+  config:
+    # inField: <string> (Mandatory)
+    # Name of the field to convert
+    inField: field_name
+    # outField: <string> (Optional, default=same as inField)
+    # Name of the field where the output should be placed.
+    outField: field_name
+    # format_string: <string> (Optional, default="{value}")
+    # The format string where the value will be interpolated into.
+    format_string: "This is the value: {value}"
+```

@@ -28,7 +28,8 @@ class ItopTransformer(TransformerInterface):
             return concat_and_sha("-", toplevel, *st.values())
 
         new = data.with_columns(
-            pl.struct(inFields).map_elements(make_code).alias(outField)
+            pl.struct(inFields).map_elements(
+                make_code, return_dtype=str).alias(outField)
         )
 
         return new
@@ -132,6 +133,7 @@ class ItopTransformer(TransformerInterface):
                     f"Error: The source_comparison_field {source_comparison_field} is not present in DataFrame"
                 ) from e
             except KeyError as e:
-                raise Exception("Error: The key definition is not valid") from e
+                raise Exception(
+                    "Error: The key definition is not valid") from e
 
         return transformed

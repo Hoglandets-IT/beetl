@@ -30,12 +30,15 @@ class TransformerInterface:
         if isinstance(fields, str):
             fields = [fields]
 
-        if sum([1 for col in columns if col in fields]) == len(columns):
+        fields_not_in_columns = [
+            field for field in fields if field not in columns]
+        if any(fields_not_in_columns):
             raise KeyError(
-                f'Some of the field(s) {",".join(fields)} are not present '
+                f'Some of the field(s) {",".join(fields_not_in_columns)} are not present '
                 "in the dataset. Valid columns at this stage are:"
                 f'{",".join(columns)}'
             )
+
         return
 
 
@@ -51,7 +54,8 @@ class Transformers:
         namespace = namespace if namespace is not None else cls.__name__
         for fun in dir(cls):
             if not fun.startswith("_"):
-                Transformers._registerFunction(namespace, fun, getattr(cls, fun))
+                Transformers._registerFunction(
+                    namespace, fun, getattr(cls, fun))
 
     @staticmethod
     def runTransformer(transformer: str, data: POLARS_DF, **kwargs) -> POLARS_DF:

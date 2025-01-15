@@ -1,0 +1,25 @@
+<PersonResponse>
+  <Body>
+    <PBSExportResponse>
+      <PBSExportResult>
+        <NewDataSet>
+          <PERSON>
+            <Id>2</Id>
+            <Name>Phil Doe</Name>
+            <Age>27</Age>
+          </PERSON>
+          <PERSON>
+            <Id>10</Id>
+            <Name>Jimmy Doe</Name>
+            <Age>25</Age>
+          </PERSON>
+          <PERSON>
+            <Id>11</Id>
+            <Name>Jimmy Doe</Name>
+            <Age>25</Age>
+          </PERSON>
+        </NewDataSet>
+      </PBSExportResult>
+    </PBSExportResponse>
+  </Body>
+</PersonResponse>

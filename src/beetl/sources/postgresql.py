@@ -117,7 +117,7 @@ class PostgresqlSource(SourceInterface):
             self.source_configuration.table
             + "_udTemp_"
             + str(uuid.uuid4()).replace("-", "")
-        )
+        ).lower()
 
         try:
             with psycopg.connect(
