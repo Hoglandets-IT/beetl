@@ -1,4 +1,5 @@
 from polars import DataFrame as POLARS_DF
+from pydantic import ConfigDict
 from .interface import (
     SourceInterface,
     SourceInterfaceConfiguration,
@@ -14,10 +15,14 @@ class FakerSourceConfiguration(SourceInterfaceConfiguration):
 class FakerSourceConnectionSettings(SourceInterfaceConnectionSettings):
     """The connection configuration class used for faker sources"""
 
+    # Arbitrary types are allow since dataframe is not a pydantic type
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+
     data: POLARS_DF
 
-    def __init__(self, faker: dict):
-        self.data = POLARS_DF(faker)
+    def __init__(self, **kwargs):
+        self.data = POLARS_DF(kwargs.get("faker", []))
+        super().__init__(**kwargs)
 
 
 @register_source("faker", FakerSourceConfiguration, FakerSourceConnectionSettings)

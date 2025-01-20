@@ -14,7 +14,7 @@ classifiers = [
 ]
 dynamic = ["version", "readme"]
 urls = { "github" = "https://github.com/Hoglandets-IT/beetl" }
-requires-python = ">=3.8"
+requires-python = ">=3.9"
 dependencies = [
   "requests",
   "polars[all]>=1.14.0",
@@ -30,6 +30,7 @@ dependencies = [
   "tabulate",
   "pymongo>=4.10.1",
   "cryptography",
+  "pydantic>=2.10.5",
 ]
 
 [project.optional-dependencies]

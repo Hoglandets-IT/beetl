@@ -2,6 +2,7 @@ from dataclasses import dataclass
 import polars as pl
 from typing import List
 import concurrent.futures
+import pydantic
 
 CASTABLE = (
     pl.Int8,
@@ -92,15 +93,16 @@ class ColumnDefinition:
 class SourceInterfaceConfiguration:
     """The configuration class used for data sources, abstract"""
 
-    def __init__(self):
-        pass
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
 
 
 @dataclass
-class SourceInterfaceConnectionSettings:
+class SourceInterfaceConnectionSettings(pydantic.BaseModel):
     """The connection configuration class used for data sources, abstract"""
 
-    pass
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
 
 
 class SourceInterface:
@@ -120,15 +122,12 @@ class SourceInterface:
             connection (dict):
                 Configuration for the source connection (paths, credentials, etc.)
         """
-        try:
-            self.connection_settings = self.ConnectionSettingsClass(
-                **connection)
-            self.source_configuration = (
-                self.SourceConfigClass(**config) if config else None
-            )
-        except Exception as e:
-            raise Exception(
-                "Invalid connection settings for source: " + str(e))
+
+        self.connection_settings = self.ConnectionSettingsClass(
+            **connection)
+        self.source_configuration = (
+            self.SourceConfigClass(**config) if config else None
+        )
 
         self._configure()
 

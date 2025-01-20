@@ -1,4 +1,5 @@
 
+from pydantic import ValidationError
 from src.beetl.beetl import BeetlConfig
 import unittest
 from polars import Int32, Utf8
@@ -74,3 +75,58 @@ class UnitTestBeetlConfig(unittest.TestCase):
         self.assertEqual(name.name, "name")
         self.assertEqual(name.type, Utf8)
         self.assertFalse(name.unique)
+
+    def test_config_validation__WIP(self):
+        try:
+            result = BeetlConfig({
+                "version": "V1",
+                "sources": [
+                    {
+                        "name": "staticsrc",
+                        "type": "Static",
+                        "connection": {
+                            "static": [
+                                {"id": 1, "name": "John", "email": "john@test.com"},
+                            ],
+                        },
+                    },
+                    {
+                        "name": "staticdst",
+                        "type": "Static",
+                        "connection": {
+                            "static": [
+                                {"id": 1, "name": "John", "email": "john@test.com"},
+                            ]
+                        },
+                    },
+                ],
+                "sync": [
+                    {
+                        "source": "staticsrc",
+                        "destination": "staticdst",
+                        "sourceConfig": {},
+                        "destinationConfig": {},
+                        "comparisonColumns": [
+                            {
+                                "name": "id",
+                                "type": "Int64",
+                                "unique": True,
+                            },
+                            {
+                                "name": "name",
+                                "type": "Utf8",
+                            },
+                            {
+                                "name": "email",
+                                "type": "Utf8",
+                            },
+                        ],
+                        "sourceTransformers": [],
+                        "destinationTransformers": [],
+                        "insertionTransformers": [],
+                    }
+                ],
+            }
+            )
+        except ValidationError as e:
+            raise e

@@ -1,6 +1,8 @@
+from typing import Any, Optional, Union
 import polars as pl
 import pandas as pd
 from pyarrow.lib import ArrowInvalid
+import pydantic
 from .interface import (
     register_source,
     SourceInterface,
@@ -91,53 +93,60 @@ class RestSourceConfiguration(SourceInterfaceConfiguration):
             **deleteRequest if deleteRequest is not None else {})
 
 
-class Oauth2Settings:
-    def __init__(self, flow: str = "", token_url: str = "", authorization_url: str = "", token_body: dict = {}, token_path: str = "access_token", valid_to_path: str = "expires_on"):
-        self.flow = flow
-        self.token_url = token_url
-        self.authorization_url = authorization_url
-        self.token_body = token_body
-        self.token_path = token_path
-        self.valid_to_path = valid_to_path
+class Oauth2Settings(pydantic.BaseModel):
+    flow: Optional[str] = ""
+    token_url: Optional[str] = ""
+    authorization_url: Optional[str] = ""
+    token_body: Optional[dict] = {}
+    token_path: Optional[str] = "access_token"
+    valid_to_path: Optional[str] = "expires_on"
+
+    def __init__(self, **kwargs):
+        self.flow = kwargs.get("flow", "")
+        self.token_url = kwargs.get("token_url", "")
+        self.authorization_url = kwargs.get("authorization_url", "")
+        self.token_body = kwargs.get("token_body", {})
+        self.token_path = kwargs.get("token_path", "access_token")
+        self.valid_to_path = kwargs.get("valid_to_path", "expires_on")
+        super().__init__(**kwargs)
 
 
-class RestAuthentication:
-    basic: bool = False
-    basic_user: str = None
-    basic_pass: str = None
-    bearer: bool = False
-    bearer_prefix: str = "Bearer"
-    bearer_token: str = None
-    oauth2: bool = False
-    oauth2_settings: Oauth2Settings = None
+class RestAuthentication(pydantic.BaseModel):
+    basic: Optional[bool] = False
+    basic_user: Optional[Union[str, None]] = None
+    basic_pass: Optional[Union[str, None]] = None
+    bearer: Optional[bool] = False
+    bearer_prefix: Optional[str] = "Bearer"
+    bearer_token: Optional[Union[str, None]] = None
+    oauth2: Optional[bool] = False
+    oauth2_settings: Optional[Union[Oauth2Settings, None]] = None
 
-    # def __init__(self, basic: bool = False, basic_user: str = None, basic_pass: str = None, bearer: bool = False, bearer_prefix: str = "Bearer", bearer_token: str = None, soft_delete: bool = False, delete_field: str = "deleted", deleted_value = None):
-
-    def __init__(self, **kvargs):
-        self.basic = kvargs.get("basic", False)
-        self.basic_user = kvargs.get("basic_user", None)
-        self.basic_pass = kvargs.get("basic_pass", None)
-        self.bearer = kvargs.get("bearer", False)
-        self.bearer_prefix = kvargs.get("bearer_prefix", "Bearer")
-        self.bearer_token = kvargs.get("bearer_token", None)
-        self.oauth2 = kvargs.get("oauth2", False)
-        self.oauth2_settings = kvargs.get("oauth2_settings", {})
+    def __init__(self, **kwargs):
+        self.basic = kwargs.get("basic", False)
+        self.basic_user = kwargs.get("basic_user", None)
+        self.basic_pass = kwargs.get("basic_pass", None)
+        self.bearer = kwargs.get("bearer", False)
+        self.bearer_prefix = kwargs.get("bearer_prefix", "Bearer")
+        self.bearer_token = kwargs.get("bearer_token", None)
+        self.oauth2 = kwargs.get("oauth2", False)
+        self.oauth2_settings = kwargs.get("oauth2_settings", {})
         if self.oauth2:
-            self.oauth2_settings = Oauth2Settings(**kvargs["oauth2_settings"])
+            self.oauth2_settings = Oauth2Settings(**kwargs["oauth2_settings"])
+        super().__init__(**kwargs)
 
 
 class RestSourceConnectionSettings(SourceInterfaceConnectionSettings):
     """The connection configuration class used for MySQL sources"""
 
     base_url: str
-    authentication: RestAuthentication = None
+    authentication: Union[RestAuthentication, None] = None
     ignore_certificates: bool = False
     soft_delete: bool = False
     deleted_field: str = "deleted"
-    deleted_value = None
-    client = None
+    deleted_value: Union[None, str, int] = None
 
-    def __init__(self, settings: dict):
+    def __init__(self, **kwargs):
+        settings = kwargs.get("settings", {})
         if settings.get("base_url", None) is not None:
             self.base_url = settings["base_url"]
 
@@ -151,6 +160,7 @@ class RestSourceConnectionSettings(SourceInterfaceConnectionSettings):
         self.soft_delete = settings.get("soft_delete", False)
         self.deleted_field = settings.get("deleted_field", "deleted")
         self.deleted_value = settings.get("deleted_value", None)
+        super().__init__(**kwargs)
 
 
 @register_source("rest", RestSourceConfiguration, RestSourceConnectionSettings)

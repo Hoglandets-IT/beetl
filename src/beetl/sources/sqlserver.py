@@ -1,3 +1,4 @@
+from typing import Optional
 from uuid import uuid4
 import polars as pl
 import pandas as pd
@@ -45,10 +46,9 @@ class SqlserverConfiguration(SourceInterfaceConfiguration):
 class SqlserverConnectionSettings(SourceInterfaceConnectionSettings):
     """The connection configuration class used for SQLServer sources"""
 
-    data: pl.DataFrame
     connection_string: str
-    query: str = None
-    table: str = None
+    query: Optional[str] = None
+    table: Optional[str] = None
 
     def __init__(self, settings: dict):
         if settings.get("connection_string", False):
