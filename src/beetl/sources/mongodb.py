@@ -1,5 +1,6 @@
-from typing import List
+from typing import Annotated, List, Optional
 from polars import DataFrame, Object
+from pydantic import Field
 from .interface import (
     register_source,
     SourceInterface,
@@ -11,8 +12,8 @@ from pymongo import MongoClient, UpdateOne, DeleteOne
 
 class MongoDBSourceConfiguration(SourceInterfaceConfiguration):
     """The configuration class used for MongoDB sources"""
-    collection: str = None
-    filter: str = None
+    collection: Annotated[Optional[str], Field(default=None)]
+    filter: Annotated[str, Field(default={})]
     projection: dict = None
     unique_fields: List[str] = None
 

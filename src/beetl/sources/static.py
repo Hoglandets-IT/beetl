@@ -1,5 +1,5 @@
 from typing import Any, List, Optional
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, model_validator
 from polars import DataFrame
 from .interface import (
     register_source,
@@ -25,14 +25,13 @@ class StaticSourceConnectionSettings(SourceInterfaceConnectionSettings):
 
     # Data source is saved as field in order to automatically validate against the schema
     static: List[dict[str, Any]]
+    data: DataFrame
 
-    # Static data is optional since it cannot be validated automatically
-    data: Optional[DataFrame] = None
-
-    def __init__(self, static: List[dict[str, Any]] = [], **kwargs) -> None:
-        super().__init__(static=static, **kwargs)
-        self.static = static
-        self.data = DataFrame(static)
+    @model_validator(mode='before')
+    def customize_fields(cls, values):
+        static = values.get('static', [])
+        values['data'] = DataFrame(static)
+        return values
 
 
 @ register_source("static", StaticSourceConfiguration, StaticSourceConnectionSettings)
@@ -49,13 +48,6 @@ class StaticSource(SourceInterface):
         pass
 
     def _disconnect(self):
-        pass
-
-    def _validate_connection(self, connection):
-        pass
-
-    def _validate_config(self, config):
-        """Static source has no config"""
         pass
 
     def _query(self, params=None) -> DataFrame:

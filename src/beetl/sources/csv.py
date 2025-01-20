@@ -1,5 +1,6 @@
-from typing import List
+from typing import Annotated, List
 import polars as pl
+from pydantic import Field, model_validator
 from .interface import (
     register_source,
     SourceInterface,
@@ -11,18 +12,15 @@ from .interface import (
 class CsvSourceConfiguration(SourceInterfaceConfiguration):
     """The configuration class used for static sources"""
 
-    pass
+    def __init__(self, **extra):
+        super().__init__(**extra)
 
 
 class CsvSourceConnectionSettings(SourceInterfaceConnectionSettings):
     """The connection configuration class used for static sources"""
 
     path: str
-    encoding: str = "utf-8"
-
-    def __init__(self, path: str, encoding: str = "utf-8"):
-        self.path = path
-        self.encoding = encoding
+    encoding: Annotated[str, Field(default="utf-8")]
 
 
 @register_source("csv", CsvSourceConfiguration, CsvSourceConnectionSettings)

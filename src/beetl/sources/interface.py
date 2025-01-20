@@ -92,17 +92,13 @@ class ColumnDefinition:
 @dataclass
 class SourceInterfaceConfiguration:
     """The configuration class used for data sources, abstract"""
-
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
+    pass
 
 
 @dataclass
 class SourceInterfaceConnectionSettings(pydantic.BaseModel):
     """The connection configuration class used for data sources, abstract"""
-
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
+    pass
 
 
 class SourceInterface:

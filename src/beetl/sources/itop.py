@@ -2,6 +2,7 @@ import os
 import json
 
 # import asyncio
+from pydantic import model_validator
 import urllib3
 import polars as pl
 import requests
@@ -82,18 +83,21 @@ class ItopSourceConnectionSettings(SourceInterfaceConnectionSettings):
     """The connection configuration class used for iTop sources"""
 
     host: str
-    username: str = None
-    password: str = None
-    verify_ssl: bool = True
+    username: str
+    password: str
+    verify_ssl: bool
 
-    def __init__(self, settings: dict):
-        self.host = settings.get("host", False)
-        self.username = settings.get("username", False)
-        self.password = settings.get("password", False)
-        self.verify_ssl = settings.get("verify_ssl", "true") == "true"
+    @model_validator(mode='before')
+    def customize_fields(cls, values):
+        settings = values.get('settings', {})
+        values['host'] = settings.get('host')
+        values['username'] = settings.get('username')
+        values['password'] = settings.get('password')
+        values['verify_ssl'] = settings.get('verify_ssl', 'true') == 'true'
+        return values
 
 
-@register_source("itop", ItopSourceConfiguration, ItopSourceConnectionSettings)
+@ register_source("itop", ItopSourceConfiguration, ItopSourceConnectionSettings)
 class ItopSource(SourceInterface):
     ConnectionSettingsClass = ItopSourceConnectionSettings
     SourceConfigClass = ItopSourceConfiguration
@@ -434,7 +438,8 @@ class ItopSource(SourceInterface):
             deleteData = deleteData.with_columns(
                 pl.Series(
                     soft_delete.get("field", "status"),
-                    [soft_delete.get("inactive_value", "inactive")] * len(deleteData),
+                    [soft_delete.get("inactive_value", "inactive")
+                     ] * len(deleteData),
                 )
             )
             deleteFunc = self.update_item

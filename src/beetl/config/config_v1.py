@@ -2,7 +2,7 @@
 import copy
 import json
 import os
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 from typing import Annotated, Any, List, Literal
 from ..transformers.interface import TransformerConfiguration
 from .config_base import BeetlConfig, ComparisonColumn, SyncConfiguration

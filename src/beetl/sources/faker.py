@@ -1,5 +1,6 @@
+from typing import Annotated, Any, Optional
 from polars import DataFrame as POLARS_DF
-from pydantic import ConfigDict
+from pydantic import ConfigDict, Field, model_validator
 from .interface import (
     SourceInterface,
     SourceInterfaceConfiguration,
@@ -9,7 +10,8 @@ from .interface import (
 
 
 class FakerSourceConfiguration(SourceInterfaceConfiguration):
-    pass
+    def __init__(self, **extra):
+        super().__init__(**extra)
 
 
 class FakerSourceConnectionSettings(SourceInterfaceConnectionSettings):
@@ -18,11 +20,14 @@ class FakerSourceConnectionSettings(SourceInterfaceConnectionSettings):
     # Arbitrary types are allow since dataframe is not a pydantic type
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
+    faker: Annotated[list[dict[str, Any]], Field(min_length=1)]
     data: POLARS_DF
 
-    def __init__(self, **kwargs):
-        self.data = POLARS_DF(kwargs.get("faker", []))
-        super().__init__(**kwargs)
+    @model_validator(mode='before')
+    def customize_fields(cls, values):
+        faker = values.get('faker', [])
+        values['data'] = POLARS_DF(faker)
+        return values
 
 
 @register_source("faker", FakerSourceConfiguration, FakerSourceConnectionSettings)
