@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 import polars as pl
-from typing import List
+from typing import Annotated, List
 import concurrent.futures
 import pydantic
 
@@ -89,28 +89,45 @@ class ColumnDefinition:
         self.type = getattr(pl, self.type)
 
 
-@dataclass
+class SourceInterfaceConfigurationArguments(pydantic.BaseModel):
+    """Class representation of the source configuration settings in the beetl config. Used to validate the source configuration settings using pydantic."""
+    model_config = pydantic.ConfigDict(extra='forbid')
+
+
 class SourceInterfaceConfiguration:
     """The configuration class used for data sources, abstract"""
-    pass
+    def __init__(cls, arguments: SourceInterfaceConfigurationArguments):
+        pass
 
 
-@dataclass
-class SourceInterfaceConnectionSettings(pydantic.BaseModel):
+class SourceInterfaceConnectionSettingsArguments(pydantic.BaseModel):
+    """Class representation of the source connection settings in the beetl config. Used to validate the source configuration settings using pydantic."""
+    model_config = pydantic.ConfigDict(extra='forbid')
+    name: Annotated[str, pydantic.Field(min_length=1)]
+    type: Annotated[str, pydantic.Field(min_length=1)]
+    connection: dict
+
+
+class SourceInterfaceConnectionSettings():
     """The connection configuration class used for data sources, abstract"""
-    pass
+    def __init__(cls, arguments: SourceInterfaceConnectionSettingsArguments):
+        pass
 
 
 class SourceInterface:
     ConnectionSettingsClass = SourceInterfaceConnectionSettings
+    ConnectionSettingsArguments = SourceInterfaceConnectionSettingsArguments
     SourceConfigClass = SourceInterfaceConfiguration
+    SourceConfigArguments = SourceInterfaceConfigurationArguments
 
     """ Abstract interface for a connection to a data source """
     connection = None
+    connection_settings_arguments = None
     connection_settings = None
+    source_configuration_arguments = None
     source_configuration = None
 
-    def __init__(self, connection: dict, config: dict = None) -> None:
+    def __init__(self, source: dict) -> None:
         """Initiates a source class
 
         Args:
@@ -119,16 +136,19 @@ class SourceInterface:
                 Configuration for the source connection (paths, credentials, etc.)
         """
 
+        self.connection_settings_arguments = self.ConnectionSettingsArguments(
+            **source)
+
         self.connection_settings = self.ConnectionSettingsClass(
-            **connection)
-        self.source_configuration = (
-            self.SourceConfigClass(**config) if config else None
-        )
+            self.connection_settings_arguments)
 
         self._configure()
 
     def set_sourceconfig(self, config: dict) -> None:
-        self.source_configuration = self.SourceConfigClass(**config)
+        self.source_configuration_arguments = self.SourceConfigArguments(
+            **config)
+        self.source_configuration = self.SourceConfigClass(
+            self.source_configuration_arguments)
 
     def __enter__(self):
         self._connect()

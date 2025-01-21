@@ -1,43 +1,36 @@
-from typing import Any, List, Optional
-from pydantic import BaseModel, ConfigDict, model_validator
+from typing import Annotated, Any, List, Literal
+from pydantic import BaseModel, ConfigDict, Field
 from polars import DataFrame
 from .interface import (
     register_source,
     SourceInterface,
     SourceInterfaceConfiguration,
     SourceInterfaceConnectionSettings,
+    SourceInterfaceConnectionSettingsArguments
 )
 
 
-class StaticSourceConfiguration(SourceInterfaceConfiguration):
-    """The configuration class used for static sources"""
+class StaticSourceConnectionSettingsArguments(SourceInterfaceConnectionSettingsArguments):
+    class ConnectionArguments(BaseModel):
+        static: List[dict[str, Any]]
 
-    def __init__(self, **kwargs) -> None:
-        super().__init__(**kwargs)
+    type: Literal["Static"] = "Static"
+    connection: ConnectionArguments
 
 
 class StaticSourceConnectionSettings(SourceInterfaceConnectionSettings):
     """The connection configuration class used for static sources"""
-
-    # Arbitrary types are allowed since dataframe is not a pydantic type
-    model_config = ConfigDict(
-        arbitrary_types_allowed=True)
-
-    # Data source is saved as field in order to automatically validate against the schema
-    static: List[dict[str, Any]]
     data: DataFrame
 
-    @model_validator(mode='before')
-    def customize_fields(cls, values):
-        static = values.get('static', [])
-        values['data'] = DataFrame(static)
-        return values
+    def __init__(self, arguments: StaticSourceConnectionSettingsArguments):
+        super().__init__(arguments)
+        self.data = DataFrame(arguments.connection.static or [])
 
 
-@ register_source("static", StaticSourceConfiguration, StaticSourceConnectionSettings)
+@ register_source("static", SourceInterfaceConfiguration, StaticSourceConnectionSettings)
 class StaticSource(SourceInterface):
+    ConnectionSettingsArguments = StaticSourceConnectionSettingsArguments
     ConnectionSettingsClass = StaticSourceConnectionSettings
-    SourceConfigClass = StaticSourceConfiguration
 
     """ A source for static data """
 

@@ -1,32 +1,37 @@
-from typing import Annotated, List
+from typing import Annotated
 import polars as pl
-from pydantic import Field, model_validator
+from pydantic import Field
 from .interface import (
     register_source,
     SourceInterface,
     SourceInterfaceConfiguration,
-    SourceInterfaceConnectionSettings,
+    SourceInterfaceConnectionSettingsArguments,
+    SourceInterfaceConnectionSettings
 )
 
 
-class CsvSourceConfiguration(SourceInterfaceConfiguration):
-    """The configuration class used for static sources"""
-
-    def __init__(self, **extra):
-        super().__init__(**extra)
+class CsvSourceConnectionSettingsArguments(SourceInterfaceConnectionSettingsArguments):
+    path: Annotated[str, Field(min_length=1)]
+    encoding: Annotated[str, Field(default="utf-8")]
 
 
 class CsvSourceConnectionSettings(SourceInterfaceConnectionSettings):
     """The connection configuration class used for static sources"""
 
     path: str
-    encoding: Annotated[str, Field(default="utf-8")]
+    encoding: str
+
+    def __init__(self, arguments: CsvSourceConnectionSettingsArguments):
+        super().__init__(arguments)
+        self.path = arguments.path
+        self.encoding = arguments.encoding
 
 
-@register_source("csv", CsvSourceConfiguration, CsvSourceConnectionSettings)
+@register_source("csv", SourceInterfaceConfiguration, CsvSourceConnectionSettings)
 class CsvSource(SourceInterface):
+    ConnectionSettingsArguments = CsvSourceConnectionSettingsArguments
     ConnectionSettingsClass = CsvSourceConnectionSettings
-    SourceConfigClass = CsvSourceConfiguration
+    SourceConfigClass = SourceInterfaceConfiguration
 
     """ A source for static data """
 

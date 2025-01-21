@@ -1,14 +1,17 @@
 import os
 import json
+from typing import Annotated, Literal, Optional
 
 # import asyncio
-from pydantic import model_validator
+from pydantic import BaseModel, Field, model_validator
 import urllib3
 import polars as pl
 import requests
 import requests.adapters
 from alive_progress import alive_bar
 from .interface import (
+    SourceInterfaceConfigurationArguments,
+    SourceInterfaceConnectionSettingsArguments,
     register_source,
     SourceInterface,
     SourceInterfaceConfiguration,
@@ -30,53 +33,85 @@ DATAMODELS_WITHOUT_SOFT_DELETE = (
 )
 
 
+class SoftDeleteArguments(BaseModel):
+    enabled: Annotated[bool, Field(default=False)]
+    field: Annotated[str, Field(min_length=1, default="status")]
+    active_value: Annotated[str, Field(min_length=1, default="enabled")]
+    inactive_value: Annotated[str, Field(min_length=1, default="inactive")]
+
+    @model_validator(mode="before")
+    def transform_input(cls, values):
+        if not values["enabled"]:
+            values["enabled"] = False
+        return values
+
+
+class ItopSourceConfigurationArguments(SourceInterfaceConfigurationArguments):
+
+    datamodel: Annotated[str, Field(min_length=1)]
+    oql_key: Annotated[str, Field(min_length=1)]
+    soft_delete: Annotated[Optional[SoftDeleteArguments], Field(default=None)]
+    link_columns: Annotated[list[str], Field(default=[])]
+    comparison_columns: Annotated[list[str], Field(min_length=1)]
+    unique_columns: Annotated[list[str], Field(min_length=1)]
+    skip_columns: Annotated[Optional[list[str]], Field(default=[])]
+
+
 class ItopSourceConfiguration(SourceInterfaceConfiguration):
     """The configuration class used for iTop sources"""
 
-    datamodel: str = None
-    oql_key: str = None
-    soft_delete: dict = None
-    link_columns: list = None
-    comparison_columns: list = None
-    unique_columns: list = None
-    skip_columns: list = None
+    datamodel: str
+    oql_key: str
+    soft_delete: Optional[SoftDeleteArguments]
+    link_columns: list[str]
+    comparison_columns: list[str]
+    unique_columns: list[str]
+    skip_columns: list[str]
 
-    def __init__(
-        self,
-        datamodel: str = None,
-        oql_key: str = None,
-        soft_delete: dict = None,
-        comparison_columns: list = None,
-        unique_columns: list = None,
-        link_columns: list = [],
-        skip_columns: list = None,
-    ):
-        super().__init__()
-        self.datamodel = datamodel
-        self.oql_key = oql_key
+    def __init__(self, arguments: ItopSourceConfigurationArguments):
+        super().__init__(arguments)
 
-        if comparison_columns is None:
-            raise Exception("Comparison columns must be provided")
-        self.comparison_columns = comparison_columns
+        self.datamodel = arguments.datamodel
+        self.oql_key = arguments.oql_key
+        self.comparison_columns = arguments.comparison_columns
+        self.unique_columns = arguments.unique_columns
+        self.skip_columns = arguments.skip_columns
+        self.soft_delete = arguments.soft_delete
+        self.link_columns = arguments.link_columns
 
-        if unique_columns is None:
-            raise Exception("Unique columns must be provided")
-        self.unique_columns = unique_columns
-
-        self.skip_columns = skip_columns
-
-        if soft_delete is not None:
-            if (
-                soft_delete.get("enabled", False)
-                and datamodel in DATAMODELS_WITHOUT_SOFT_DELETE
-            ):
+        # TODO: This can be made redundant by adding the model to the soft delete and only allowing the values to be models that support soft delete
+        if arguments.soft_delete is not None:
+            soft_delete_not_supported = arguments.soft_delete.enabled and arguments.datamodel in DATAMODELS_WITHOUT_SOFT_DELETE
+            if soft_delete_not_supported:
                 raise Exception(
-                    f"Soft delete is not supported for {datamodel} datamodel"
+                    f"Soft delete is not supported for {arguments.datamodel} datamodel"
                 )
 
-        self.soft_delete = soft_delete
 
-        self.link_columns = link_columns
+class ItopSourceConnectionSettingsArguments(SourceInterfaceConnectionSettingsArguments):
+    class ItopConnectionArguments(BaseModel):
+        host: Annotated[str, Field(min_length=1)]
+        username: Annotated[str, Field(min_length=1)]
+        password: Annotated[str, Field(min_length=1)]
+        verify_ssl: Annotated[str, Field(default="true")]
+
+        @model_validator(mode="before")
+        def transform_input(cls, values):
+            settings: dict[str, str] = values.get("settings", {})
+            transformed_values: dict[str, str] = {}
+            transformed_values['host'] = settings.get("host", None)
+            transformed_values['username'] = settings.get("username", None)
+            transformed_values['password'] = settings.get("password", None)
+            transformed_values['verify_ssl'] = settings.get(
+                "verify_ssl", "true")
+
+            if type(transformed_values['verify_ssl']) is bool:
+                transformed_values['verify_ssl'] = str(
+                    transformed_values['verify_ssl']).lower()
+            return transformed_values
+
+    type: Literal["Itop"] = "Itop"
+    connection: ItopConnectionArguments
 
 
 class ItopSourceConnectionSettings(SourceInterfaceConnectionSettings):
@@ -87,20 +122,23 @@ class ItopSourceConnectionSettings(SourceInterfaceConnectionSettings):
     password: str
     verify_ssl: bool
 
-    @model_validator(mode='before')
-    def customize_fields(cls, values):
-        settings = values.get('settings', {})
-        values['host'] = settings.get('host')
-        values['username'] = settings.get('username')
-        values['password'] = settings.get('password')
-        values['verify_ssl'] = settings.get('verify_ssl', 'true') == 'true'
-        return values
+    def __init__(self, arguments: ItopSourceConnectionSettingsArguments):
+        super().__init__(arguments)
+        self.host = arguments.connection.host
+        self.username = arguments.connection.username
+        self.password = arguments.connection.password
+        self.verify_ssl = arguments.connection.verify_ssl == 'true'
 
 
 @ register_source("itop", ItopSourceConfiguration, ItopSourceConnectionSettings)
 class ItopSource(SourceInterface):
+    ConnectionSettingsArguments = ItopSourceConnectionSettingsArguments
     ConnectionSettingsClass = ItopSourceConnectionSettings
+    SourceConfigArguments = ItopSourceConfigurationArguments
     SourceConfigClass = ItopSourceConfiguration
+
+    source_configuration: ItopSourceConfiguration = None
+    connection_settings: ItopSourceConnectionSettings = None
     auth_data: dict = None
 
     """ A source for Combodo iTop Data data """
@@ -114,7 +152,7 @@ class ItopSource(SourceInterface):
         if self.source_configuration.soft_delete is None:
             return False
 
-        return self.source_configuration.soft_delete.get("enabled", False)
+        return self.source_configuration.soft_delete.enabled
 
     def _configure(self):
         self.auth_data = {
@@ -176,11 +214,11 @@ class ItopSource(SourceInterface):
         oql = self.source_configuration.oql_key
         if self.soft_delete_active():
             soft_delete = self.source_configuration.soft_delete
-            if f"{soft_delete.get('field', 'status').lower()}" not in oql.lower():
+            if f"{soft_delete.field.lower()}" not in oql.lower():
                 combining_word = "WHERE" if "WHERE" not in oql.upper() else "AND"
                 oql += (
-                    f" {combining_word} {soft_delete.get('field', 'status')} "
-                    + f"= '{soft_delete.get('active_value', 'enabled')}'"
+                    f" {combining_word} {soft_delete.field} "
+                    + f"= '{soft_delete.active_value}'"
                 )
 
         all_colums = (
@@ -437,9 +475,8 @@ class ItopSource(SourceInterface):
 
             deleteData = deleteData.with_columns(
                 pl.Series(
-                    soft_delete.get("field", "status"),
-                    [soft_delete.get("inactive_value", "inactive")
-                     ] * len(deleteData),
+                    soft_delete.field,
+                    [soft_delete.inactive_value] * len(deleteData),
                 )
             )
             deleteFunc = self.update_item

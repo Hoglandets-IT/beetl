@@ -27,7 +27,7 @@ class MongoDBSourceConfiguration(SourceInterfaceConfiguration):
 
 class MongoDBSourceConnectionSettings(SourceInterfaceConnectionSettings):
     """The connection configuration class used for MongoDB sources"""
-    connection_string: str
+    connection_string: Annotated[str, Field(min_length=1)]
     query: str = None
     database: str = None
 

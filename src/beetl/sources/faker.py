@@ -1,39 +1,31 @@
-from typing import Annotated, Any, Optional
+from typing import Any
 from polars import DataFrame as POLARS_DF
-from pydantic import ConfigDict, Field, model_validator
 from .interface import (
     SourceInterface,
     SourceInterfaceConfiguration,
     SourceInterfaceConnectionSettings,
+    SourceInterfaceConnectionSettingsArguments,
     register_source,
 )
 
 
-class FakerSourceConfiguration(SourceInterfaceConfiguration):
-    def __init__(self, **extra):
-        super().__init__(**extra)
+class FakerSourceConnectionSettingsArguments(SourceInterfaceConnectionSettingsArguments):
+    faker: list[dict[str, Any]]
 
 
 class FakerSourceConnectionSettings(SourceInterfaceConnectionSettings):
     """The connection configuration class used for faker sources"""
-
-    # Arbitrary types are allow since dataframe is not a pydantic type
-    model_config = ConfigDict(arbitrary_types_allowed=True)
-
-    faker: Annotated[list[dict[str, Any]], Field(min_length=1)]
     data: POLARS_DF
 
-    @model_validator(mode='before')
-    def customize_fields(cls, values):
-        faker = values.get('faker', [])
-        values['data'] = POLARS_DF(faker)
-        return values
+    def __init__(self, arguments: FakerSourceConnectionSettingsArguments):
+        super().__init__(arguments)
+        self.data = POLARS_DF(arguments.faker or [])
 
 
-@register_source("faker", FakerSourceConfiguration, FakerSourceConnectionSettings)
+@register_source("faker", SourceInterfaceConfiguration, FakerSourceConnectionSettings)
 class FakerSource(SourceInterface):
+    ConnectionSettingsArguments = FakerSourceConnectionSettingsArguments
     ConnectionSettingsClass = FakerSourceConnectionSettings
-    SourceConfigClass = FakerSourceConfiguration
 
     """ A source for faker data """
 
