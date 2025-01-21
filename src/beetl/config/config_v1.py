@@ -2,8 +2,11 @@
 import copy
 import json
 import os
-from pydantic import BaseModel, ConfigDict, Field
-from typing import Annotated, Any, List, Literal
+from pydantic import BaseModel, Field, TypeAdapter, model_validator, ValidationError
+from typing import Annotated, Any, List, Literal, Union
+
+from ..sources.itop import ItopSource, ItopSourceConnectionSettingsArguments
+from ..sources.static import StaticSource, StaticSourceConnectionSettingsArguments
 from ..transformers.interface import TransformerConfiguration
 from .config_base import BeetlConfig, ComparisonColumn, SyncConfiguration
 
@@ -14,10 +17,51 @@ class BeetlConfigSchemaSourceV1(BaseModel):
                   "Mysql", "Postgres", "Rest", "Sqlserver", "Static"]
 
 
+TYPE_TO_SOURCE = {
+    "Static": StaticSource,
+    "Itop": ItopSource
+}
+
+Sources = List[Union[StaticSourceConnectionSettingsArguments,
+               ItopSourceConnectionSettingsArguments]]
+
+
 class BeetlConfigSchemaV1(BaseModel):
     version: Literal["V1"]
-    sources: Annotated[List[BeetlConfigSchemaSourceV1], Field(min_length=1)]
+    sources: Annotated[Sources, Field(min_items=1)]
     sync: List[Any]
+
+    @ model_validator(mode='before')
+    def validate_sources(cls, values):
+        sources = values.get('sources', [])
+        validated_sources = []
+        errors = []
+        for i, source in enumerate(sources):
+            source_type = source.get('type')
+            try:
+                source_class = TYPE_TO_SOURCE.get(source_type, None)
+                if source_class is None:
+                    raise ValueError(
+                        f"sources.{i}.type \"{source_type}\" is not recognized, valid sources are {list(TYPE_TO_SOURCE.keys())}")
+                # TODO: Continue here
+                source_class.(**source)
+                if source_type == 'Static':
+                    validated_sources.append(
+                        StaticSourceConnectionSettingsArguments(**source))
+                elif source_type == 'Itop':
+                    validated_sources.append(
+                        ItopSourceConnectionSettingsArguments(**source))
+                else:
+                    raise ValidationError(
+                        f"Unsupported source type: {source_type}")
+            except ValidationError as e:
+                for error in e.errors():
+                    error['loc'] = ('sources', i) + error['loc']
+                    errors.append(error)
+        if errors:
+            raise ValidationError.from_exception_data(cls.__name__, errors)
+        values['sources'] = validated_sources
+        return values
 
 
 class BeetlConfigV1(BeetlConfig):
@@ -29,7 +73,7 @@ class BeetlConfigV1(BeetlConfig):
         if not config.get("sources", []):
             config["sources"] = self.read_sources_from_env(config)
 
-        BeetlConfigSchemaV1.model_validate(config)
+        BeetlConfigSchemaV1(**config)
 
         self.sources = self.initialize_sources(config)
 
@@ -149,8 +193,8 @@ class BeetlConfigV1(BeetlConfig):
     def initialize_sources(self, config):
         sources = {}
         for source in config["sources"]:
-            name = source.pop("name")
-            source_type = source.pop("type")
+            name = source["name"]
+            source_type = source["type"]
             source_module = __import__(
                 ".".join(
                     self.__module__.split(".")[0:-2]
@@ -165,7 +209,7 @@ class BeetlConfigV1(BeetlConfig):
                     f"The source type '{source_type}' used in source '{name}' is not a valid source type."
                 ) from e
 
-            sources[name] = source_class(**source)
+            sources[name] = source_class(source)
         return sources
 
     def read_sources_from_env(self, config):
