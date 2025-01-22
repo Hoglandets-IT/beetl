@@ -52,22 +52,6 @@ class RequestThreader:
             yield result
 
 
-def register_source(name: str, configuration: type, connection_settings: type):
-    def wrapper(cls: type):
-        Sources.sources[name] = {
-            "class": cls,
-            "configuration": configuration,
-            "connection_settings": connection_settings,
-        }
-        return cls
-
-    return wrapper
-
-
-class Sources:
-    sources: dict = {}
-
-
 @dataclass
 class ColumnDefinition:
     """The definition of a column in a dataset.
@@ -100,7 +84,7 @@ class SourceInterfaceConfiguration:
         pass
 
 
-class SourceInterfaceConnectionSettingsArguments(pydantic.BaseModel):
+class InterfaceSourceArguments(pydantic.BaseModel):
     """Class representation of the source connection settings in the beetl config. Used to validate the source configuration settings using pydantic."""
     model_config = pydantic.ConfigDict(extra='forbid')
     name: Annotated[str, pydantic.Field(min_length=1)]
@@ -110,13 +94,13 @@ class SourceInterfaceConnectionSettingsArguments(pydantic.BaseModel):
 
 class SourceInterfaceConnectionSettings():
     """The connection configuration class used for data sources, abstract"""
-    def __init__(cls, arguments: SourceInterfaceConnectionSettingsArguments):
+    def __init__(cls, arguments: InterfaceSourceArguments):
         pass
 
 
 class SourceInterface:
     ConnectionSettingsClass = SourceInterfaceConnectionSettings
-    ConnectionSettingsArguments = SourceInterfaceConnectionSettingsArguments
+    ConnectionSettingsArguments = InterfaceSourceArguments
     SourceConfigClass = SourceInterfaceConfiguration
     SourceConfigArguments = SourceInterfaceConfigurationArguments
 
@@ -227,3 +211,30 @@ class SourceInterface:
             data (pl.DataFrame): The data to delete
         """
         raise NotImplementedError
+
+
+class RegistratedSource:
+    name: str
+    cls: SourceInterface
+    configuration: SourceInterfaceConfiguration
+    connection_settings: SourceInterfaceConnectionSettings
+
+    def __init__(self, name: str, cls: SourceInterface, configuration: SourceInterfaceConfiguration, connection_settings: SourceInterfaceConnectionSettings):
+        self.name = name
+        self.cls = cls
+        self.configuration = configuration
+        self.connection_settings = connection_settings
+
+
+def register_source(name: str, configuration: type, connection_settings: type):
+    def wrapper(cls: type):
+        Sources.sources[name] = RegistratedSource(
+            name, cls, configuration, connection_settings)
+
+        return cls
+
+    return wrapper
+
+
+class Sources:
+    sources: dict[str, RegistratedSource] = {}

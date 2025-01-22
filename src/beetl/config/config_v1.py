@@ -5,35 +5,24 @@ import os
 from pydantic import BaseModel, Field, model_validator, ValidationError
 from typing import Annotated, Any, List, Literal, Union
 
-# TODO: Probably move imports to the __init__.py of sources
-from ..sources.mongodb import MongodbSource, MongoDBSourceConnectionSettingsAttributes
-from ..sources.interface import SourceInterface
-from ..sources.itop import ItopSource, ItopSourceConnectionSettingsArguments
-from ..sources.static import StaticSource, StaticSourceConnectionSettingsArguments
 from ..transformers.interface import TransformerConfiguration
 from .config_base import BeetlConfig, ComparisonColumn, SyncConfiguration
+from ..sources import Sources, CsvSourceArguments, FakerSourceArguments, MongoDBSourceArguments, ItopSourceArguments, StaticSourceArguments, MysqlSourceArguments
 
 
-class BeetlConfigSchemaSourceV1(BaseModel):
-    name: str
-    type: Literal["Csv", "Faker", "Itop", "Mongodb",
-                  "Mysql", "Postgres", "Rest", "Sqlserver", "Static"]
-
-
-# TODO: This can probably be a dict where sources register them selves just like transformers
-TYPE_TO_SOURCE: dict[str, SourceInterface] = {
-    "Static": StaticSource,
-    "Itop": ItopSource,
-    "Mongodb": MongodbSource
-}
-
-Sources = List[Union[StaticSourceConnectionSettingsArguments,
-               ItopSourceConnectionSettingsArguments, MongoDBSourceConnectionSettingsAttributes]]
+SourceConfigs = List[Union[(
+    StaticSourceArguments,
+    ItopSourceArguments,
+    MongoDBSourceArguments,
+    CsvSourceArguments,
+    FakerSourceArguments,
+    MysqlSourceArguments
+)]]
 
 
 class BeetlConfigSchemaV1(BaseModel):
     version: Literal["V1"]
-    sources: Annotated[Sources, Field(min_items=1)]
+    sources: Annotated[SourceConfigs, Field(min_items=1)]
     sync: List[Any]
 
     @ model_validator(mode='before')
@@ -45,14 +34,14 @@ class BeetlConfigSchemaV1(BaseModel):
             source_type = source.get('type', None)
             if source_type is None:
                 raise ValueError(
-                    f"sources.{i}.type is missing, valid sources are {list(TYPE_TO_SOURCE.keys())}")
+                    f"sources.{i}.type is missing, valid sources are {list(Sources.sources.keys())}")
             try:
-                source_class = TYPE_TO_SOURCE.get(
+                registrated_source = Sources.sources.get(
                     source_type, None)
-                if source_class is None:
+                if registrated_source is None:
                     raise ValueError(
-                        f"sources.{i}.type \"{source_type}\" is not recognized, valid sources are {list(TYPE_TO_SOURCE.keys())}")
-                source_class.ConnectionSettingsArguments(**source)
+                        f"sources.{i}.type \"{source_type}\" is not recognized, valid sources are {list(Sources.sources.keys())}")
+                registrated_source.cls.ConnectionSettingsArguments(**source)
             except ValidationError as e:
                 # Mutatate the location so that it is absolute to the sources position in the configuration
                 for error in e.errors():

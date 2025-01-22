@@ -76,7 +76,7 @@ class UnitTestBeetlConfig(unittest.TestCase):
         self.assertEqual(name.type, Utf8)
         self.assertFalse(name.unique)
 
-    def test_config_validation__v1_static__does_not_throw(self):
+    def test_that_version_1_supports_static_source(self):
         result = BeetlConfig({
             "version": "V1",
             "sources": [
@@ -128,7 +128,7 @@ class UnitTestBeetlConfig(unittest.TestCase):
         }
         )
 
-    def test_config_validation_V1__Mongodb(self):
+    def test_that_version_1_supports_mongodb_source(self):
         result = BeetlConfig({
             "version": "V1",
             "sources": [
@@ -137,10 +137,7 @@ class UnitTestBeetlConfig(unittest.TestCase):
                     "type": "Mongodb",
                     "connection": {
                         "database": "test",
-                        "host": "localhost",
-                        "port": "27017",
-                        "username": "root",
-                        "password": "root",
+                        "connection_string": "mongodb://localhost:27017",
                     },
                 },
                 {
@@ -164,6 +161,13 @@ class UnitTestBeetlConfig(unittest.TestCase):
                     },
                     "destinationConfig": {
                         "collection": "test",
+                        "filter": {
+                            "name": "John",
+                        },
+                        "projection": {
+                            "name": 1,
+                        },
+                        "uniqueFields": ["id"],
                     },
                     "comparisonColumns": {
                         "id": "Int64"
@@ -175,3 +179,114 @@ class UnitTestBeetlConfig(unittest.TestCase):
             ],
         }
         )
+
+    def test_that_version_1_supports_csv_source(self):
+        result = BeetlConfig({
+            "version": "V1",
+            "sources": [
+                {
+                    "name": "src",
+                    "type": "Csv",
+                    "connection": {
+                        "path": "test.csv",
+                    },
+                },
+                {
+                    "name": "dst",
+                    "type": "Csv",
+                    "connection": {
+                        "path": "test.csv",
+                    },
+                },
+            ],
+            "sync": [
+                {
+                    "source": "src",
+                    "destination": "dst",
+                    "sourceConfig": {
+                    },
+                    "destinationConfig": {
+                    },
+                    "comparisonColumns": {
+                        "id": "Int64"
+                    },
+                    "sourceTransformers": [],
+                    "destinationTransformers": [],
+                    "insertionTransformers": [],
+                }
+            ],
+        }
+        )
+
+    def test_that_version_1_supports_faker_source(self):
+        result = BeetlConfig({
+            "version": "V1",
+            "sources": [
+                {
+                    "name": "src",
+                    "type": "Faker",
+                    "connection": {
+                        "faker": []
+                    },
+                },
+                {
+                    "name": "dst",
+                    "type": "Faker",
+                    "connection": {
+                        "faker": []
+                    },
+                },
+            ],
+            "sync": [
+                {
+                    "source": "src",
+                    "destination": "dst",
+                    "sourceConfig": {
+                    },
+                    "destinationConfig": {
+                    },
+                    "comparisonColumns": {
+                        "id": "Int64"
+                    },
+                    "sourceTransformers": [],
+                    "destinationTransformers": [],
+                    "insertionTransformers": [],
+                }
+            ],
+        }
+        )
+
+    def test_that_version_1_supports_mysql_source(self):
+        result = BeetlConfig({
+            "version": "V1",
+            "sources": [
+                {
+                    "name": "src",
+                    "type": "Mysql",
+                    "connection": {
+                    },
+                },
+                {
+                    "name": "dst",
+                    "type": "Mysql",
+                    "connection": {
+                    },
+                },
+            ],
+            "sync": [
+                {
+                    "source": "src",
+                    "destination": "dst",
+                    "sourceConfig": {
+                    },
+                    "destinationConfig": {
+                    },
+                    "comparisonColumns": {
+                        "id": "Int64"
+                    },
+                    "sourceTransformers": [],
+                    "destinationTransformers": [],
+                    "insertionTransformers": [],
+                }
+            ],
+        })

@@ -5,12 +5,12 @@ from .interface import (
     SourceInterface,
     SourceInterfaceConfiguration,
     SourceInterfaceConnectionSettings,
-    SourceInterfaceConnectionSettingsArguments,
+    InterfaceSourceArguments,
     register_source,
 )
 
 
-class FakerSourceConnectionSettingsArguments(SourceInterfaceConnectionSettingsArguments):
+class FakerSourceArguments(InterfaceSourceArguments):
     class FakerConnectionArguments(BaseModel):
         model_config = ConfigDict(extra='forbid')
 
@@ -24,20 +24,20 @@ class FakerSourceConnectionSettings(SourceInterfaceConnectionSettings):
     """The connection configuration class used for faker sources"""
     data: POLARS_DF
 
-    def __init__(self, arguments: FakerSourceConnectionSettingsArguments):
+    def __init__(self, arguments: FakerSourceArguments):
         super().__init__(arguments)
         self.data = POLARS_DF(arguments.connection.faker or [])
 
 
-@register_source("faker", SourceInterfaceConfiguration, FakerSourceConnectionSettings)
+@register_source("Faker", SourceInterfaceConfiguration, FakerSourceConnectionSettings)
 class FakerSource(SourceInterface):
-    ConnectionSettingsArguments = FakerSourceConnectionSettingsArguments
+    ConnectionSettingsArguments = FakerSourceArguments
     ConnectionSettingsClass = FakerSourceConnectionSettings
 
     """ A source for faker data """
 
     def _configure(self):
-        raise Exception("Not yet implemented")
+        pass
 
     def _connect(self):
         pass

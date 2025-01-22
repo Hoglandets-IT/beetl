@@ -5,12 +5,12 @@ from .interface import (
     register_source,
     SourceInterface,
     SourceInterfaceConfiguration,
-    SourceInterfaceConnectionSettingsArguments,
+    InterfaceSourceArguments,
     SourceInterfaceConnectionSettings
 )
 
 
-class CsvSourceConnectionSettingsArguments(SourceInterfaceConnectionSettingsArguments):
+class CsvSourceArguments(InterfaceSourceArguments):
     class CsvConnectionArguments(BaseModel):
         model_config = ConfigDict(extra='forbid')
 
@@ -27,15 +27,15 @@ class CsvSourceConnectionSettings(SourceInterfaceConnectionSettings):
     path: str
     encoding: str
 
-    def __init__(self, arguments: CsvSourceConnectionSettingsArguments):
+    def __init__(self, arguments: CsvSourceArguments):
         super().__init__(arguments)
         self.path = arguments.connection.path
         self.encoding = arguments.connection.encoding
 
 
-@register_source("csv", SourceInterfaceConfiguration, CsvSourceConnectionSettings)
+@register_source("Csv", SourceInterfaceConfiguration, CsvSourceConnectionSettings)
 class CsvSource(SourceInterface):
-    ConnectionSettingsArguments = CsvSourceConnectionSettingsArguments
+    ConnectionSettingsArguments = CsvSourceArguments
     ConnectionSettingsClass = CsvSourceConnectionSettings
     SourceConfigClass = SourceInterfaceConfiguration
 

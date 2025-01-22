@@ -6,11 +6,11 @@ from .interface import (
     SourceInterface,
     SourceInterfaceConfiguration,
     SourceInterfaceConnectionSettings,
-    SourceInterfaceConnectionSettingsArguments
+    InterfaceSourceArguments
 )
 
 
-class StaticSourceConnectionSettingsArguments(SourceInterfaceConnectionSettingsArguments):
+class StaticSourceArguments(InterfaceSourceArguments):
     class ConnectionArguments(BaseModel):
         static: List[dict[str, Any]]
 
@@ -22,14 +22,14 @@ class StaticSourceConnectionSettings(SourceInterfaceConnectionSettings):
     """The connection configuration class used for static sources"""
     data: DataFrame
 
-    def __init__(self, arguments: StaticSourceConnectionSettingsArguments):
+    def __init__(self, arguments: StaticSourceArguments):
         super().__init__(arguments)
         self.data = DataFrame(arguments.connection.static or [])
 
 
 @ register_source("static", SourceInterfaceConfiguration, StaticSourceConnectionSettings)
 class StaticSource(SourceInterface):
-    ConnectionSettingsArguments = StaticSourceConnectionSettingsArguments
+    ConnectionSettingsArguments = StaticSourceArguments
     ConnectionSettingsClass = StaticSourceConnectionSettings
 
     """ A source for static data """

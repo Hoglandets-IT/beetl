@@ -42,7 +42,7 @@ class MysqlSourceConnectionSettings(SourceInterfaceConnectionSettings):
         f"@{settings['host']}:{settings['port']}/{settings['database']}"
 
 
-@register_source("mysql", MysqlSourceConfiguration, MysqlSourceConnectionSettings)
+@register_source("Mysql", MysqlSourceConfiguration, MysqlSourceConnectionSettings)
 class MysqlSource(SourceInterface):
     ConnectionSettingsClass = MysqlSourceConnectionSettings
     SourceConfigClass = MysqlSourceConfiguration

@@ -3,7 +3,7 @@ from polars import DataFrame, Object
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 from .interface import (
     SourceInterfaceConfigurationArguments,
-    SourceInterfaceConnectionSettingsArguments,
+    InterfaceSourceArguments,
     register_source,
     SourceInterface,
     SourceInterfaceConfiguration,
@@ -35,7 +35,7 @@ class MongoDBSourceConfiguration(SourceInterfaceConfiguration):
         self.unique_fields = arguments.uniqueFields
 
 
-class MongoDBSourceConnectionSettingsAttributes(SourceInterfaceConnectionSettingsArguments):
+class MongoDBSourceArguments(InterfaceSourceArguments):
     class MongoDBConnectionArguments(BaseModel):
         model_config = ConfigDict(extra='forbid')
 
@@ -48,7 +48,7 @@ class MongoDBSourceConnectionSettingsAttributes(SourceInterfaceConnectionSetting
         database: Annotated[str, Field(min_length=1)]
 
         @ model_validator(mode="after")
-        def validate_connection_string_or_components(cls, instance: "MongoDBSourceConnectionSettingsAttributes.MongoDBConnectionArguments"):
+        def validate_connection_string_or_components(cls, instance: "MongoDBSourceArguments.MongoDBConnectionArguments"):
             connection_string_is_not_present = not instance.connection_string
             connection_string_components = [
                 "host", "port", "username", "password"]
@@ -71,7 +71,7 @@ class MongoDBSourceConnectionSettings(SourceInterfaceConnectionSettings):
     query: Optional[str] = None
     database: str
 
-    def __init__(self, arguments: MongoDBSourceConnectionSettingsAttributes):
+    def __init__(self, arguments: MongoDBSourceArguments):
         super().__init__(arguments)
 
         if not arguments.connection.connection_string:
@@ -81,9 +81,9 @@ class MongoDBSourceConnectionSettings(SourceInterfaceConnectionSettings):
         self.database = arguments.connection.database
 
 
-@ register_source("mongodb", MongoDBSourceConfiguration, MongoDBSourceConnectionSettings)
+@ register_source("Mongodb", MongoDBSourceConfiguration, MongoDBSourceConnectionSettings)
 class MongodbSource(SourceInterface):
-    ConnectionSettingsArguments = MongoDBSourceConnectionSettingsAttributes
+    ConnectionSettingsArguments = MongoDBSourceArguments
     ConnectionSettingsClass = MongoDBSourceConnectionSettings
     SourceConfigArguments = MongoDBSourceConfigurationArguments
     SourceConfigClass = MongoDBSourceConfiguration

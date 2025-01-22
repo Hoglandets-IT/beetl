@@ -11,7 +11,7 @@ import requests.adapters
 from alive_progress import alive_bar
 from .interface import (
     SourceInterfaceConfigurationArguments,
-    SourceInterfaceConnectionSettingsArguments,
+    InterfaceSourceArguments,
     register_source,
     SourceInterface,
     SourceInterfaceConfiguration,
@@ -88,7 +88,7 @@ class ItopSourceConfiguration(SourceInterfaceConfiguration):
                 )
 
 
-class ItopSourceConnectionSettingsArguments(SourceInterfaceConnectionSettingsArguments):
+class ItopSourceArguments(InterfaceSourceArguments):
     class ItopConnectionArguments(BaseModel):
         model_config = ConfigDict(extra='forbid')
 
@@ -124,7 +124,7 @@ class ItopSourceConnectionSettings(SourceInterfaceConnectionSettings):
     password: str
     verify_ssl: bool
 
-    def __init__(self, arguments: ItopSourceConnectionSettingsArguments):
+    def __init__(self, arguments: ItopSourceArguments):
         super().__init__(arguments)
         self.host = arguments.connection.host
         self.username = arguments.connection.username
@@ -132,9 +132,9 @@ class ItopSourceConnectionSettings(SourceInterfaceConnectionSettings):
         self.verify_ssl = arguments.connection.verify_ssl == 'true'
 
 
-@ register_source("itop", ItopSourceConfiguration, ItopSourceConnectionSettings)
+@ register_source("Itop", ItopSourceConfiguration, ItopSourceConnectionSettings)
 class ItopSource(SourceInterface):
-    ConnectionSettingsArguments = ItopSourceConnectionSettingsArguments
+    ConnectionSettingsArguments = ItopSourceArguments
     ConnectionSettingsClass = ItopSourceConnectionSettings
     SourceConfigArguments = ItopSourceConfigurationArguments
     SourceConfigClass = ItopSourceConfiguration
