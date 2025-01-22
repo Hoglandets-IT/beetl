@@ -1,6 +1,6 @@
-from typing import Annotated
+from typing import Annotated, Literal
 import polars as pl
-from pydantic import Field
+from pydantic import BaseModel, ConfigDict, Field
 from .interface import (
     register_source,
     SourceInterface,
@@ -11,8 +11,14 @@ from .interface import (
 
 
 class CsvSourceConnectionSettingsArguments(SourceInterfaceConnectionSettingsArguments):
-    path: Annotated[str, Field(min_length=1)]
-    encoding: Annotated[str, Field(default="utf-8")]
+    class CsvConnectionArguments(BaseModel):
+        model_config = ConfigDict(extra='forbid')
+
+        path: Annotated[str, Field(min_length=1)]
+        encoding: Annotated[str, Field(default="utf-8")]
+
+    type: Annotated[Literal["Csv"], Field(default="Csv")] = "Csv"
+    connection: CsvConnectionArguments
 
 
 class CsvSourceConnectionSettings(SourceInterfaceConnectionSettings):
@@ -23,8 +29,8 @@ class CsvSourceConnectionSettings(SourceInterfaceConnectionSettings):
 
     def __init__(self, arguments: CsvSourceConnectionSettingsArguments):
         super().__init__(arguments)
-        self.path = arguments.path
-        self.encoding = arguments.encoding
+        self.path = arguments.connection.path
+        self.encoding = arguments.connection.encoding
 
 
 @register_source("csv", SourceInterfaceConfiguration, CsvSourceConnectionSettings)

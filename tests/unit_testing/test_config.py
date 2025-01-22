@@ -76,7 +76,7 @@ class UnitTestBeetlConfig(unittest.TestCase):
         self.assertEqual(name.type, Utf8)
         self.assertFalse(name.unique)
 
-    def test_config_validation__WIP(self):
+    def test_config_validation__v1_static__does_not_throw(self):
         result = BeetlConfig({
             "version": "V1",
             "sources": [
@@ -84,7 +84,7 @@ class UnitTestBeetlConfig(unittest.TestCase):
                     "name": "staticsrc",
                     "type": "Static",
                     "connection": {
-                        "sttatic": [
+                        "static": [
                             {"id": 1, "name": "John", "email": "john@test.com"},
                         ],
                     },
@@ -120,6 +120,54 @@ class UnitTestBeetlConfig(unittest.TestCase):
                             "type": "Utf8",
                         },
                     ],
+                    "sourceTransformers": [],
+                    "destinationTransformers": [],
+                    "insertionTransformers": [],
+                }
+            ],
+        }
+        )
+
+    def test_config_validation_V1__Mongodb(self):
+        result = BeetlConfig({
+            "version": "V1",
+            "sources": [
+                {
+                    "name": "src",
+                    "type": "Mongodb",
+                    "connection": {
+                        "database": "test",
+                        "host": "localhost",
+                        "port": "27017",
+                        "username": "root",
+                        "password": "root",
+                    },
+                },
+                {
+                    "name": "dst",
+                    "type": "Mongodb",
+                    "connection": {
+                        "database": "test",
+                        "host": "localhost",
+                        "port": "27017",
+                        "username": "root",
+                        "password": "root",
+                    },
+                },
+            ],
+            "sync": [
+                {
+                    "source": "src",
+                    "destination": "dst",
+                    "sourceConfig": {
+                        "collection": "test",
+                    },
+                    "destinationConfig": {
+                        "collection": "test",
+                    },
+                    "comparisonColumns": {
+                        "id": "Int64"
+                    },
                     "sourceTransformers": [],
                     "destinationTransformers": [],
                     "insertionTransformers": [],

@@ -2,9 +2,12 @@
 import copy
 import json
 import os
-from pydantic import BaseModel, Field, TypeAdapter, model_validator, ValidationError
+from pydantic import BaseModel, Field, model_validator, ValidationError
 from typing import Annotated, Any, List, Literal, Union
 
+# TODO: Probably move imports to the __init__.py of sources
+from ..sources.mongodb import MongodbSource, MongoDBSourceConnectionSettingsAttributes
+from ..sources.interface import SourceInterface
 from ..sources.itop import ItopSource, ItopSourceConnectionSettingsArguments
 from ..sources.static import StaticSource, StaticSourceConnectionSettingsArguments
 from ..transformers.interface import TransformerConfiguration
@@ -17,13 +20,15 @@ class BeetlConfigSchemaSourceV1(BaseModel):
                   "Mysql", "Postgres", "Rest", "Sqlserver", "Static"]
 
 
-TYPE_TO_SOURCE = {
+# TODO: This can probably be a dict where sources register them selves just like transformers
+TYPE_TO_SOURCE: dict[str, SourceInterface] = {
     "Static": StaticSource,
-    "Itop": ItopSource
+    "Itop": ItopSource,
+    "Mongodb": MongodbSource
 }
 
 Sources = List[Union[StaticSourceConnectionSettingsArguments,
-               ItopSourceConnectionSettingsArguments]]
+               ItopSourceConnectionSettingsArguments, MongoDBSourceConnectionSettingsAttributes]]
 
 
 class BeetlConfigSchemaV1(BaseModel):
@@ -33,39 +38,41 @@ class BeetlConfigSchemaV1(BaseModel):
 
     @ model_validator(mode='before')
     def validate_sources(cls, values):
+        """Makes sure that each source configuration is only validated against one source type, the one that matches the 'type' field"""
         sources = values.get('sources', [])
-        validated_sources = []
         errors = []
         for i, source in enumerate(sources):
-            source_type = source.get('type')
+            source_type = source.get('type', None)
+            if source_type is None:
+                raise ValueError(
+                    f"sources.{i}.type is missing, valid sources are {list(TYPE_TO_SOURCE.keys())}")
             try:
-                source_class = TYPE_TO_SOURCE.get(source_type, None)
+                source_class = TYPE_TO_SOURCE.get(
+                    source_type, None)
                 if source_class is None:
                     raise ValueError(
                         f"sources.{i}.type \"{source_type}\" is not recognized, valid sources are {list(TYPE_TO_SOURCE.keys())}")
-                # TODO: Continue here
-                source_class.(**source)
-                if source_type == 'Static':
-                    validated_sources.append(
-                        StaticSourceConnectionSettingsArguments(**source))
-                elif source_type == 'Itop':
-                    validated_sources.append(
-                        ItopSourceConnectionSettingsArguments(**source))
-                else:
-                    raise ValidationError(
-                        f"Unsupported source type: {source_type}")
+                source_class.ConnectionSettingsArguments(**source)
             except ValidationError as e:
+                # Mutatate the location so that it is absolute to the sources position in the configuration
                 for error in e.errors():
                     error['loc'] = ('sources', i) + error['loc']
                     errors.append(error)
         if errors:
             raise ValidationError.from_exception_data(cls.__name__, errors)
-        values['sources'] = validated_sources
         return values
 
 
 class BeetlConfigV1(BeetlConfig):
     """Version 1 of the Beetl Configuration Interface"""
+
+    @staticmethod
+    def generate_jsonschema() -> str:
+        return json.dumps(BeetlConfigSchemaV1.model_json_schema())
+
+    @staticmethod
+    def validate_config(config: dict):
+        BeetlConfigSchemaV1(**config)
 
     def __init__(self, config: dict):
         self.sources, self.sync_list = {}, []
@@ -73,7 +80,7 @@ class BeetlConfigV1(BeetlConfig):
         if not config.get("sources", []):
             config["sources"] = self.read_sources_from_env(config)
 
-        BeetlConfigSchemaV1(**config)
+        BeetlConfigV1.validate_config(config)
 
         self.sources = self.initialize_sources(config)
 

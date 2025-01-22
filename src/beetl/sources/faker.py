@@ -1,5 +1,6 @@
-from typing import Any
+from typing import Annotated, Any, Literal
 from polars import DataFrame as POLARS_DF
+from pydantic import BaseModel, ConfigDict, Field
 from .interface import (
     SourceInterface,
     SourceInterfaceConfiguration,
@@ -10,7 +11,13 @@ from .interface import (
 
 
 class FakerSourceConnectionSettingsArguments(SourceInterfaceConnectionSettingsArguments):
-    faker: list[dict[str, Any]]
+    class FakerConnectionArguments(BaseModel):
+        model_config = ConfigDict(extra='forbid')
+
+        faker: list[dict[str, Any]]
+
+    type: Annotated[Literal["Faker"], Field(default="Faker")] = "Faker"
+    connection: FakerConnectionArguments
 
 
 class FakerSourceConnectionSettings(SourceInterfaceConnectionSettings):
@@ -19,7 +26,7 @@ class FakerSourceConnectionSettings(SourceInterfaceConnectionSettings):
 
     def __init__(self, arguments: FakerSourceConnectionSettingsArguments):
         super().__init__(arguments)
-        self.data = POLARS_DF(arguments.faker or [])
+        self.data = POLARS_DF(arguments.connection.faker or [])
 
 
 @register_source("faker", SourceInterfaceConfiguration, FakerSourceConnectionSettings)

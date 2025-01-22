@@ -3,7 +3,7 @@ import json
 from typing import Annotated, Literal, Optional
 
 # import asyncio
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 import urllib3
 import polars as pl
 import requests
@@ -90,6 +90,8 @@ class ItopSourceConfiguration(SourceInterfaceConfiguration):
 
 class ItopSourceConnectionSettingsArguments(SourceInterfaceConnectionSettingsArguments):
     class ItopConnectionArguments(BaseModel):
+        model_config = ConfigDict(extra='forbid')
+
         host: Annotated[str, Field(min_length=1)]
         username: Annotated[str, Field(min_length=1)]
         password: Annotated[str, Field(min_length=1)]
@@ -110,7 +112,7 @@ class ItopSourceConnectionSettingsArguments(SourceInterfaceConnectionSettingsArg
                     transformed_values['verify_ssl']).lower()
             return transformed_values
 
-    type: Literal["Itop"] = "Itop"
+    type: Annotated[Literal["Itop"], Field(default="Itop")] = "Itop"
     connection: ItopConnectionArguments
 
 

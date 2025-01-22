@@ -1,13 +1,23 @@
-from typing import Annotated, List, Optional
+from typing import Annotated, Any, List, Literal, Optional
 from polars import DataFrame, Object
-from pydantic import Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 from .interface import (
+    SourceInterfaceConfigurationArguments,
+    SourceInterfaceConnectionSettingsArguments,
     register_source,
     SourceInterface,
     SourceInterfaceConfiguration,
     SourceInterfaceConnectionSettings,
 )
 from pymongo import MongoClient, UpdateOne, DeleteOne
+
+
+class MongoDBSourceConfigurationArguments(SourceInterfaceConfigurationArguments):
+    collection: str
+    filter: Annotated[Optional[dict[str, Any]], Field(default={})]
+    projection: Annotated[Optional[dict[str, int]], Field(default={})]
+    uniqueFields: Annotated[Optional[List[str]], Field(
+        default=[], description="Required when used as a destination")]
 
 
 class MongoDBSourceConfiguration(SourceInterfaceConfiguration):
@@ -17,55 +27,65 @@ class MongoDBSourceConfiguration(SourceInterfaceConfiguration):
     projection: dict = None
     unique_fields: List[str] = None
 
-    def __init__(self, collection: str = None, filter: dict = {}, projection: dict = {}, uniqueFields: List[str] = []):
-        super().__init__()
-        self.collection = collection
-        self.filter = filter
-        self.projection = projection
-        self.unique_fields = uniqueFields
+    def __init__(self, arguments: MongoDBSourceConfigurationArguments):
+        super().__init__(arguments)
+        self.collection = arguments.collection
+        self.filter = arguments.filter
+        self.projection = arguments.projection
+        self.unique_fields = arguments.uniqueFields
+
+
+class MongoDBSourceConnectionSettingsAttributes(SourceInterfaceConnectionSettingsArguments):
+    class MongoDBConnectionArguments(BaseModel):
+        model_config = ConfigDict(extra='forbid')
+
+        connection_string: Annotated[Optional[str],
+                                     Field(min_length=1, default=None)]
+        host: Annotated[Optional[str], Field(min_length=1, default=None)]
+        port: Annotated[Optional[str], Field(min_length=1, default=None)]
+        username: Annotated[Optional[str], Field(min_length=1, default=None)]
+        password: Annotated[Optional[str], Field(min_length=1, default=None)]
+        database: Annotated[str, Field(min_length=1)]
+
+        @ model_validator(mode="after")
+        def validate_connection_string_or_components(cls, instance: "MongoDBSourceConnectionSettingsAttributes.MongoDBConnectionArguments"):
+            connection_string_is_not_present = not instance.connection_string
+            connection_string_components = [
+                "host", "port", "username", "password"]
+            if connection_string_is_not_present:
+                dict = instance.model_dump()
+                for component in connection_string_components:
+                    if not dict.get(component, None):
+                        raise ValueError(
+                            f"'{component}' is missing. {connection_string_components} are required if 'connection_string' is not provided")
+
+            return instance
+
+    type: Annotated[Literal["Mongodb"], Field(default="Mongodb")] = "Mongodb"
+    connection: MongoDBConnectionArguments
 
 
 class MongoDBSourceConnectionSettings(SourceInterfaceConnectionSettings):
     """The connection configuration class used for MongoDB sources"""
-    connection_string: Annotated[str, Field(min_length=1)]
-    query: str = None
-    database: str = None
+    connection_string: str
+    query: Optional[str] = None
+    database: str
 
-    def get_connection_string_components(self, settings: dict):
-        config = {
-            "host": settings.get("host", None),
-            "port":  settings.get("post", None),
-            "username":  settings.get("username", None),
-            "password":  settings.get("password", None),
-        }
-        for _, value in config.items():
-            if not value:
-                return None
+    def __init__(self, arguments: MongoDBSourceConnectionSettingsAttributes):
+        super().__init__(arguments)
 
-        return config
+        if not arguments.connection.connection_string:
+            arguments.connection.connection_string = f"mongodb://{arguments.connection.username}:{arguments.connection.password}@{arguments.connection.host}:{arguments.connection.port}/"
 
-    def __init__(self, settings: dict):
-        self.projection = settings.get("projection", {})
-
-        if not settings.get("database", None):
-            raise Exception("Database name in connection settings is required")
-
-        self.database = settings["database"]
-
-        if settings.get("connection_string", False):
-            self.connection_string = settings["connection_string"]
-        else:
-            connection_string_components = self.get_connection_string_components(
-                settings)
-            if not connection_string_components:
-                raise Exception(
-                    "Connection string or host, port, username, and password are required")
-            self.connection_string = f"mongodb://{connection_string_components['username']}:{connection_string_components['password']}@{connection_string_components['host']}:{connection_string_components['port']}/"
+        self.connection_string = arguments.connection.connection_string
+        self.database = arguments.connection.database
 
 
-@register_source("mongodb", MongoDBSourceConfiguration, MongoDBSourceConnectionSettings)
+@ register_source("mongodb", MongoDBSourceConfiguration, MongoDBSourceConnectionSettings)
 class MongodbSource(SourceInterface):
+    ConnectionSettingsArguments = MongoDBSourceConnectionSettingsAttributes
     ConnectionSettingsClass = MongoDBSourceConnectionSettings
+    SourceConfigArguments = MongoDBSourceConfigurationArguments
     SourceConfigClass = MongoDBSourceConfiguration
 
     """ A source for MongoDB data """
