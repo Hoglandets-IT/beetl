@@ -84,7 +84,7 @@ class SourceInterfaceConfiguration:
         pass
 
 
-class InterfaceSourceArguments(pydantic.BaseModel):
+class SourceInterfaceArguments(pydantic.BaseModel):
     """Class representation of the source connection settings in the beetl config. Used to validate the source configuration settings using pydantic."""
     model_config = pydantic.ConfigDict(extra='forbid')
     name: Annotated[str, pydantic.Field(min_length=1)]
@@ -94,13 +94,13 @@ class InterfaceSourceArguments(pydantic.BaseModel):
 
 class SourceInterfaceConnectionSettings():
     """The connection configuration class used for data sources, abstract"""
-    def __init__(cls, arguments: InterfaceSourceArguments):
+    def __init__(cls, arguments: SourceInterfaceArguments):
         pass
 
 
 class SourceInterface:
     ConnectionSettingsClass = SourceInterfaceConnectionSettings
-    ConnectionSettingsArguments = InterfaceSourceArguments
+    ConnectionSettingsArguments = SourceInterfaceArguments
     SourceConfigClass = SourceInterfaceConfiguration
     SourceConfigArguments = SourceInterfaceConfigurationArguments
 

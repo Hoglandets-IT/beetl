@@ -6,6 +6,7 @@ from .csv import CsvSource, CsvSourceConnectionSettings, CsvSourceArguments
 from .faker import FakerSource, FakerSourceConnectionSettings, FakerSourceArguments
 from .itop import ItopSource, ItopSourceConnectionSettings, ItopSourceArguments
 from .mongodb import MongodbSource, MongoDBSourceConnectionSettings, MongoDBSourceConfiguration, MongoDBSourceArguments
+from .mysql import MysqlSource, MysqlSourceConnectionSettings, MysqlSourceArguments
 from .interface import Sources
 
 cDir = os.path.dirname(__file__)

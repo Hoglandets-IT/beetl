@@ -5,12 +5,12 @@ from .interface import (
     register_source,
     SourceInterface,
     SourceInterfaceConfiguration,
-    InterfaceSourceArguments,
+    SourceInterfaceArguments,
     SourceInterfaceConnectionSettings
 )
 
 
-class CsvSourceArguments(InterfaceSourceArguments):
+class CsvSourceArguments(SourceInterfaceArguments):
     class CsvConnectionArguments(BaseModel):
         model_config = ConfigDict(extra='forbid')
 

@@ -11,7 +11,7 @@ import requests.adapters
 from alive_progress import alive_bar
 from .interface import (
     SourceInterfaceConfigurationArguments,
-    InterfaceSourceArguments,
+    SourceInterfaceArguments,
     register_source,
     SourceInterface,
     SourceInterfaceConfiguration,
@@ -88,7 +88,7 @@ class ItopSourceConfiguration(SourceInterfaceConfiguration):
                 )
 
 
-class ItopSourceArguments(InterfaceSourceArguments):
+class ItopSourceArguments(SourceInterfaceArguments):
     class ItopConnectionArguments(BaseModel):
         model_config = ConfigDict(extra='forbid')
 

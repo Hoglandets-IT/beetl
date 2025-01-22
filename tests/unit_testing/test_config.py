@@ -264,12 +264,18 @@ class UnitTestBeetlConfig(unittest.TestCase):
                     "name": "src",
                     "type": "Mysql",
                     "connection": {
+                        "database": "test",
+                        "host": "localhost",
+                        "port": "27017",
+                        "username": "root",
+                        "password": "root",
                     },
                 },
                 {
                     "name": "dst",
                     "type": "Mysql",
                     "connection": {
+                        "connection_string": "mysql+pymysql://root:root@localhost:3306/test",
                     },
                 },
             ],

@@ -3,7 +3,7 @@ from polars import DataFrame, Object
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 from .interface import (
     SourceInterfaceConfigurationArguments,
-    InterfaceSourceArguments,
+    SourceInterfaceArguments,
     register_source,
     SourceInterface,
     SourceInterfaceConfiguration,
@@ -35,7 +35,7 @@ class MongoDBSourceConfiguration(SourceInterfaceConfiguration):
         self.unique_fields = arguments.uniqueFields
 
 
-class MongoDBSourceArguments(InterfaceSourceArguments):
+class MongoDBSourceArguments(SourceInterfaceArguments):
     class MongoDBConnectionArguments(BaseModel):
         model_config = ConfigDict(extra='forbid')
 
@@ -74,10 +74,13 @@ class MongoDBSourceConnectionSettings(SourceInterfaceConnectionSettings):
     def __init__(self, arguments: MongoDBSourceArguments):
         super().__init__(arguments)
 
-        if not arguments.connection.connection_string:
-            arguments.connection.connection_string = f"mongodb://{arguments.connection.username}:{arguments.connection.password}@{arguments.connection.host}:{arguments.connection.port}/"
+        connection_string: str
+        if arguments.connection.connection_string:
+            connection_string = arguments.connection.connection_string
+        else:
+            connection_string = f"mongodb://{arguments.connection.username}:{arguments.connection.password}@{arguments.connection.host}:{arguments.connection.port}/"
 
-        self.connection_string = arguments.connection.connection_string
+        self.connection_string = connection_string
         self.database = arguments.connection.database
 
 

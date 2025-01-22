@@ -6,11 +6,11 @@ from .interface import (
     SourceInterface,
     SourceInterfaceConfiguration,
     SourceInterfaceConnectionSettings,
-    InterfaceSourceArguments
+    SourceInterfaceArguments
 )
 
 
-class StaticSourceArguments(InterfaceSourceArguments):
+class StaticSourceArguments(SourceInterfaceArguments):
     class ConnectionArguments(BaseModel):
         static: List[dict[str, Any]]
 

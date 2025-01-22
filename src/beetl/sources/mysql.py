@@ -1,12 +1,24 @@
 import polars as pl
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 import sqlalchemy as sqla
-from typing import List
+from typing import Annotated, List, Optional
 from .interface import (
+    SourceInterfaceArguments,
     register_source,
     SourceInterface,
     SourceInterfaceConfiguration,
     SourceInterfaceConnectionSettings,
 )
+
+
+class MysqlSourceConfigurationArguments(BaseModel):
+    model_config = ConfigDict(extra='forbid')
+
+    table: Annotated[Optional[str], Field(
+        default=None, description="Mandatory if configured as a destination, and if query isn't provided")]
+    query: Annotated[Optional[str], Field(default=None)]
+    uniqueColumns: Annotated[List[str], Field(default=[])]
+    skipColumns: Annotated[List[str], Field(default=[])]
 
 
 class MysqlSourceConfiguration(SourceInterfaceConfiguration):
@@ -17,12 +29,41 @@ class MysqlSourceConfiguration(SourceInterfaceConfiguration):
     table: str = None
     query: str = None
 
-    def __init__(self, table: str = None, query: str = None, uniqueColumns: List[str] = [], skipColumns: List[str] = []):
-        super().__init__()
-        self.table = table
-        self.query = query
-        self.unique_columns = uniqueColumns
-        self.skip_columns = skipColumns
+    def __init__(self, arguments: MysqlSourceConfigurationArguments):
+        super().__init__(arguments)
+
+        self.table = arguments.table
+        self.query = arguments.query
+        self.unique_columns = arguments.uniqueColumns
+        self.skip_columns = arguments.skipColumns
+
+
+class MysqlSourceArguments(SourceInterfaceArguments):
+    class MysqlConnectionArguments(BaseModel):
+        model_config = ConfigDict(extra='forbid')
+
+        connection_string: Annotated[Optional[str], Field(default=None)]
+        username: Annotated[Optional[str], Field(default=None)]
+        password: Annotated[Optional[str], Field(default=None)]
+        host: Annotated[Optional[str], Field(default=None)]
+        port: Annotated[Optional[str], Field(default=None)]
+        database: Annotated[Optional[str], Field(default=None)]
+
+        @ model_validator(mode="after")
+        def validate_connection_string_or_components(cls, instance: "MysqlSourceArguments.MySqlConnectionArguments"):
+            connection_string_is_not_present = not instance.connection_string
+            connection_string_components = [
+                "host", "port", "username", "password", "database"]
+            if connection_string_is_not_present:
+                dict = instance.model_dump()
+                for component in connection_string_components:
+                    if not dict.get(component, None):
+                        raise ValueError(
+                            f"'{component}' is missing. {connection_string_components} are required if 'connection_string' is not provided")
+            return instance
+
+    type: Annotated[str, Field(default="Mysql")] = "Mysql"
+    connection: MysqlConnectionArguments
 
 
 class MysqlSourceConnectionSettings(SourceInterfaceConnectionSettings):
@@ -32,19 +73,25 @@ class MysqlSourceConnectionSettings(SourceInterfaceConnectionSettings):
     query: str = None
     table: str = None
 
-    def __init__(self, settings: dict):
-        if settings.get("connection_string", False):
-            self.connection_string = settings["connection_string"]
-            return
+    def __init__(self, arguments: MysqlSourceArguments):
+        super().__init__(arguments)
 
-        self.connection_string = "mysql+pymysql://"
-        f"{settings['username']}:{settings['password']}"
-        f"@{settings['host']}:{settings['port']}/{settings['database']}"
+        connection_string: str
+        if arguments.connection.connection_string:
+            connection_string = arguments.connection.connection_string
+        if not arguments.connection.connection_string:
+            connection_string = "mysql+pymysql://"
+            f"{arguments.connection.username}:{arguments.connection.password}"
+            f"@{arguments.connection.host}:{arguments.connection.port}/{arguments.connection.database}"
+
+        self.connection_string = connection_string
 
 
 @register_source("Mysql", MysqlSourceConfiguration, MysqlSourceConnectionSettings)
 class MysqlSource(SourceInterface):
+    ConnectionSettingsArguments = MysqlSourceArguments
     ConnectionSettingsClass = MysqlSourceConnectionSettings
+    SourceConfigArguments = MysqlSourceConfigurationArguments
     SourceConfigClass = MysqlSourceConfiguration
 
     """ A source for MySQL data """

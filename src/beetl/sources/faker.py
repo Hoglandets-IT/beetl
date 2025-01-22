@@ -5,12 +5,12 @@ from .interface import (
     SourceInterface,
     SourceInterfaceConfiguration,
     SourceInterfaceConnectionSettings,
-    InterfaceSourceArguments,
+    SourceInterfaceArguments,
     register_source,
 )
 
 
-class FakerSourceArguments(InterfaceSourceArguments):
+class FakerSourceArguments(SourceInterfaceArguments):
     class FakerConnectionArguments(BaseModel):
         model_config = ConfigDict(extra='forbid')
 
