@@ -2,17 +2,17 @@ from typing import Annotated, Any, List, Literal, Optional
 from polars import DataFrame, Object
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 from .interface import (
-    SourceInterfaceConfigurationArguments,
-    SourceInterfaceArguments,
+    SourceSyncArguments,
+    SourceConfigArguments,
     register_source,
     SourceInterface,
-    SourceInterfaceConfiguration,
-    SourceInterfaceConnectionSettings,
+    SourceSync,
+    SourceConfig,
 )
 from pymongo import MongoClient, UpdateOne, DeleteOne
 
 
-class MongoDBSourceConfigurationArguments(SourceInterfaceConfigurationArguments):
+class MongodbSyncArguments(SourceSyncArguments):
     collection: str
     filter: Annotated[Optional[dict[str, Any]], Field(default={})]
     projection: Annotated[Optional[dict[str, int]], Field(default={})]
@@ -20,14 +20,14 @@ class MongoDBSourceConfigurationArguments(SourceInterfaceConfigurationArguments)
         default=[], description="Required when used as a destination")]
 
 
-class MongoDBSourceConfiguration(SourceInterfaceConfiguration):
+class MongodbSync(SourceSync):
     """The configuration class used for MongoDB sources"""
     collection: Annotated[Optional[str], Field(default=None)]
     filter: Annotated[str, Field(default={})]
     projection: dict = None
     unique_fields: List[str] = None
 
-    def __init__(self, arguments: MongoDBSourceConfigurationArguments):
+    def __init__(self, arguments: MongodbSyncArguments):
         super().__init__(arguments)
         self.collection = arguments.collection
         self.filter = arguments.filter
@@ -35,7 +35,7 @@ class MongoDBSourceConfiguration(SourceInterfaceConfiguration):
         self.unique_fields = arguments.uniqueFields
 
 
-class MongoDBSourceArguments(SourceInterfaceArguments):
+class MongodbConfigArguments(SourceConfigArguments):
     class MongoDBConnectionArguments(BaseModel):
         model_config = ConfigDict(extra='forbid')
 
@@ -48,7 +48,7 @@ class MongoDBSourceArguments(SourceInterfaceArguments):
         database: Annotated[str, Field(min_length=1)]
 
         @ model_validator(mode="after")
-        def validate_connection_string_or_components(cls, instance: "MongoDBSourceArguments.MongoDBConnectionArguments"):
+        def validate_connection_string_or_components(cls, instance: "MongodbConfigArguments.MongoDBConnectionArguments"):
             connection_string_is_not_present = not instance.connection_string
             connection_string_components = [
                 "host", "port", "username", "password"]
@@ -65,13 +65,13 @@ class MongoDBSourceArguments(SourceInterfaceArguments):
     connection: MongoDBConnectionArguments
 
 
-class MongoDBSourceConnectionSettings(SourceInterfaceConnectionSettings):
+class MongodbConfig(SourceConfig):
     """The connection configuration class used for MongoDB sources"""
     connection_string: str
     query: Optional[str] = None
     database: str
 
-    def __init__(self, arguments: MongoDBSourceArguments):
+    def __init__(self, arguments: MongodbConfigArguments):
         super().__init__(arguments)
 
         connection_string: str
@@ -84,12 +84,12 @@ class MongoDBSourceConnectionSettings(SourceInterfaceConnectionSettings):
         self.database = arguments.connection.database
 
 
-@ register_source("Mongodb", MongoDBSourceConfiguration, MongoDBSourceConnectionSettings)
+@ register_source("Mongodb")
 class MongodbSource(SourceInterface):
-    ConnectionSettingsArguments = MongoDBSourceArguments
-    ConnectionSettingsClass = MongoDBSourceConnectionSettings
-    SourceConfigArguments = MongoDBSourceConfigurationArguments
-    SourceConfigClass = MongoDBSourceConfiguration
+    ConfigArgumentsClass = MongodbConfigArguments
+    ConfigClass = MongodbConfig
+    SyncArgumentsClass = MongodbSyncArguments
+    SyncClass = MongodbSync
 
     """ A source for MongoDB data """
 

@@ -284,8 +284,11 @@ class UnitTestBeetlConfig(unittest.TestCase):
                     "source": "src",
                     "destination": "dst",
                     "sourceConfig": {
+                        "table": "test",
                     },
                     "destinationConfig": {
+                        "table": "test",
+                        "uniqueColumns": ["Id"]
                     },
                     "comparisonColumns": {
                         "id": "Int64"

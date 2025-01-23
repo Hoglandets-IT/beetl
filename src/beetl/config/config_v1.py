@@ -7,16 +7,16 @@ from typing import Annotated, Any, List, Literal, Union
 
 from ..transformers.interface import TransformerConfiguration
 from .config_base import BeetlConfig, ComparisonColumn, SyncConfiguration
-from ..sources import Sources, CsvSourceArguments, FakerSourceArguments, MongoDBSourceArguments, ItopSourceArguments, StaticSourceArguments, MysqlSourceArguments
+from ..sources import Sources, CsvConfigArguments, FakerConfigArguments, MongodbConfigArguments, ItopConfigArguments, StaticConfigArguments, MysqlConfigArguments
 
 
 SourceConfigs = List[Union[(
-    StaticSourceArguments,
-    ItopSourceArguments,
-    MongoDBSourceArguments,
-    CsvSourceArguments,
-    FakerSourceArguments,
-    MysqlSourceArguments
+    StaticConfigArguments,
+    ItopConfigArguments,
+    MongodbConfigArguments,
+    CsvConfigArguments,
+    FakerConfigArguments,
+    MysqlConfigArguments
 )]]
 
 
@@ -41,7 +41,7 @@ class BeetlConfigSchemaV1(BaseModel):
                 if registrated_source is None:
                     raise ValueError(
                         f"sources.{i}.type \"{source_type}\" is not recognized, valid sources are {list(Sources.sources.keys())}")
-                registrated_source.cls.ConnectionSettingsArguments(**source)
+                registrated_source.cls.ConfigArgumentsClass(**source)
             except ValidationError as e:
                 # Mutatate the location so that it is absolute to the sources position in the configuration
                 for error in e.errors():
@@ -78,7 +78,8 @@ class BeetlConfigV1(BeetlConfig):
             raise Exception(
                 "The configuration file is missing the 'sync' section.")
 
-        for sync in config["sync"]:
+        for sync_index, sync in enumerate(config["sync"]):
+            location = ['sync', str(sync_index)]
             if not self.sources.get(sync["source"], False) or not self.sources.get(
                 sync["destination"], False
             ):
@@ -89,10 +90,15 @@ class BeetlConfigV1(BeetlConfig):
                     "Please check your configuration.",
                 )
 
-            tmpSource = copy.deepcopy(self.sources[sync["source"]])
-            tmpSource.set_sourceconfig(sync["sourceConfig"])
-            tmpDestination = copy.deepcopy(self.sources[sync["destination"]])
-            tmpDestination.set_sourceconfig(sync["destinationConfig"])
+            source_name = sync["source"]
+            temp_source = copy.deepcopy(self.sources[source_name])
+            temp_source.set_sourceconfig(
+                sync["sourceConfig"], direction="source", name=source_name, location=(*location, 'sourceConfig'))
+
+            destination_name = sync["destination"]
+            temp_destination = copy.deepcopy(self.sources[destination_name])
+            temp_destination.set_sourceconfig(
+                sync["destinationConfig"], direction="destination", name=destination_name, location=(*location, 'destinationConfig'))
 
             comparisonColumnsConf = sync.get("comparisonColumns", None)
             if not comparisonColumnsConf:
@@ -128,14 +134,14 @@ class BeetlConfigV1(BeetlConfig):
 
             syncConfig = SyncConfiguration(
                 name=sync.get("name", ""),
-                source=tmpSource,
+                source=temp_source,
                 sourceConfig=sync["sourceConfig"],
-                destination=tmpDestination,
+                destination=temp_destination,
                 destinationConfig=sync["destinationConfig"],
                 comparisonColumns=comparisonColumns,
             )
 
-            tmpSource = tmpDestination = None
+            temp_source = temp_destination = None
 
             if sync.get("sourceTransformer", None) is not None:
                 syncConfig.sourceTransformer = TransformerConfiguration(

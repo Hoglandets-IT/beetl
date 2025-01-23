@@ -5,8 +5,8 @@ import polars as pl
 from .interface import (
     register_source,
     SourceInterface,
-    SourceInterfaceConfiguration,
-    SourceInterfaceConnectionSettings,
+    SourceSync,
+    SourceConfig,
 )
 
 polar_to_xml_type_map = {
@@ -28,7 +28,7 @@ polar_to_xml_type_map = {
 }
 
 
-class XmlSyncConfiguration(SourceInterfaceConfiguration):
+class XmlSync(SourceSync):
     """The configuration class used for XML file sources"""
 
     xpath: str = ""
@@ -59,7 +59,7 @@ class XmlSyncConfiguration(SourceInterfaceConfiguration):
         self.types = types
 
 
-class XmlConnectionSettings(SourceInterfaceConnectionSettings):
+class XmlConfig(SourceConfig):
     """The connection configuration class used for XML file sources"""
 
     path: str
@@ -70,14 +70,14 @@ class XmlConnectionSettings(SourceInterfaceConnectionSettings):
         self.encoding = encoding
 
 
-@register_source("xml", XmlSyncConfiguration, XmlConnectionSettings)
+@register_source("Xml")
 class XmlSource(SourceInterface):
     """ A source for reading and writing XML files """
-    ConnectionSettingsClass = XmlConnectionSettings
-    SourceConfigClass = XmlSyncConfiguration
+    ConfigClass = XmlConfig
+    SyncClass = XmlSync
 
-    connection_settings: XmlConnectionSettings = None
-    source_configuration: XmlSyncConfiguration = None
+    connection_settings: XmlConfig = None
+    source_configuration: XmlSync = None
     mutation_data: pl.DataFrame = pl.DataFrame()
 
     def _configure(self):

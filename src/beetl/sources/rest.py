@@ -6,8 +6,8 @@ import pydantic
 from .interface import (
     register_source,
     SourceInterface,
-    SourceInterfaceConfiguration,
-    SourceInterfaceConnectionSettings,
+    SourceSync,
+    SourceConfig,
 )
 import requests
 
@@ -75,7 +75,7 @@ class RestRequest:
         self.query = query
 
 
-class RestSourceConfiguration(SourceInterfaceConfiguration):
+class RestSync(SourceSync):
     """The configuration class used for MySQL sources"""
     listRequest: RestRequest
     createRequest: RestRequest
@@ -135,7 +135,7 @@ class RestAuthentication(pydantic.BaseModel):
         super().__init__(**kwargs)
 
 
-class RestSourceConnectionSettings(SourceInterfaceConnectionSettings):
+class RestConfig(SourceConfig):
     """The connection configuration class used for MySQL sources"""
 
     base_url: str
@@ -163,12 +163,13 @@ class RestSourceConnectionSettings(SourceInterfaceConnectionSettings):
         super().__init__(**kwargs)
 
 
-@register_source("rest", RestSourceConfiguration, RestSourceConnectionSettings)
+@register_source("Rest")
 class RestSource(SourceInterface):
-    ConnectionSettingsClass = RestSourceConnectionSettings
-    SourceConfigClass = RestSourceConfiguration
-    source_configuration: RestSourceConfiguration
-    connection_settings: RestSourceConnectionSettings
+    ConfigClass = RestConfig
+    SyncClass = RestSync
+
+    source_configuration: RestSync
+    connection_settings: RestConfig
     client = None
     authValidTo = None
 

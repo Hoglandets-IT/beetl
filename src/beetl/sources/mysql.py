@@ -1,17 +1,21 @@
 import polars as pl
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, ValidationError, model_validator
 import sqlalchemy as sqla
 from typing import Annotated, List, Optional
+
+from ..errors import ConfigValueError, ConfigValidationError, RequiredDestinationFieldError
+
 from .interface import (
-    SourceInterfaceArguments,
+    SourceConfigArguments,
+    SourceSyncArguments,
     register_source,
     SourceInterface,
-    SourceInterfaceConfiguration,
-    SourceInterfaceConnectionSettings,
+    SourceSync,
+    SourceConfig,
 )
 
 
-class MysqlSourceConfigurationArguments(BaseModel):
+class MysqlSyncArguments(SourceSyncArguments):
     model_config = ConfigDict(extra='forbid')
 
     table: Annotated[Optional[str], Field(
@@ -20,8 +24,39 @@ class MysqlSourceConfigurationArguments(BaseModel):
     uniqueColumns: Annotated[List[str], Field(default=[])]
     skipColumns: Annotated[List[str], Field(default=[])]
 
+    @ model_validator(mode="after")
+    def validate_as_source(cls, instance: "MysqlSyncArguments"):
+        if instance.direction == "destination":
+            return instance
 
-class MysqlSourceConfiguration(SourceInterfaceConfiguration):
+        if not instance.table and not instance.query:
+            raise ValueError(
+                "'table' or 'query' is required when used as a source")
+
+        return instance
+
+    @ model_validator(mode="after")
+    def validate_as_destination(cls, instance: "MysqlSyncArguments"):
+        if instance.direction == "source":
+            return instance
+
+        errors = []
+
+        if not instance.table and not instance.query:
+            errors.append(RequiredDestinationFieldError(
+                'table', instance.location))
+
+        if not instance.uniqueColumns:
+            errors.append(RequiredDestinationFieldError(
+                'uniqueColumns', instance.location))
+
+        if errors:
+            raise ConfigValidationError(errors)
+
+        return instance
+
+
+class MysqlSync(SourceSync):
     """The configuration class used for MySQL sources"""
 
     unique_columns: List[str] = None
@@ -29,7 +64,7 @@ class MysqlSourceConfiguration(SourceInterfaceConfiguration):
     table: str = None
     query: str = None
 
-    def __init__(self, arguments: MysqlSourceConfigurationArguments):
+    def __init__(self, arguments: MysqlSyncArguments):
         super().__init__(arguments)
 
         self.table = arguments.table
@@ -38,8 +73,8 @@ class MysqlSourceConfiguration(SourceInterfaceConfiguration):
         self.skip_columns = arguments.skipColumns
 
 
-class MysqlSourceArguments(SourceInterfaceArguments):
-    class MysqlConnectionArguments(BaseModel):
+class MysqlConfigArguments(SourceConfigArguments):
+    class Connection(BaseModel):
         model_config = ConfigDict(extra='forbid')
 
         connection_string: Annotated[Optional[str], Field(default=None)]
@@ -50,7 +85,7 @@ class MysqlSourceArguments(SourceInterfaceArguments):
         database: Annotated[Optional[str], Field(default=None)]
 
         @ model_validator(mode="after")
-        def validate_connection_string_or_components(cls, instance: "MysqlSourceArguments.MySqlConnectionArguments"):
+        def validate_connection_string_or_components(cls, instance: "MysqlConfigArguments.Connection"):
             connection_string_is_not_present = not instance.connection_string
             connection_string_components = [
                 "host", "port", "username", "password", "database"]
@@ -63,17 +98,17 @@ class MysqlSourceArguments(SourceInterfaceArguments):
             return instance
 
     type: Annotated[str, Field(default="Mysql")] = "Mysql"
-    connection: MysqlConnectionArguments
+    connection: Connection
 
 
-class MysqlSourceConnectionSettings(SourceInterfaceConnectionSettings):
+class MysqlConfig(SourceConfig):
     """The connection configuration class used for MySQL sources"""
 
     connection_string: str
     query: str = None
     table: str = None
 
-    def __init__(self, arguments: MysqlSourceArguments):
+    def __init__(self, arguments: MysqlConfigArguments):
         super().__init__(arguments)
 
         connection_string: str
@@ -87,12 +122,12 @@ class MysqlSourceConnectionSettings(SourceInterfaceConnectionSettings):
         self.connection_string = connection_string
 
 
-@register_source("Mysql", MysqlSourceConfiguration, MysqlSourceConnectionSettings)
+@ register_source("Mysql")
 class MysqlSource(SourceInterface):
-    ConnectionSettingsArguments = MysqlSourceArguments
-    ConnectionSettingsClass = MysqlSourceConnectionSettings
-    SourceConfigArguments = MysqlSourceConfigurationArguments
-    SourceConfigClass = MysqlSourceConfiguration
+    ConfigArgumentsClass = MysqlConfigArguments
+    ConfigClass = MysqlConfig
+    SyncArgumentsClass = MysqlSyncArguments
+    SyncClass = MysqlSync
 
     """ A source for MySQL data """
 

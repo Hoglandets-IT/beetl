@@ -3,14 +3,14 @@ from polars import DataFrame as POLARS_DF
 from pydantic import BaseModel, ConfigDict, Field
 from .interface import (
     SourceInterface,
-    SourceInterfaceConfiguration,
-    SourceInterfaceConnectionSettings,
-    SourceInterfaceArguments,
+    SourceSync,
+    SourceConfig,
+    SourceConfigArguments,
     register_source,
 )
 
 
-class FakerSourceArguments(SourceInterfaceArguments):
+class FakerConfigArguments(SourceConfigArguments):
     class FakerConnectionArguments(BaseModel):
         model_config = ConfigDict(extra='forbid')
 
@@ -20,19 +20,19 @@ class FakerSourceArguments(SourceInterfaceArguments):
     connection: FakerConnectionArguments
 
 
-class FakerSourceConnectionSettings(SourceInterfaceConnectionSettings):
+class FakerConfig(SourceConfig):
     """The connection configuration class used for faker sources"""
     data: POLARS_DF
 
-    def __init__(self, arguments: FakerSourceArguments):
+    def __init__(self, arguments: FakerConfigArguments):
         super().__init__(arguments)
         self.data = POLARS_DF(arguments.connection.faker or [])
 
 
-@register_source("Faker", SourceInterfaceConfiguration, FakerSourceConnectionSettings)
+@register_source("Faker")
 class FakerSource(SourceInterface):
-    ConnectionSettingsArguments = FakerSourceArguments
-    ConnectionSettingsClass = FakerSourceConnectionSettings
+    ConfigArgumentsClass = FakerConfigArguments
+    ConfigClass = FakerConfig
 
     """ A source for faker data """
 

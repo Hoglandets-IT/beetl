@@ -6,12 +6,12 @@ import psycopg
 from .interface import (
     register_source,
     SourceInterface,
-    SourceInterfaceConfiguration,
-    SourceInterfaceConnectionSettings,
+    SourceSync,
+    SourceConfig,
 )
 
 
-class PostgresqlSourceConfiguration(SourceInterfaceConfiguration):
+class PostgresSync(SourceSync):
     """The configuration class used for Postgresql sources"""
 
     unique_columns: List[str] = None
@@ -33,7 +33,7 @@ class PostgresqlSourceConfiguration(SourceInterfaceConfiguration):
         self.skip_columns = skipColumns
 
 
-class PostgresqlSourceConnectionSettings(SourceInterfaceConnectionSettings):
+class PostgresConfig(SourceConfig):
     """The connection configuration class used for Postgresql sources"""
 
     connection_string: str
@@ -48,12 +48,10 @@ class PostgresqlSourceConnectionSettings(SourceInterfaceConnectionSettings):
         f"@{settings['host']}:{settings['port']}/{settings['database']}"
 
 
-@register_source(
-    "postgresql", PostgresqlSourceConfiguration, PostgresqlSourceConnectionSettings
-)
-class PostgresqlSource(SourceInterface):
-    ConnectionSettingsClass = PostgresqlSourceConnectionSettings
-    SourceConfigClass = PostgresqlSourceConfiguration
+@register_source("Postgresql")
+class PostgresSource(SourceInterface):
+    ConfigClass = PostgresConfig
+    SyncClass = PostgresSync
 
     """ A source for Postgresql data """
 

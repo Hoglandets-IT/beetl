@@ -4,8 +4,8 @@ from typing import Any, List, Dict, Literal
 from dataclasses import dataclass
 import polars as pl
 from ..sources.interface import (
-    SourceInterfaceConfiguration,
-    SourceInterfaceConnectionSettings,
+    SourceSync,
+    SourceConfig,
 )
 from ..transformers.interface import TransformerConfiguration
 
@@ -15,8 +15,8 @@ class SourceSettings:
 
     name: str
     source_type: str
-    connection: SourceInterfaceConnectionSettings
-    config: SourceInterfaceConfiguration
+    connection: SourceConfig
+    config: SourceSync
 
     def __init__(
         self, name: str, source_type: str, connection: dict, config: dict
@@ -57,9 +57,9 @@ class SyncConfiguration:
     """The configuration for a single sync between two sources"""
 
     source: SourceSettings
-    sourceConfig: SourceInterfaceConfiguration
+    sourceConfig: SourceSync
     destination: SourceSettings
-    destinationConfig: SourceInterfaceConfiguration
+    destinationConfig: SourceSync
     comparisonColumns: List[ComparisonColumn]
     name: str = ""
     changeDetection: ChangeDetectionConfig = None

@@ -7,12 +7,12 @@ import pyodbc
 from .interface import (
     register_source,
     SourceInterface,
-    SourceInterfaceConfiguration,
-    SourceInterfaceConnectionSettings,
+    SourceSync,
+    SourceConfig,
 )
 
 
-class SqlserverConfiguration(SourceInterfaceConfiguration):
+class SqlserverSync(SourceSync):
     """The configuration class used for SQLServer sources"""
 
     table: str = None
@@ -43,7 +43,7 @@ class SqlserverConfiguration(SourceInterfaceConfiguration):
         self.skip_columns = skipColumns
 
 
-class SqlserverConnectionSettings(SourceInterfaceConnectionSettings):
+class SqlserverConfig(SourceConfig):
     """The connection configuration class used for SQLServer sources"""
 
     connection_string: str
@@ -82,10 +82,11 @@ class SqlserverConnectionSettings(SourceInterfaceConnectionSettings):
         f"@{settings['host']}:{settings['port']}/{settings['database']}"
 
 
-@register_source("sqlserver", SqlserverConfiguration, SqlserverConnectionSettings)
+@register_source("Sqlserver")
 class SqlserverSource(SourceInterface):
-    ConnectionSettingsClass = SqlserverConnectionSettings
-    SourceConfigClass = SqlserverConfiguration
+    ConfigClass = SqlserverConfig
+    SyncClass = SqlserverSync
+
     connection: pyodbc.Connection = None
 
     """ A source for SqlServer data """

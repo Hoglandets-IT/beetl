@@ -4,13 +4,13 @@ from pydantic import BaseModel, ConfigDict, Field
 from .interface import (
     register_source,
     SourceInterface,
-    SourceInterfaceConfiguration,
-    SourceInterfaceArguments,
-    SourceInterfaceConnectionSettings
+    SourceSync,
+    SourceConfigArguments,
+    SourceConfig
 )
 
 
-class CsvSourceArguments(SourceInterfaceArguments):
+class CsvConfigArguments(SourceConfigArguments):
     class CsvConnectionArguments(BaseModel):
         model_config = ConfigDict(extra='forbid')
 
@@ -21,23 +21,22 @@ class CsvSourceArguments(SourceInterfaceArguments):
     connection: CsvConnectionArguments
 
 
-class CsvSourceConnectionSettings(SourceInterfaceConnectionSettings):
+class CsvConfig(SourceConfig):
     """The connection configuration class used for static sources"""
 
     path: str
     encoding: str
 
-    def __init__(self, arguments: CsvSourceArguments):
+    def __init__(self, arguments: CsvConfigArguments):
         super().__init__(arguments)
         self.path = arguments.connection.path
         self.encoding = arguments.connection.encoding
 
 
-@register_source("Csv", SourceInterfaceConfiguration, CsvSourceConnectionSettings)
+@register_source("Csv")
 class CsvSource(SourceInterface):
-    ConnectionSettingsArguments = CsvSourceArguments
-    ConnectionSettingsClass = CsvSourceConnectionSettings
-    SourceConfigClass = SourceInterfaceConfiguration
+    ConfigArgumentsClass = CsvConfigArguments
+    ConfigClass = CsvConfig
 
     """ A source for static data """
 

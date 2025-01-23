@@ -10,12 +10,12 @@ import requests
 import requests.adapters
 from alive_progress import alive_bar
 from .interface import (
-    SourceInterfaceConfigurationArguments,
-    SourceInterfaceArguments,
+    SourceSyncArguments,
+    SourceConfigArguments,
     register_source,
     SourceInterface,
-    SourceInterfaceConfiguration,
-    SourceInterfaceConnectionSettings,
+    SourceSync,
+    SourceConfig,
     RequestThreader,
 )
 
@@ -46,7 +46,7 @@ class SoftDeleteArguments(BaseModel):
         return values
 
 
-class ItopSourceConfigurationArguments(SourceInterfaceConfigurationArguments):
+class ItopSyncArguments(SourceSyncArguments):
 
     datamodel: Annotated[str, Field(min_length=1)]
     oql_key: Annotated[str, Field(min_length=1)]
@@ -57,7 +57,7 @@ class ItopSourceConfigurationArguments(SourceInterfaceConfigurationArguments):
     skip_columns: Annotated[Optional[list[str]], Field(default=[])]
 
 
-class ItopSourceConfiguration(SourceInterfaceConfiguration):
+class ItopSync(SourceSync):
     """The configuration class used for iTop sources"""
 
     datamodel: str
@@ -68,7 +68,7 @@ class ItopSourceConfiguration(SourceInterfaceConfiguration):
     unique_columns: list[str]
     skip_columns: list[str]
 
-    def __init__(self, arguments: ItopSourceConfigurationArguments):
+    def __init__(self, arguments: ItopSyncArguments):
         super().__init__(arguments)
 
         self.datamodel = arguments.datamodel
@@ -88,7 +88,7 @@ class ItopSourceConfiguration(SourceInterfaceConfiguration):
                 )
 
 
-class ItopSourceArguments(SourceInterfaceArguments):
+class ItopConfigArguments(SourceConfigArguments):
     class ItopConnectionArguments(BaseModel):
         model_config = ConfigDict(extra='forbid')
 
@@ -116,7 +116,7 @@ class ItopSourceArguments(SourceInterfaceArguments):
     connection: ItopConnectionArguments
 
 
-class ItopSourceConnectionSettings(SourceInterfaceConnectionSettings):
+class ItopConfig(SourceConfig):
     """The connection configuration class used for iTop sources"""
 
     host: str
@@ -124,7 +124,7 @@ class ItopSourceConnectionSettings(SourceInterfaceConnectionSettings):
     password: str
     verify_ssl: bool
 
-    def __init__(self, arguments: ItopSourceArguments):
+    def __init__(self, arguments: ItopConfigArguments):
         super().__init__(arguments)
         self.host = arguments.connection.host
         self.username = arguments.connection.username
@@ -132,15 +132,15 @@ class ItopSourceConnectionSettings(SourceInterfaceConnectionSettings):
         self.verify_ssl = arguments.connection.verify_ssl == 'true'
 
 
-@ register_source("Itop", ItopSourceConfiguration, ItopSourceConnectionSettings)
+@ register_source("Itop")
 class ItopSource(SourceInterface):
-    ConnectionSettingsArguments = ItopSourceArguments
-    ConnectionSettingsClass = ItopSourceConnectionSettings
-    SourceConfigArguments = ItopSourceConfigurationArguments
-    SourceConfigClass = ItopSourceConfiguration
+    ConfigArgumentsClass = ItopConfigArguments
+    ConfigClass = ItopConfig
+    SyncArgumentsClass = ItopSyncArguments
+    SyncClass = ItopSync
 
-    source_configuration: ItopSourceConfiguration = None
-    connection_settings: ItopSourceConnectionSettings = None
+    source_configuration: ItopSync = None
+    connection_settings: ItopConfig = None
     auth_data: dict = None
 
     """ A source for Combodo iTop Data data """

@@ -4,13 +4,13 @@ from polars import DataFrame
 from .interface import (
     register_source,
     SourceInterface,
-    SourceInterfaceConfiguration,
-    SourceInterfaceConnectionSettings,
-    SourceInterfaceArguments
+    SourceSync,
+    SourceConfig,
+    SourceConfigArguments
 )
 
 
-class StaticSourceArguments(SourceInterfaceArguments):
+class StaticConfigArguments(SourceConfigArguments):
     class ConnectionArguments(BaseModel):
         static: List[dict[str, Any]]
 
@@ -18,19 +18,19 @@ class StaticSourceArguments(SourceInterfaceArguments):
     connection: ConnectionArguments
 
 
-class StaticSourceConnectionSettings(SourceInterfaceConnectionSettings):
+class StaticConfig(SourceConfig):
     """The connection configuration class used for static sources"""
     data: DataFrame
 
-    def __init__(self, arguments: StaticSourceArguments):
+    def __init__(self, arguments: StaticConfigArguments):
         super().__init__(arguments)
         self.data = DataFrame(arguments.connection.static or [])
 
 
-@ register_source("static", SourceInterfaceConfiguration, StaticSourceConnectionSettings)
+@ register_source("Static")
 class StaticSource(SourceInterface):
-    ConnectionSettingsArguments = StaticSourceArguments
-    ConnectionSettingsClass = StaticSourceConnectionSettings
+    ConfigArgumentsClass = StaticConfigArguments
+    ConfigClass = StaticConfig
 
     """ A source for static data """
 
