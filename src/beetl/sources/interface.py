@@ -73,6 +73,36 @@ class ColumnDefinition:
         self.type = getattr(pl, self.type)
 
 
+class SourceConnectionArguments(pydantic.BaseModel):
+    model_config = pydantic.ConfigDict(extra='forbid')
+    location: Annotated[tuple[str, ...],
+                        pydantic.Field(min_length=3, max_length=3)]
+
+
+class SourceConfigArguments(pydantic.BaseModel):
+    """Class representation of the source connection settings in the beetl config. Used to validate the source configuration settings using pydantic."""
+    model_config = pydantic.ConfigDict(extra='forbid')
+    name: Annotated[str, pydantic.Field(min_length=1)]
+    type: Annotated[str, pydantic.Field(min_length=1)]
+    location: Annotated[tuple[str, ...],
+                        pydantic.Field(min_length=2, max_length=2)]
+    connection: SourceConnectionArguments
+
+    @pydantic.model_validator(mode="before")
+    def propagate_location(cls, instance: dict):
+        location = instance["location"]
+        if not location:
+            return instance
+        instance["connection"]["location"] = location + ("connection",)
+        return instance
+
+
+class SourceConfig():
+    """The connection configuration class used for data sources, abstract"""
+    def __init__(cls, arguments: SourceConfigArguments):
+        pass
+
+
 class SourceSyncArguments(pydantic.BaseModel):
     """Class representation of the source configuration settings in the beetl config. Used to validate the source configuration settings using pydantic."""
     model_config = pydantic.ConfigDict(extra='forbid')
@@ -85,20 +115,6 @@ class SourceSyncArguments(pydantic.BaseModel):
 class SourceSync:
     """The configuration class used for data sources, abstract"""
     def __init__(cls, arguments: SourceSyncArguments):
-        pass
-
-
-class SourceConfigArguments(pydantic.BaseModel):
-    """Class representation of the source connection settings in the beetl config. Used to validate the source configuration settings using pydantic."""
-    model_config = pydantic.ConfigDict(extra='forbid')
-    name: Annotated[str, pydantic.Field(min_length=1)]
-    type: Annotated[str, pydantic.Field(min_length=1)]
-    connection: dict
-
-
-class SourceConfig():
-    """The connection configuration class used for data sources, abstract"""
-    def __init__(cls, arguments: SourceConfigArguments):
         pass
 
 

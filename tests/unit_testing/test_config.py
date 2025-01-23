@@ -299,3 +299,47 @@ class UnitTestBeetlConfig(unittest.TestCase):
                 }
             ],
         })
+
+    def test_that_version_1_supports_postgres_source(self):
+        result = BeetlConfig({
+            "version": "V1",
+            "sources": [
+                {
+                    "name": "src",
+                    "type": "Postgresql",
+                    "connection": {
+                        "connection_string": "postgresql://root:root@localhost:5432/test",
+                    },
+                },
+                {
+                    "name": "dst",
+                    "type": "Postgresql",
+                    "connection": {
+                        "username": "root",
+                        "password": "root",
+                        "host": "localhost",
+                        "port": "5432",
+                        "database": "test",
+                    },
+                },
+            ],
+            "sync": [
+                {
+                    "source": "src",
+                    "destination": "dst",
+                    "sourceConfig": {
+                        "table": "test",
+                    },
+                    "destinationConfig": {
+                        "table": "test",
+                        "uniqueColumns": ["Id"]
+                    },
+                    "comparisonColumns": {
+                        "id": "Int64"
+                    },
+                    "sourceTransformers": [],
+                    "destinationTransformers": [],
+                    "insertionTransformers": [],
+                }
+            ],
+        })

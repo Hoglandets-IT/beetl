@@ -7,6 +7,7 @@ from .faker import FakerSource, FakerConfig, FakerConfigArguments
 from .itop import ItopSource, ItopConfig, ItopConfigArguments
 from .mongodb import MongodbSource, MongodbConfig, MongodbSync, MongodbConfigArguments
 from .mysql import MysqlSource, MysqlConfig, MysqlConfigArguments
+from .postgresql import PostgresSource, PostgresConfig, PostgresConfigArguments
 from .interface import Sources
 
 cDir = os.path.dirname(__file__)

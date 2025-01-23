@@ -13,9 +13,9 @@ class ConfigValueError(Exception):
     message: str
     location: tuple[str]
 
-    def __init__(self, message: str, location: tuple[str]):
+    def __init__(self, field: str,  message: str, location: tuple[str]):
         self.message = message
-        self.location = location
+        self.location = location + (field,)
 
     def __str__(self):
         return f"{'.'.join(self.location)}: {self.message}"
@@ -23,13 +23,17 @@ class ConfigValueError(Exception):
 
 class RequiredDestinationFieldError(ConfigValueError):
     def __init__(self, field: str, destination_location: tuple[str]):
-        location = destination_location + (field,)
-        super().__init__(
-            f"Field '{field}' is required when used as destination", location)
+        super().__init__(field,
+                         f"Field '{field}' is required when used as destination", destination_location)
+
+
+class RequiredDestinationFieldError(ConfigValueError):
+    def __init__(self, field: str, destination_location: tuple[str]):
+        super().__init__(field,
+                         f"Field '{field}' is required when used as destination", destination_location)
 
 
 class RequiredSourceFieldError(ConfigValueError):
     def __init__(self, field: str, source_location: tuple[str]):
-        location = source_location + (field,)
-        super().__init__(
-            f"Field '{field}' is required when used as source", location)
+        super().__init__(field,
+                         f"Field '{field}' is required when used as source", source_location)

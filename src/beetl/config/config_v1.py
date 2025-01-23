@@ -3,11 +3,12 @@ import copy
 import json
 import os
 from pydantic import BaseModel, Field, model_validator, ValidationError
-from typing import Annotated, Any, List, Literal, Union
+from typing import Annotated, Any, Dict, List, Literal, Union
+
 
 from ..transformers.interface import TransformerConfiguration
 from .config_base import BeetlConfig, ComparisonColumn, SyncConfiguration
-from ..sources import Sources, CsvConfigArguments, FakerConfigArguments, MongodbConfigArguments, ItopConfigArguments, StaticConfigArguments, MysqlConfigArguments
+from ..sources import Sources, CsvConfigArguments, FakerConfigArguments, MongodbConfigArguments, ItopConfigArguments, StaticConfigArguments, MysqlConfigArguments, PostgresConfigArguments
 
 
 SourceConfigs = List[Union[(
@@ -16,7 +17,8 @@ SourceConfigs = List[Union[(
     MongodbConfigArguments,
     CsvConfigArguments,
     FakerConfigArguments,
-    MysqlConfigArguments
+    MysqlConfigArguments,
+    PostgresConfigArguments,
 )]]
 
 
@@ -28,7 +30,7 @@ class BeetlConfigSchemaV1(BaseModel):
     @ model_validator(mode='before')
     def validate_sources(cls, values):
         """Makes sure that each source configuration is only validated against one source type, the one that matches the 'type' field"""
-        sources = values.get('sources', [])
+        sources: List[Dict[str, Any]] = values.get('sources', [])
         errors = []
         for i, source in enumerate(sources):
             source_type = source.get('type', None)
@@ -41,7 +43,13 @@ class BeetlConfigSchemaV1(BaseModel):
                 if registrated_source is None:
                     raise ValueError(
                         f"sources.{i}.type \"{source_type}\" is not recognized, valid sources are {list(Sources.sources.keys())}")
-                registrated_source.cls.ConfigArgumentsClass(**source)
+                location = ('sources', str(i))
+                # TODO: Break out to make it clearer what is happening
+                # append location to source for it to be available in the automatic validation later
+                source["location"] = location
+
+                registrated_source.cls.ConfigArgumentsClass(
+                    **source)
             except ValidationError as e:
                 # Mutatate the location so that it is absolute to the sources position in the configuration
                 for error in e.errors():
@@ -79,7 +87,7 @@ class BeetlConfigV1(BeetlConfig):
                 "The configuration file is missing the 'sync' section.")
 
         for sync_index, sync in enumerate(config["sync"]):
-            location = ['sync', str(sync_index)]
+            location = ('sync', str(sync_index))
             if not self.sources.get(sync["source"], False) or not self.sources.get(
                 sync["destination"], False
             ):
@@ -194,24 +202,17 @@ class BeetlConfigV1(BeetlConfig):
 
     def initialize_sources(self, config):
         sources = {}
-        for source in config["sources"]:
+        for source_index, source in enumerate(config["sources"]):
             name = source["name"]
             source_type = source["type"]
-            source_module = __import__(
-                ".".join(
-                    self.__module__.split(".")[0:-2]
-                    + [f"sources.{source_type.lower()}"]
-                ),
-                fromlist=[""],
-            )
-            try:
-                source_class = getattr(source_module, f"{source_type}Source")
-            except Exception as e:
+            registrated_source = Sources.sources.get(source_type, None)
+            if registrated_source is None:
                 raise Exception(
-                    f"The source type '{source_type}' used in source '{name}' is not a valid source type."
-                ) from e
+                    f"The source type '{source_type}' used in source '{name}' is not registrated in available sources")
 
-            sources[name] = source_class(source)
+            location = ('sources', str(source_index))
+            source_config_with_location = {**source, "location": location}
+            sources[name] = registrated_source.cls(source_config_with_location)
         return sources
 
     def read_sources_from_env(self, config):

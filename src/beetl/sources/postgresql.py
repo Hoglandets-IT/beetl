@@ -1,14 +1,101 @@
 import uuid
 import polars as pl
-from typing import List
+from typing import Annotated, List, Literal, Optional
 
 import psycopg
+from pydantic import Field, model_validator
+
+from ..errors import ConfigValidationError, ConfigValueError, RequiredDestinationFieldError, RequiredSourceFieldError
 from .interface import (
+    SourceConfigArguments,
+    SourceConnectionArguments,
+    SourceSyncArguments,
     register_source,
     SourceInterface,
     SourceSync,
     SourceConfig,
 )
+
+
+class PostgresConfigArguments(SourceConfigArguments):
+    class ConnectionArguments(SourceConnectionArguments):
+        connection_string: Annotated[Optional[str], Field(default=None)]
+        username: Annotated[Optional[str], Field(min_length=1, default=None)]
+        password: Annotated[Optional[str], Field(min_length=1, default=None)]
+        host: Annotated[Optional[str], Field(min_length=1, default=None)]
+        port: Annotated[Optional[str], Field(min_length=1, default=None)]
+        database: Annotated[Optional[str], Field(min_length=1, default=None)]
+
+        @model_validator(mode="after")
+        def validate_connection_string(cls, instance: "PostgresConfigArguments.ConnectionArguments"):
+            if instance.connection_string:
+                return instance
+
+            errors = []
+            fields = ["username", "password", "host", "port", "database"]
+            for field in fields:
+                if getattr(instance, field) is None:
+                    errors.append(ConfigValueError(field,
+                                                   f"'{field}' is required when 'connection_string' is not provided", instance.location
+                                                   ))
+
+            if errors:
+                raise ConfigValidationError(errors)
+            return instance
+
+    type: Annotated[Literal["Postgresql"], Field(
+        default="Postgresql")] = "Postgresql"
+    connection: ConnectionArguments
+
+
+class PostgresConfig(SourceConfig):
+    """The connection configuration class used for Postgresql sources"""
+
+    connection_string: str
+
+    def __init__(self, arguments: PostgresConfigArguments):
+        super().__init__(arguments)
+        connection_string = arguments.connection.connection_string
+
+        if not connection_string:
+            self.connection_string = f"postgresql://{arguments.connection.username}:{arguments.connection.password}@{arguments.connection.host}:{arguments.connection.port}/{arguments.connection.database}"
+
+
+class PostgresSyncArguments(SourceSyncArguments):
+    table: Annotated[Optional[str], Field(default=None)]
+    query: Annotated[Optional[str], Field(default=None)]
+    uniqueColumns: Annotated[List[str], Field(default=[])]
+    skipColumns: Annotated[List[str], Field(default=[])]
+
+    @model_validator(mode="after")
+    def validate_as_source(cls, instance: "PostgresSyncArguments"):
+        if instance.direction == "destination":
+            return instance
+        errors = []
+        if not instance.table and not instance.query:
+            errors.append(RequiredSourceFieldError(
+                "table|query", instance.location))
+
+        if errors:
+            raise ConfigValidationError(errors)
+        return instance
+
+    @model_validator(mode="after")
+    def validate_as_destination(cls, instance: "PostgresSyncArguments"):
+        if instance.direction == "source":
+            return instance
+        errors = []
+        if not instance.table:
+            errors.append(RequiredDestinationFieldError(
+                "table", instance.location))
+        if not instance.uniqueColumns:
+            errors.append(RequiredDestinationFieldError(
+                "uniqueColumns", instance.location))
+
+        if errors:
+            raise ConfigValidationError(errors)
+
+        return instance
 
 
 class PostgresSync(SourceSync):
@@ -19,38 +106,20 @@ class PostgresSync(SourceSync):
     table: str = None
     query: str = None
 
-    def __init__(
-        self,
-        table: str = None,
-        query: str = None,
-        uniqueColumns: List[str] = [],
-        skipColumns: List[str] = [],
-    ):
-        super().__init__()
-        self.table = table
-        self.query = query
-        self.unique_columns = uniqueColumns
-        self.skip_columns = skipColumns
+    def __init__(self, arguments: PostgresSyncArguments):
+        super().__init__(arguments)
+
+        self.table = arguments.table
+        self.query = arguments.query
+        self.unique_columns = arguments.uniqueColumns
+        self.skip_columns = arguments.skipColumns
 
 
-class PostgresConfig(SourceConfig):
-    """The connection configuration class used for Postgresql sources"""
-
-    connection_string: str
-
-    def __init__(self, settings: dict):
-        if settings.get("connection_string", False):
-            self.connection_string = settings["connection_string"]
-            return
-
-        self.connection_string = "postgresql://"
-        f"{settings['username']}:{settings['password']}"
-        f"@{settings['host']}:{settings['port']}/{settings['database']}"
-
-
-@register_source("Postgresql")
+@ register_source("Postgresql")
 class PostgresSource(SourceInterface):
+    ConfigArgumentsClass = PostgresConfigArguments
     ConfigClass = PostgresConfig
+    SyncArgumentsClass = PostgresSyncArguments
     SyncClass = PostgresSync
 
     """ A source for Postgresql data """

@@ -1,5 +1,7 @@
 # Change Notes
-
+## 1.1.0
+automatic validation
+schema generation
 ## 1.0.4
 ### Changes ️️🔄️
 - It is now possible to use Xml files as a data source and destination. Read more about it in the [docs](/sources/xml.html).
