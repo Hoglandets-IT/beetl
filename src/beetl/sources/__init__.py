@@ -1,14 +1,15 @@
 import os
 
 # Import for re-export
-from .static import StaticSource, StaticConfig, StaticConfigArguments
-from .csv import CsvSource, CsvConfig, CsvConfigArguments
-from .faker import FakerSource, FakerConfig, FakerConfigArguments
-from .itop import ItopSource, ItopConfig, ItopConfigArguments
-from .mongodb import MongodbSource, MongodbConfig, MongodbSync, MongodbConfigArguments
-from .mysql import MysqlSource, MysqlConfig, MysqlConfigArguments
-from .postgresql import PostgresSource, PostgresConfig, PostgresConfigArguments
+from .csv import CsvConfig, CsvConfigArguments, CsvSource
+from .faker import FakerConfig, FakerConfigArguments, FakerSource
 from .interface import Sources
+from .itop import ItopConfig, ItopConfigArguments, ItopSource
+from .mongodb import MongodbConfig, MongodbConfigArguments, MongodbSource, MongodbSync
+from .mysql import MysqlConfig, MysqlConfigArguments, MysqlSource
+from .postgresql import PostgresConfig, PostgresConfigArguments, PostgresSource
+from .rest import RestConfig, RestConfigArguments, RestSource
+from .static import StaticConfig, StaticConfigArguments, StaticSource
 
 cDir = os.path.dirname(__file__)
 for file in os.listdir(cDir):

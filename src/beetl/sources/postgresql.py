@@ -1,19 +1,24 @@
 import uuid
-import polars as pl
-from typing import Annotated, List, Literal, Optional
+from typing import Annotated, List, Literal, Optional, Tuple
 
+import polars as pl
 import psycopg
 from pydantic import Field, model_validator
 
-from ..errors import ConfigValidationError, ConfigValueError, RequiredDestinationFieldError, RequiredSourceFieldError
+from ..errors import (
+    ConfigValidationError,
+    ConfigValueError,
+    RequiredDestinationFieldError,
+    RequiredSourceFieldError,
+)
 from .interface import (
+    SourceConfig,
     SourceConfigArguments,
     SourceConnectionArguments,
-    SourceSyncArguments,
-    register_source,
     SourceInterface,
     SourceSync,
-    SourceConfig,
+    SourceSyncArguments,
+    register_source,
 )
 
 
@@ -27,7 +32,9 @@ class PostgresConfigArguments(SourceConfigArguments):
         database: Annotated[Optional[str], Field(min_length=1, default=None)]
 
         @model_validator(mode="after")
-        def validate_connection_string(cls, instance: "PostgresConfigArguments.ConnectionArguments"):
+        def validate_connection_string(
+            cls, instance: "PostgresConfigArguments.ConnectionArguments"
+        ):
             if instance.connection_string:
                 return instance
 
@@ -35,16 +42,19 @@ class PostgresConfigArguments(SourceConfigArguments):
             fields = ["username", "password", "host", "port", "database"]
             for field in fields:
                 if getattr(instance, field) is None:
-                    errors.append(ConfigValueError(field,
-                                                   f"'{field}' is required when 'connection_string' is not provided", instance.location
-                                                   ))
+                    errors.append(
+                        ConfigValueError(
+                            field,
+                            f"'{field}' is required when 'connection_string' is not provided",
+                            instance.location,
+                        )
+                    )
 
             if errors:
                 raise ConfigValidationError(errors)
             return instance
 
-    type: Annotated[Literal["Postgresql"], Field(
-        default="Postgresql")] = "Postgresql"
+    type: Annotated[Literal["Postgresql"], Field(default="Postgresql")] = "Postgresql"
     connection: ConnectionArguments
 
 
@@ -73,8 +83,7 @@ class PostgresSyncArguments(SourceSyncArguments):
             return instance
         errors = []
         if not instance.table and not instance.query:
-            errors.append(RequiredSourceFieldError(
-                "table|query", instance.location))
+            errors.append(RequiredSourceFieldError("table|query", instance.location))
 
         if errors:
             raise ConfigValidationError(errors)
@@ -86,11 +95,11 @@ class PostgresSyncArguments(SourceSyncArguments):
             return instance
         errors = []
         if not instance.table:
-            errors.append(RequiredDestinationFieldError(
-                "table", instance.location))
+            errors.append(RequiredDestinationFieldError("table", instance.location))
         if not instance.uniqueColumns:
-            errors.append(RequiredDestinationFieldError(
-                "uniqueColumns", instance.location))
+            errors.append(
+                RequiredDestinationFieldError("uniqueColumns", instance.location)
+            )
 
         if errors:
             raise ConfigValidationError(errors)
@@ -115,7 +124,7 @@ class PostgresSync(SourceSync):
         self.skip_columns = arguments.skipColumns
 
 
-@ register_source("Postgresql")
+@register_source("Postgresql")
 class PostgresSource(SourceInterface):
     ConfigArgumentsClass = PostgresConfigArguments
     ConfigClass = PostgresConfig
@@ -167,11 +176,10 @@ class PostgresSource(SourceInterface):
             connection_string = self.connection_settings.connection_string
 
         connection_string = connection_string.replace(
-            "postgresql://", "postgresql+psycopg://")
-
-        data.write_database(
-            table, connection_string, if_table_exists="append"
+            "postgresql://", "postgresql+psycopg://"
         )
+
+        data.write_database(table, connection_string, if_table_exists="append")
 
         return len(data)
 
@@ -192,8 +200,7 @@ class PostgresSource(SourceInterface):
             ) as connection:
                 with connection.cursor() as cursor:
                     create_temp_table_with_same_structure_as_destination = f"CREATE TABLE {temp_table_name} AS SELECT * FROM {self.source_configuration.table} where 1=0"
-                    cursor.execute(
-                        create_temp_table_with_same_structure_as_destination)
+                    cursor.execute(create_temp_table_with_same_structure_as_destination)
 
             self._insert(data, table=temp_table_name)
 
@@ -246,7 +253,7 @@ class PostgresSource(SourceInterface):
             batches = []
 
             for i in range(0, len(data), batch_size):
-                batches.append(data[i: i + batch_size])
+                batches.append(data[i : i + batch_size])
 
         for batch in batches:
             id_clause = " AND ".join(

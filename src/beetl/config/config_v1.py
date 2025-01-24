@@ -1,25 +1,38 @@
-
 import copy
 import json
 import os
-from pydantic import BaseModel, Field, model_validator, ValidationError
 from typing import Annotated, Any, Dict, List, Literal, Union
 
+from pydantic import BaseModel, Field, ValidationError, model_validator
 
-from ..transformers.interface import TransformerConfiguration
-from .config_base import BeetlConfig, ComparisonColumn, SyncConfiguration
-from ..sources import Sources, CsvConfigArguments, FakerConfigArguments, MongodbConfigArguments, ItopConfigArguments, StaticConfigArguments, MysqlConfigArguments, PostgresConfigArguments
-
-
-SourceConfigs = List[Union[(
-    StaticConfigArguments,
-    ItopConfigArguments,
-    MongodbConfigArguments,
+from ..sources import (
     CsvConfigArguments,
     FakerConfigArguments,
+    ItopConfigArguments,
+    MongodbConfigArguments,
     MysqlConfigArguments,
     PostgresConfigArguments,
-)]]
+    RestConfigArguments,
+    Sources,
+    StaticConfigArguments,
+)
+from ..transformers.interface import TransformerConfiguration
+from .config_base import BeetlConfig, ComparisonColumn, SyncConfiguration
+
+SourceConfigs = List[
+    Union[
+        (
+            StaticConfigArguments,
+            ItopConfigArguments,
+            MongodbConfigArguments,
+            CsvConfigArguments,
+            FakerConfigArguments,
+            MysqlConfigArguments,
+            PostgresConfigArguments,
+            RestConfigArguments,
+        )
+    ]
+]
 
 
 class BeetlConfigSchemaV1(BaseModel):
@@ -27,33 +40,33 @@ class BeetlConfigSchemaV1(BaseModel):
     sources: Annotated[SourceConfigs, Field(min_items=1)]
     sync: List[Any]
 
-    @ model_validator(mode='before')
+    @model_validator(mode="before")
     def validate_sources(cls, values):
         """Makes sure that each source configuration is only validated against one source type, the one that matches the 'type' field"""
-        sources: List[Dict[str, Any]] = values.get('sources', [])
+        sources: List[Dict[str, Any]] = values.get("sources", [])
         errors = []
         for i, source in enumerate(sources):
-            source_type = source.get('type', None)
+            source_type = source.get("type", None)
             if source_type is None:
                 raise ValueError(
-                    f"sources.{i}.type is missing, valid sources are {list(Sources.sources.keys())}")
+                    f"sources.{i}.type is missing, valid sources are {list(Sources.sources.keys())}"
+                )
             try:
-                registrated_source = Sources.sources.get(
-                    source_type, None)
+                registrated_source = Sources.sources.get(source_type, None)
                 if registrated_source is None:
                     raise ValueError(
-                        f"sources.{i}.type \"{source_type}\" is not recognized, valid sources are {list(Sources.sources.keys())}")
-                location = ('sources', str(i))
+                        f'sources.{i}.type "{source_type}" is not recognized, valid sources are {list(Sources.sources.keys())}'
+                    )
+                location = ("sources", str(i))
                 # TODO: Break out to make it clearer what is happening
                 # append location to source for it to be available in the automatic validation later
                 source["location"] = location
 
-                registrated_source.cls.ConfigArgumentsClass(
-                    **source)
+                registrated_source.cls.ConfigArgumentsClass(**source)
             except ValidationError as e:
                 # Mutatate the location so that it is absolute to the sources position in the configuration
                 for error in e.errors():
-                    error['loc'] = ('sources', i) + error['loc']
+                    error["loc"] = ("sources", i) + error["loc"]
                     errors.append(error)
         if errors:
             raise ValidationError.from_exception_data(cls.__name__, errors)
@@ -83,11 +96,10 @@ class BeetlConfigV1(BeetlConfig):
 
         # TODO: Validate sync
         if len(config.get("sync", "")) == 0:
-            raise Exception(
-                "The configuration file is missing the 'sync' section.")
+            raise Exception("The configuration file is missing the 'sync' section.")
 
         for sync_index, sync in enumerate(config["sync"]):
-            location = ('sync', str(sync_index))
+            location = ("sync", str(sync_index))
             if not self.sources.get(sync["source"], False) or not self.sources.get(
                 sync["destination"], False
             ):
@@ -101,12 +113,20 @@ class BeetlConfigV1(BeetlConfig):
             source_name = sync["source"]
             temp_source = copy.deepcopy(self.sources[source_name])
             temp_source.set_sourceconfig(
-                sync["sourceConfig"], direction="source", name=source_name, location=(*location, 'sourceConfig'))
+                sync["sourceConfig"],
+                direction="source",
+                name=source_name,
+                location=(*location, "sourceConfig"),
+            )
 
             destination_name = sync["destination"]
             temp_destination = copy.deepcopy(self.sources[destination_name])
             temp_destination.set_sourceconfig(
-                sync["destinationConfig"], direction="destination", name=destination_name, location=(*location, 'destinationConfig'))
+                sync["destinationConfig"],
+                direction="destination",
+                name=destination_name,
+                location=(*location, "destinationConfig"),
+            )
 
             comparisonColumnsConf = sync.get("comparisonColumns", None)
             if not comparisonColumnsConf:
@@ -125,11 +145,11 @@ class BeetlConfigV1(BeetlConfig):
             elif type(comparisonColumnsConf) is dict:
                 try:
                     comparisonColumns = []
-                    unique_column_name, _ = list(
-                        comparisonColumnsConf.items())[0]
+                    unique_column_name, _ = list(comparisonColumnsConf.items())[0]
                     for key, value in comparisonColumnsConf.items():
-                        comparisonColumns.append(ComparisonColumn(
-                            key, value, key == unique_column_name))
+                        comparisonColumns.append(
+                            ComparisonColumn(key, value, key == unique_column_name)
+                        )
 
                 except Exception as e:
                     raise Exception(
@@ -208,9 +228,10 @@ class BeetlConfigV1(BeetlConfig):
             registrated_source = Sources.sources.get(source_type, None)
             if registrated_source is None:
                 raise Exception(
-                    f"The source type '{source_type}' used in source '{name}' is not registrated in available sources")
+                    f"The source type '{source_type}' used in source '{name}' is not registrated in available sources"
+                )
 
-            location = ('sources', str(source_index))
+            location = ("sources", str(source_index))
             source_config_with_location = {**source, "location": location}
             sources[name] = registrated_source.cls(source_config_with_location)
         return sources

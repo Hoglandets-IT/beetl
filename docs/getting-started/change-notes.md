@@ -2,6 +2,7 @@
 ## 1.1.0
 automatic validation
 schema generation
+extras are forbidden will throw error
 ## 1.0.4
 ### Changes ️️🔄️
 - It is now possible to use Xml files as a data source and destination. Read more about it in the [docs](/sources/xml.html).

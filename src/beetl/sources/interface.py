@@ -1,8 +1,11 @@
-from dataclasses import dataclass
-import polars as pl
-from typing import Annotated, List, Literal
 import concurrent.futures
+from dataclasses import dataclass
+from typing import Annotated, List, Literal, Tuple
+
+import polars as pl
 import pydantic
+
+from ..validation import ValidationBaseModel
 
 CASTABLE = (
     pl.Int8,
@@ -33,8 +36,7 @@ class RequestThreader:
 
     def __enter__(self):
         print("Threading the needle...")
-        self.executor = concurrent.futures.ThreadPoolExecutor(
-            max_workers=self.threads)
+        self.executor = concurrent.futures.ThreadPoolExecutor(max_workers=self.threads)
 
         return self
 
@@ -73,47 +75,41 @@ class ColumnDefinition:
         self.type = getattr(pl, self.type)
 
 
-class SourceConnectionArguments(pydantic.BaseModel):
-    model_config = pydantic.ConfigDict(extra='forbid')
-    location: Annotated[tuple[str, ...],
-                        pydantic.Field(min_length=3, max_length=3)]
+class SourceConnectionArguments(ValidationBaseModel):
+    pass
 
 
-class SourceConfigArguments(pydantic.BaseModel):
+class SourceConfigArguments(ValidationBaseModel):
     """Class representation of the source connection settings in the beetl config. Used to validate the source configuration settings using pydantic."""
-    model_config = pydantic.ConfigDict(extra='forbid')
+
     name: Annotated[str, pydantic.Field(min_length=1)]
     type: Annotated[str, pydantic.Field(min_length=1)]
-    location: Annotated[tuple[str, ...],
-                        pydantic.Field(min_length=2, max_length=2)]
     connection: SourceConnectionArguments
 
     @pydantic.model_validator(mode="before")
-    def propagate_location(cls, instance: dict):
-        location = instance["location"]
-        if not location:
-            return instance
-        instance["connection"]["location"] = location + ("connection",)
-        return instance
+    def propagate_nested_location(cls, values: dict):
+        cls.propagate_location("connection", values)
+        return values
 
 
-class SourceConfig():
+class SourceConfig:
     """The connection configuration class used for data sources, abstract"""
+
     def __init__(cls, arguments: SourceConfigArguments):
         pass
 
 
-class SourceSyncArguments(pydantic.BaseModel):
+class SourceSyncArguments(ValidationBaseModel):
     """Class representation of the source configuration settings in the beetl config. Used to validate the source configuration settings using pydantic."""
-    model_config = pydantic.ConfigDict(extra='forbid')
+
+    model_config = pydantic.ConfigDict(extra="forbid")
     name: Annotated[str, pydantic.Field(min_length=1)]
-    direction: Annotated[Literal["source", "destination"],
-                         pydantic.Field(min_length=1)]
-    location: Annotated[tuple[str, ...], pydantic.Field(min_length=3)]
+    direction: Annotated[Literal["source", "destination"], pydantic.Field(min_length=1)]
 
 
 class SourceSync:
     """The configuration class used for data sources, abstract"""
+
     def __init__(cls, arguments: SourceSyncArguments):
         pass
 
@@ -140,19 +136,23 @@ class SourceInterface:
                 Configuration for the source connection (paths, credentials, etc.)
         """
 
-        self.connection_settings_arguments = self.ConfigArgumentsClass(
-            **source)
+        self.connection_settings_arguments = self.ConfigArgumentsClass(**source)
 
-        self.connection_settings = self.ConfigClass(
-            self.connection_settings_arguments)
+        self.connection_settings = self.ConfigClass(self.connection_settings_arguments)
 
         self._configure()
 
-    def set_sourceconfig(self, config: dict, direction: Literal["source", "destination"], name: str, location: tuple[str]) -> None:
+    def set_sourceconfig(
+        self,
+        config: dict,
+        direction: Literal["source", "destination"],
+        name: str,
+        location: tuple[str],
+    ) -> None:
         self.source_configuration_arguments = self.SyncArgumentsClass(
-            direction=direction, name=name, location=location, **config)
-        self.source_configuration = self.SyncClass(
-            self.source_configuration_arguments)
+            direction=direction, name=name, location=location, **config
+        )
+        self.source_configuration = self.SyncClass(self.source_configuration_arguments)
 
     def __enter__(self):
         self._connect()
