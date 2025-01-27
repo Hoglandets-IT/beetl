@@ -1,4 +1,4 @@
-from typing import Annotated, Optional, Union
+from typing import Annotated, Literal, Optional, Union
 
 from pydantic import ConfigDict, Field, model_validator
 
@@ -102,6 +102,7 @@ class ConnectionArguments(SourceConnectionArguments):
 
 class RestConfigArguments(SourceConfigArguments):
     connection: ConnectionArguments
+    type: Annotated[Literal["Rest"], Field(default="Rest")] = "Rest"
 
 
 class RestConfig(SourceConfig):

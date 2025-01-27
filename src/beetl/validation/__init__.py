@@ -33,7 +33,7 @@ class ValidationBaseModel(BaseModel):
         ```
         """
         nested_cls = arguments.get(nested_cls_property, None)
-        if not nested_cls:
+        if nested_cls is None:
             return
         location = arguments.get("location", ())
         nested_cls["location"] = location + (nested_cls_property,)

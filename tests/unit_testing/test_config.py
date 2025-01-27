@@ -401,3 +401,48 @@ class UnitTestBeetlConfig(unittest.TestCase):
                 ],
             }
         )
+
+    def test_that_version_1_supports_Sqlserver_source(self):
+        result = BeetlConfig(
+            {
+                "version": "V1",
+                "sources": [
+                    {
+                        "name": "src",
+                        "type": "Sqlserver",
+                        "connection": {
+                            "connection_string": "mssql+pyodbc://root:root@localhost:1433/test"
+                        },
+                    },
+                    {
+                        "name": "dst",
+                        "type": "Sqlserver",
+                        "connection": {
+                            "username": "test",
+                            "password": "test",
+                            "host": "test",
+                            "port": "test",
+                            "database": "test",
+                        },
+                    },
+                ],
+                "sync": [
+                    {
+                        "source": "src",
+                        "destination": "dst",
+                        "sourceConfig": {
+                            "query": "SELECT * FROM test",
+                        },
+                        "destinationConfig": {
+                            "query": "SELECT * FROM test",
+                            "table": "test",
+                            "uniqueColumns": ["id"],
+                        },
+                        "comparisonColumns": {"id": "Int64"},
+                        "sourceTransformers": [],
+                        "destinationTransformers": [],
+                        "insertionTransformers": [],
+                    }
+                ],
+            }
+        )

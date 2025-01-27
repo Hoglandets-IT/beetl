@@ -3,6 +3,7 @@
 automatic validation
 schema generation
 extras are forbidden will throw error
+unused query and table removed from sqlserver config 
 ## 1.0.4
 ### Changes ️️🔄️
 - It is now possible to use Xml files as a data source and destination. Read more about it in the [docs](/sources/xml.html).

@@ -1,90 +1,20 @@
-from typing import Optional
 from uuid import uuid4
-import polars as pl
+
 import pandas as pd
-import sqlalchemy as sqla
+import polars as pl
 import pyodbc
-from .interface import (
-    register_source,
-    SourceInterface,
-    SourceSync,
-    SourceConfig,
-)
+import sqlalchemy as sqla
 
-
-class SqlserverSync(SourceSync):
-    """The configuration class used for SQLServer sources"""
-
-    table: str = None
-    query: str = None
-    soft_delete: bool = False
-    deleted_field: str = None
-    deleted_value: str = "'true'"
-    unique_columns: list[str] = None
-    skip_columns: list[str] = None
-
-    def __init__(
-        self,
-        table: str = None,
-        query: str = None,
-        soft_delete: bool = False,
-        deleted_field: str = None,
-        deleted_value: str = "true",
-        uniqueColumns: list[str] = [],
-        skipColumns: list[str] = [],
-    ):
-        super().__init__()
-        self.table = table
-        self.query = query
-        self.soft_delete = soft_delete
-        self.deleted_field = deleted_field
-        self.deleted_value = deleted_value
-        self.unique_columns = uniqueColumns
-        self.skip_columns = skipColumns
-
-
-class SqlserverConfig(SourceConfig):
-    """The connection configuration class used for SQLServer sources"""
-
-    connection_string: str
-    query: Optional[str] = None
-    table: Optional[str] = None
-
-    def __init__(self, settings: dict):
-        if settings.get("connection_string", False):
-            self.connection_string = settings["connection_string"]
-            if "driver" not in self.connection_string:
-                if len(pyodbc.drivers()) == 0:
-                    raise pyodbc.DatabaseError(
-                        "No ODBC drivers found for SQL Server/pyodbc. "
-                        "Please make sure at least one is installed"
-                    )
-                print("Found other ODBDC driver than the one provided, trying...\n")
-                for driver in pyodbc.drivers():
-                    print(f"Trying driver: {driver}")
-                    if "SQL Server" in driver:
-                        if "?" not in self.connection_string:
-                            self.connection_string += f"?driver={driver}"
-                        else:
-                            self.connection_string += f"&driver={driver}"
-                        break
-
-                if "driver" not in self.connection_string:
-                    raise pyodbc.DatabaseError(
-                        "No working ODBC drivers found for SQL Server/pyodbc. "
-                        "Please make sure at least one is installed"
-                    )
-
-            return
-
-        self.connection_string = "mssql://"
-        f"{settings['username']}:{settings['password']}"
-        f"@{settings['host']}:{settings['port']}/{settings['database']}"
+from ..interface import SourceInterface, register_source
+from .sqlserver_config import SqlserverConfig, SqlserverConfigArguments
+from .sqlserver_sync import SqlserverSync, SqlserverSyncArguments
 
 
 @register_source("Sqlserver")
 class SqlserverSource(SourceInterface):
+    ConfigArgumentsClass = SqlserverConfigArguments
     ConfigClass = SqlserverConfig
+    SyncArgumentsClass = SqlserverSyncArguments
     SyncClass = SqlserverSync
 
     connection: pyodbc.Connection = None
@@ -96,19 +26,20 @@ class SqlserverSource(SourceInterface):
 
     def _connect(self):
         try:
-            engine = sqla.create_engine(
-                self.connection_settings.connection_string)
+            engine = sqla.create_engine(self.connection_settings.connection_string)
         except ModuleNotFoundError:
             try:
                 engine = sqla.create_engine(
                     self.connection_settings.connection_string.replace(
                         "mssql://", "mssql+pyodbc://"
-                    ))
+                    )
+                )
             except ModuleNotFoundError:
                 engine = sqla.create_engine(
                     self.connection_settings.connection_string.replace(
                         "mssql://", "mssql+pymssql://"
-                    ))
+                    )
+                )
         self.connection = engine.connect()
 
     def _disconnect(self):

@@ -1,7 +1,7 @@
 import copy
 import json
 import os
-from typing import Annotated, Any, Dict, List, Literal, Union
+from typing import Annotated, Any, Literal, Union
 
 from pydantic import BaseModel, Field, ValidationError, model_validator
 
@@ -14,12 +14,13 @@ from ..sources import (
     PostgresConfigArguments,
     RestConfigArguments,
     Sources,
+    SqlserverConfigArguments,
     StaticConfigArguments,
 )
 from ..transformers.interface import TransformerConfiguration
 from .config_base import BeetlConfig, ComparisonColumn, SyncConfiguration
 
-SourceConfigs = List[
+SourceConfigs = list[
     Union[
         (
             StaticConfigArguments,
@@ -30,6 +31,7 @@ SourceConfigs = List[
             MysqlConfigArguments,
             PostgresConfigArguments,
             RestConfigArguments,
+            SqlserverConfigArguments,
         )
     ]
 ]
@@ -38,12 +40,12 @@ SourceConfigs = List[
 class BeetlConfigSchemaV1(BaseModel):
     version: Literal["V1"]
     sources: Annotated[SourceConfigs, Field(min_items=1)]
-    sync: List[Any]
+    sync: list[Any]
 
     @model_validator(mode="before")
     def validate_sources(cls, values):
         """Makes sure that each source configuration is only validated against one source type, the one that matches the 'type' field"""
-        sources: List[Dict[str, Any]] = values.get("sources", [])
+        sources: list[dict[str, Any]] = values.get("sources", [])
         errors = []
         for i, source in enumerate(sources):
             source_type = source.get("type", None)

@@ -1,6 +1,6 @@
 import os
 
-# Import for re-export
+# re-export
 from .csv import CsvConfig, CsvConfigArguments, CsvSource
 from .faker import FakerConfig, FakerConfigArguments, FakerSource
 from .interface import Sources
@@ -9,6 +9,12 @@ from .mongodb import MongodbConfig, MongodbConfigArguments, MongodbSource, Mongo
 from .mysql import MysqlConfig, MysqlConfigArguments, MysqlSource
 from .postgresql import PostgresConfig, PostgresConfigArguments, PostgresSource
 from .rest import RestConfig, RestConfigArguments, RestSource
+from .sqlserver import (
+    SqlserverConfig,
+    SqlserverConfigArguments,
+    SqlserverSource,
+    SqlserverSync,
+)
 from .static import StaticConfig, StaticConfigArguments, StaticSource
 
 cDir = os.path.dirname(__file__)
