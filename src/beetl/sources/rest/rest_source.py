@@ -69,9 +69,7 @@ class RestSource(SourceInterface):
     def _disconnect(self):
         pass
 
-    def _query(
-        self, params=None, customQuery: str = None, returnData: bool = True
-    ) -> pl.DataFrame:
+    def _query(self) -> pl.DataFrame:
         self._connect()
 
         lrSettings = self.source_configuration.listRequest

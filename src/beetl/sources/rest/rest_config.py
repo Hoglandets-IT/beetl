@@ -1,6 +1,6 @@
 from typing import Annotated, Optional, Union
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import ConfigDict, Field, model_validator
 
 from ...errors import ConfigValidationError, ConfigValueError
 from ...sources.interface import (
