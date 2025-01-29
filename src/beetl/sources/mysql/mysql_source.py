@@ -1,128 +1,12 @@
 import polars as pl
-from pydantic import BaseModel, ConfigDict, Field, ValidationError, model_validator
 import sqlalchemy as sqla
-from typing import Annotated, List, Optional
 
-from ..errors import ConfigValueError, ConfigValidationError, RequiredDestinationFieldError
-
-from .interface import (
-    SourceConfigArguments,
-    SourceSyncArguments,
-    register_source,
-    SourceInterface,
-    SourceSync,
-    SourceConfig,
-)
+from ..interface import SourceInterface, register_source
+from .mysql_config import MysqlConfig, MysqlConfigArguments
+from .mysql_sync import MysqlSync, MysqlSyncArguments
 
 
-class MysqlSyncArguments(SourceSyncArguments):
-    model_config = ConfigDict(extra='forbid')
-
-    table: Annotated[Optional[str], Field(
-        default=None, description="Mandatory if configured as a destination, and if query isn't provided")]
-    query: Annotated[Optional[str], Field(default=None)]
-    uniqueColumns: Annotated[List[str], Field(default=[])]
-    skipColumns: Annotated[List[str], Field(default=[])]
-
-    @ model_validator(mode="after")
-    def validate_as_source(cls, instance: "MysqlSyncArguments"):
-        if instance.direction == "destination":
-            return instance
-
-        if not instance.table and not instance.query:
-            raise ValueError(
-                "'table' or 'query' is required when used as a source")
-
-        return instance
-
-    @ model_validator(mode="after")
-    def validate_as_destination(cls, instance: "MysqlSyncArguments"):
-        if instance.direction == "source":
-            return instance
-
-        errors = []
-
-        if not instance.table and not instance.query:
-            errors.append(RequiredDestinationFieldError(
-                'table', instance.location))
-
-        if not instance.uniqueColumns:
-            errors.append(RequiredDestinationFieldError(
-                'uniqueColumns', instance.location))
-
-        if errors:
-            raise ConfigValidationError(errors)
-
-        return instance
-
-
-class MysqlSync(SourceSync):
-    """The configuration class used for MySQL sources"""
-
-    unique_columns: List[str] = None
-    skip_columns: List[str] = None
-    table: str = None
-    query: str = None
-
-    def __init__(self, arguments: MysqlSyncArguments):
-        super().__init__(arguments)
-
-        self.table = arguments.table
-        self.query = arguments.query
-        self.unique_columns = arguments.uniqueColumns
-        self.skip_columns = arguments.skipColumns
-
-
-class MysqlConfigArguments(SourceConfigArguments):
-    class Connection(BaseModel):
-        model_config = ConfigDict(extra='forbid')
-
-        connection_string: Annotated[Optional[str], Field(default=None)]
-        username: Annotated[Optional[str], Field(default=None)]
-        password: Annotated[Optional[str], Field(default=None)]
-        host: Annotated[Optional[str], Field(default=None)]
-        port: Annotated[Optional[str], Field(default=None)]
-        database: Annotated[Optional[str], Field(default=None)]
-
-        @ model_validator(mode="after")
-        def validate_connection_string_or_components(cls, instance: "MysqlConfigArguments.Connection"):
-            connection_string_is_not_present = not instance.connection_string
-            connection_string_components = [
-                "host", "port", "username", "password", "database"]
-            if connection_string_is_not_present:
-                dict = instance.model_dump()
-                for component in connection_string_components:
-                    if not dict.get(component, None):
-                        raise ValueError(
-                            f"'{component}' is missing. {connection_string_components} are required if 'connection_string' is not provided")
-            return instance
-
-    type: Annotated[str, Field(default="Mysql")] = "Mysql"
-    connection: Connection
-
-
-class MysqlConfig(SourceConfig):
-    """The connection configuration class used for MySQL sources"""
-
-    connection_string: str
-    query: str = None
-    table: str = None
-
-    def __init__(self, arguments: MysqlConfigArguments):
-        super().__init__(arguments)
-
-        connection_string: str
-        if arguments.connection.connection_string:
-            connection_string = arguments.connection.connection_string
-        if not arguments.connection.connection_string:
-            connection_string = "mysql+pymysql://"
-            f"{arguments.connection.username}:{arguments.connection.password}"
-            f"@{arguments.connection.host}:{arguments.connection.port}/{arguments.connection.database}"
-
-        self.connection_string = connection_string
-
-
-@ register_source("Mysql")
+@register_source("Mysql")
 class MysqlSource(SourceInterface):
     ConfigArgumentsClass = MysqlConfigArguments
     ConfigClass = MysqlConfig
@@ -196,7 +80,9 @@ class MysqlSource(SourceInterface):
 
         try:
             data.write_database(
-                table, self.connection_settings.connection_string, if_table_exists="append"
+                table,
+                self.connection_settings.connection_string,
+                if_table_exists="append",
             )
         except ModuleNotFoundError:
             data.write_database(
@@ -248,11 +134,14 @@ class MysqlSource(SourceInterface):
         # Insert data into temporary table
         self._insert(data, table=tempDB)
 
-        fields_to_update = [field.name for field in data.get_columns(
-        ) if not field.name in self.source_configuration.skip_columns or not field.name in self.source_configuration.unique_columns]
+        fields_to_update = [
+            field.name
+            for field in data.get_columns()
+            if not field.name in self.source_configuration.skip_columns
+            or not field.name in self.source_configuration.unique_columns
+        ]
 
-        field_spec = ", ".join(
-            (f"`{fieldName}`" for fieldName in fields_to_update))
+        field_spec = ", ".join((f"`{fieldName}`" for fieldName in fields_to_update))
 
         query = f"""
             REPLACE INTO {self.source_configuration.table} ({field_spec})
@@ -271,7 +160,7 @@ class MysqlSource(SourceInterface):
             batches = []
 
             for i in range(0, len(data), batch_size):
-                batches.append(data[i: i + batch_size])
+                batches.append(data[i : i + batch_size])
 
         for batch in batches:
             id_clause = " AND ".join(
@@ -293,7 +182,8 @@ class MysqlSource(SourceInterface):
     def _validate_unique_columns(self):
         if not self.source_configuration.unique_columns:
             raise ValueError(
-                "MySQL source requires the unique_columns to be set if used as a destination")
+                "MySQL source requires the unique_columns to be set if used as a destination"
+            )
 
     def _quote_if_needed(self, id: any) -> str:
         if isinstance(id, str):

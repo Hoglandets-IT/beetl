@@ -1,138 +1,21 @@
-import os
 import json
-from typing import Annotated, Literal, Optional
 
-# import asyncio
-from pydantic import BaseModel, ConfigDict, Field, model_validator
-import urllib3
 import polars as pl
 import requests
 import requests.adapters
+import urllib3
 from alive_progress import alive_bar
-from .interface import (
-    SourceSyncArguments,
-    SourceConfigArguments,
-    register_source,
-    SourceInterface,
-    SourceSync,
-    SourceConfig,
-    RequestThreader,
-)
+
+from ..interface import RequestThreader, SourceInterface, register_source
+from .itop_config import ItopConfig, ItopConfigArguments
+from .itop_sync import ItopSync, ItopSyncArguments
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 BULK_CUTOFF = 300
 
-DATAMODELS_WITHOUT_SOFT_DELETE = (
-    "NutanixCluster",
-    "NutanixClusterHost",
-    "NutanixVM",
-    "NutanixVMDisk",
-    "NutanixNetwork",
-    "NutanixNetworkInterface",
-)
 
-
-class SoftDeleteArguments(BaseModel):
-    enabled: Annotated[bool, Field(default=False)]
-    field: Annotated[str, Field(min_length=1, default="status")]
-    active_value: Annotated[str, Field(min_length=1, default="enabled")]
-    inactive_value: Annotated[str, Field(min_length=1, default="inactive")]
-
-    @model_validator(mode="before")
-    def transform_input(cls, values):
-        if not values["enabled"]:
-            values["enabled"] = False
-        return values
-
-
-class ItopSyncArguments(SourceSyncArguments):
-
-    datamodel: Annotated[str, Field(min_length=1)]
-    oql_key: Annotated[str, Field(min_length=1)]
-    soft_delete: Annotated[Optional[SoftDeleteArguments], Field(default=None)]
-    link_columns: Annotated[list[str], Field(default=[])]
-    comparison_columns: Annotated[list[str], Field(min_length=1)]
-    unique_columns: Annotated[list[str], Field(min_length=1)]
-    skip_columns: Annotated[Optional[list[str]], Field(default=[])]
-
-
-class ItopSync(SourceSync):
-    """The configuration class used for iTop sources"""
-
-    datamodel: str
-    oql_key: str
-    soft_delete: Optional[SoftDeleteArguments]
-    link_columns: list[str]
-    comparison_columns: list[str]
-    unique_columns: list[str]
-    skip_columns: list[str]
-
-    def __init__(self, arguments: ItopSyncArguments):
-        super().__init__(arguments)
-
-        self.datamodel = arguments.datamodel
-        self.oql_key = arguments.oql_key
-        self.comparison_columns = arguments.comparison_columns
-        self.unique_columns = arguments.unique_columns
-        self.skip_columns = arguments.skip_columns
-        self.soft_delete = arguments.soft_delete
-        self.link_columns = arguments.link_columns
-
-        # TODO: This can be made redundant by adding the model to the soft delete and only allowing the values to be models that support soft delete
-        if arguments.soft_delete is not None:
-            soft_delete_not_supported = arguments.soft_delete.enabled and arguments.datamodel in DATAMODELS_WITHOUT_SOFT_DELETE
-            if soft_delete_not_supported:
-                raise Exception(
-                    f"Soft delete is not supported for {arguments.datamodel} datamodel"
-                )
-
-
-class ItopConfigArguments(SourceConfigArguments):
-    class ItopConnectionArguments(BaseModel):
-        model_config = ConfigDict(extra='forbid')
-
-        host: Annotated[str, Field(min_length=1)]
-        username: Annotated[str, Field(min_length=1)]
-        password: Annotated[str, Field(min_length=1)]
-        verify_ssl: Annotated[str, Field(default="true")]
-
-        @model_validator(mode="before")
-        def transform_input(cls, values):
-            settings: dict[str, str] = values.get("settings", {})
-            transformed_values: dict[str, str] = {}
-            transformed_values['host'] = settings.get("host", None)
-            transformed_values['username'] = settings.get("username", None)
-            transformed_values['password'] = settings.get("password", None)
-            transformed_values['verify_ssl'] = settings.get(
-                "verify_ssl", "true")
-
-            if type(transformed_values['verify_ssl']) is bool:
-                transformed_values['verify_ssl'] = str(
-                    transformed_values['verify_ssl']).lower()
-            return transformed_values
-
-    type: Annotated[Literal["Itop"], Field(default="Itop")] = "Itop"
-    connection: ItopConnectionArguments
-
-
-class ItopConfig(SourceConfig):
-    """The connection configuration class used for iTop sources"""
-
-    host: str
-    username: str
-    password: str
-    verify_ssl: bool
-
-    def __init__(self, arguments: ItopConfigArguments):
-        super().__init__(arguments)
-        self.host = arguments.connection.host
-        self.username = arguments.connection.username
-        self.password = arguments.connection.password
-        self.verify_ssl = arguments.connection.verify_ssl == 'true'
-
-
-@ register_source("Itop")
+@register_source("Itop")
 class ItopSource(SourceInterface):
     ConfigArgumentsClass = ItopConfigArguments
     ConfigClass = ItopConfig
