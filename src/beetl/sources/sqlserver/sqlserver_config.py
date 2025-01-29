@@ -4,10 +4,11 @@ from pydantic import Field, model_validator
 from pyodbc import DatabaseError, drivers
 
 from ...errors import ConfigValidationError, ConfigValueError
+from ...validation import ValidationBaseModel
 from ..interface import SourceConfig, SourceConfigArguments, SourceConnectionArguments
 
 
-class SqlserverConnectionArguments(SourceConnectionArguments):
+class SqlserverSettingsArguments(ValidationBaseModel):
     connection_string: Annotated[
         Optional[str],
         Field(
@@ -68,6 +69,15 @@ class SqlserverConnectionArguments(SourceConnectionArguments):
         return instance
 
 
+class SqlserverConnectionArguments(SourceConnectionArguments):
+    settings: SqlserverSettingsArguments
+
+    @model_validator(mode="before")
+    def propagate_nested_location(cls, arguments: "SqlserverConnectionArguments"):
+        cls.propagate_location("settings", arguments)
+        return arguments
+
+
 class SqlserverConfigArguments(SourceConfigArguments):
     connection: SqlserverConnectionArguments
     type: Annotated[Literal["Sqlserver"], Field(default="Sqlserver")] = "Sqlserver"
@@ -98,15 +108,15 @@ class SqlserverConfig(SourceConfig):
 
     def __init__(self, arguments: SqlserverConfigArguments):
         super().__init__(arguments)
-        if arguments.connection.connection_string:
+        if arguments.connection.settings.connection_string:
             self.connection_string = self.append_sqlserver_driver(
-                arguments.connection.connection_string
+                arguments.connection.settings.connection_string
             )
             return
 
         composed_connection_string = "mssql://"
-        f"{arguments.connection.username}:{arguments.connection.password}"
-        f"@{arguments.connection.host}:{arguments.connection.port}/{arguments.connection.database}"
+        f"{arguments.connection.settings.username}:{arguments.connection.settings.password}"
+        f"@{arguments.connection.settings.host}:{arguments.connection.settings.port}/{arguments.connection.settings.database}"
 
         self.connection_string = self.append_sqlserver_driver(
             composed_connection_string

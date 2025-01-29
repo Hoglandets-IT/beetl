@@ -411,18 +411,22 @@ class UnitTestBeetlConfig(unittest.TestCase):
                         "name": "src",
                         "type": "Sqlserver",
                         "connection": {
-                            "connection_string": "mssql+pyodbc://root:root@localhost:1433/test"
+                            "settings": {
+                                "connection_string": "mssql+pyodbc://root:root@localhost:1433/test"
+                            }
                         },
                     },
                     {
                         "name": "dst",
                         "type": "Sqlserver",
                         "connection": {
-                            "username": "test",
-                            "password": "test",
-                            "host": "test",
-                            "port": "test",
-                            "database": "test",
+                            "settings": {
+                                "username": "test",
+                                "password": "test",
+                                "host": "test",
+                                "port": "test",
+                                "database": "test",
+                            },
                         },
                     },
                 ],
