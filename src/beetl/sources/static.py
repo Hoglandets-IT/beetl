@@ -1,12 +1,13 @@
-from typing import Annotated, Any, List, Literal
-from pydantic import BaseModel, ConfigDict, Field
+from typing import Any, List, Literal
+
 from polars import DataFrame
+from pydantic import BaseModel
+
 from .interface import (
-    register_source,
-    SourceInterface,
-    SourceSync,
     SourceConfig,
-    SourceConfigArguments
+    SourceConfigArguments,
+    SourceInterface,
+    register_source,
 )
 
 
@@ -20,6 +21,7 @@ class StaticConfigArguments(SourceConfigArguments):
 
 class StaticConfig(SourceConfig):
     """The connection configuration class used for static sources"""
+
     data: DataFrame
 
     def __init__(self, arguments: StaticConfigArguments):
@@ -27,7 +29,7 @@ class StaticConfig(SourceConfig):
         self.data = DataFrame(arguments.connection.static or [])
 
 
-@ register_source("Static")
+@register_source("Static")
 class StaticSource(SourceInterface):
     ConfigArgumentsClass = StaticConfigArguments
     ConfigClass = StaticConfig

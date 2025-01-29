@@ -16,6 +16,7 @@ from ..sources import (
     Sources,
     SqlserverConfigArguments,
     StaticConfigArguments,
+    XmlConfigArguments,
 )
 from ..transformers.interface import TransformerConfiguration
 from .config_base import BeetlConfig, ComparisonColumn, SyncConfiguration
@@ -32,6 +33,7 @@ SourceConfigs = list[
             PostgresConfigArguments,
             RestConfigArguments,
             SqlserverConfigArguments,
+            XmlConfigArguments,
         )
     ]
 ]

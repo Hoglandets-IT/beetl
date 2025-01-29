@@ -446,3 +446,44 @@ class UnitTestBeetlConfig(unittest.TestCase):
                 ],
             }
         )
+
+    def test_that_version_1_supports_xml_source(self):
+        result = BeetlConfig(
+            {
+                "version": "V1",
+                "sources": [
+                    {
+                        "name": "src",
+                        "type": "Xml",
+                        "connection": {
+                            "path": "test.xml",
+                        },
+                    },
+                    {
+                        "name": "dst",
+                        "type": "Xml",
+                        "connection": {
+                            "path": "test.xml",
+                            "encoding": "utf-8",
+                        },
+                    },
+                ],
+                "sync": [
+                    {
+                        "source": "src",
+                        "destination": "dst",
+                        "sourceConfig": {
+                            "types": {
+                                "id": "Int64",
+                                "name": "Utf8",
+                            }
+                        },
+                        "destinationConfig": {"unique_columns": ("id",)},
+                        "comparisonColumns": {"id": "Int64"},
+                        "sourceTransformers": [],
+                        "destinationTransformers": [],
+                        "insertionTransformers": [],
+                    }
+                ],
+            }
+        )

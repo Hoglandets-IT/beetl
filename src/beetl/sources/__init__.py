@@ -16,6 +16,7 @@ from .sqlserver import (
     SqlserverSync,
 )
 from .static import StaticConfig, StaticConfigArguments, StaticSource
+from .xml import XmlConfig, XmlConfigArguments, XmlSource, XmlSync, XmlSyncArguments
 
 cDir = os.path.dirname(__file__)
 for file in os.listdir(cDir):
