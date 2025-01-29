@@ -2,10 +2,11 @@ from typing import Annotated, Optional
 
 from pydantic import Field, model_validator
 
+from ...validation import ValidationBaseModel
 from ..interface import SourceConfig, SourceConfigArguments, SourceConnectionArguments
 
 
-class MysqlConnectionArguments(SourceConnectionArguments):
+class MysqlSettingsArguments(ValidationBaseModel):
     connection_string: Annotated[Optional[str], Field(default=None)]
     username: Annotated[Optional[str], Field(default=None)]
     password: Annotated[Optional[str], Field(default=None)]
@@ -15,7 +16,7 @@ class MysqlConnectionArguments(SourceConnectionArguments):
 
     @model_validator(mode="after")
     def validate_connection_string_or_components(
-        cls, instance: "MysqlConfigArguments.Connection"
+        cls, instance: "MysqlSettingsArguments"
     ):
         connection_string_is_not_present = not instance.connection_string
         connection_string_components = [
@@ -35,6 +36,15 @@ class MysqlConnectionArguments(SourceConnectionArguments):
         return instance
 
 
+class MysqlConnectionArguments(SourceConnectionArguments):
+    settings: MysqlSettingsArguments
+
+    @model_validator(mode="before")
+    def propagate_nested_location(cls, values: dict):
+        cls.propagate_location("settings", values)
+        return values
+
+
 class MysqlConfigArguments(SourceConfigArguments):
     type: Annotated[str, Field(default="Mysql")] = "Mysql"
     connection: MysqlConnectionArguments
@@ -51,11 +61,11 @@ class MysqlConfig(SourceConfig):
         super().__init__(arguments)
 
         connection_string: str
-        if arguments.connection.connection_string:
-            connection_string = arguments.connection.connection_string
-        if not arguments.connection.connection_string:
+        if arguments.connection.settings.connection_string:
+            connection_string = arguments.connection.settings.connection_string
+        if not arguments.connection.settings.connection_string:
             connection_string = "mysql+pymysql://"
-            f"{arguments.connection.username}:{arguments.connection.password}"
-            f"@{arguments.connection.host}:{arguments.connection.port}/{arguments.connection.database}"
+            f"{arguments.connection.settings.username}:{arguments.connection.settings.password}"
+            f"@{arguments.connection.settings.host}:{arguments.connection.settings.port}/{arguments.connection.settings.database}"
 
         self.connection_string = connection_string

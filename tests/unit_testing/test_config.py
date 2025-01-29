@@ -264,18 +264,22 @@ class UnitTestBeetlConfig(unittest.TestCase):
                         "name": "src",
                         "type": "Mysql",
                         "connection": {
-                            "database": "test",
-                            "host": "localhost",
-                            "port": "27017",
-                            "username": "root",
-                            "password": "root",
+                            "settings": {
+                                "database": "test",
+                                "host": "localhost",
+                                "port": "27017",
+                                "username": "root",
+                                "password": "root",
+                            },
                         },
                     },
                     {
                         "name": "dst",
                         "type": "Mysql",
                         "connection": {
-                            "connection_string": "mysql+pymysql://root:root@localhost:3306/test",
+                            "settings": {
+                                "connection_string": "mysql+pymysql://root:root@localhost:3306/test",
+                            },
                         },
                     },
                 ],
@@ -406,7 +410,7 @@ class UnitTestBeetlConfig(unittest.TestCase):
             }
         )
 
-    def test_that_version_1_supports_Sqlserver_source(self):
+    def test_that_version_1_supports_sqlserver_source(self):
         result = BeetlConfig(
             {
                 "version": "V1",
