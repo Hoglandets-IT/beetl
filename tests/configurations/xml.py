@@ -27,13 +27,13 @@ def to_xml(source_file_path: str, destination_file_path: str) -> dict:
                         "Id": "Int64",
                         "Name": "Utf8",
                         "Age": "UInt8",
-                    }
+                    },
                 },
                 "destinationConfig": {
                     "xpath": ".//Person",
                     "root_name": "PersonExport",
                     "row_name": "Person",
-                    "unique_columns": ("Id")
+                    "unique_columns": ("Id",),
                 },
                 "comparisonColumns": [
                     {
