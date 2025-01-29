@@ -147,19 +147,23 @@ class UnitTestBeetlConfig(unittest.TestCase):
                         "name": "src",
                         "type": "Mongodb",
                         "connection": {
-                            "database": "test",
-                            "connection_string": "mongodb://localhost:27017",
+                            "settings": {
+                                "database": "test",
+                                "connection_string": "mongodb://localhost:27017",
+                            },
                         },
                     },
                     {
                         "name": "dst",
                         "type": "Mongodb",
                         "connection": {
-                            "database": "test",
-                            "host": "localhost",
-                            "port": "27017",
-                            "username": "root",
-                            "password": "root",
+                            "settings": {
+                                "database": "test",
+                                "host": "localhost",
+                                "port": "27017",
+                                "username": "root",
+                                "password": "root",
+                            },
                         },
                     },
                 ],

@@ -2,10 +2,11 @@ from typing import Annotated, Literal, Optional
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
+from ...validation import ValidationBaseModel
 from ..interface import SourceConfig, SourceConfigArguments, SourceConnectionArguments
 
 
-class MongoDBConnectionArguments(SourceConnectionArguments):
+class MongodbSettingsArguments(ValidationBaseModel):
     connection_string: Annotated[Optional[str], Field(min_length=1, default=None)]
     host: Annotated[Optional[str], Field(min_length=1, default=None)]
     port: Annotated[Optional[str], Field(min_length=1, default=None)]
@@ -15,7 +16,7 @@ class MongoDBConnectionArguments(SourceConnectionArguments):
 
     @model_validator(mode="after")
     def validate_connection_string_or_components(
-        cls, instance: "MongoDBConnectionArguments"
+        cls, instance: "MongodbSettingsArguments"
     ):
         connection_string_is_not_present = not instance.connection_string
         connection_string_components = ["host", "port", "username", "password"]
@@ -30,10 +31,19 @@ class MongoDBConnectionArguments(SourceConnectionArguments):
         return instance
 
 
+class MongodbConnectionArguments(SourceConnectionArguments):
+    settings: MongodbSettingsArguments
+
+    @model_validator(mode="before")
+    def propagate_nested_location(cls, values: dict):
+        cls.propagate_location("settings", values)
+        return values
+
+
 class MongodbConfigArguments(SourceConfigArguments):
 
     type: Annotated[Literal["Mongodb"], Field(default="Mongodb")] = "Mongodb"
-    connection: MongoDBConnectionArguments
+    connection: MongodbConnectionArguments
 
 
 class MongodbConfig(SourceConfig):
@@ -47,10 +57,10 @@ class MongodbConfig(SourceConfig):
         super().__init__(arguments)
 
         connection_string: str
-        if arguments.connection.connection_string:
-            connection_string = arguments.connection.connection_string
+        if arguments.connection.settings.connection_string:
+            connection_string = arguments.connection.settings.connection_string
         else:
-            connection_string = f"mongodb://{arguments.connection.username}:{arguments.connection.password}@{arguments.connection.host}:{arguments.connection.port}/"
+            connection_string = f"mongodb://{arguments.connection.settings.username}:{arguments.connection.settings.password}@{arguments.connection.settings.host}:{arguments.connection.settings.port}/"
 
         self.connection_string = connection_string
-        self.database = arguments.connection.database
+        self.database = arguments.connection.settings.database
