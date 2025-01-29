@@ -305,18 +305,22 @@ class UnitTestBeetlConfig(unittest.TestCase):
                         "name": "src",
                         "type": "Postgresql",
                         "connection": {
-                            "connection_string": "postgresql://root:root@localhost:5432/test",
+                            "settings": {
+                                "connection_string": "postgresql://root:root@localhost:5432/test",
+                            },
                         },
                     },
                     {
                         "name": "dst",
                         "type": "Postgresql",
                         "connection": {
-                            "username": "root",
-                            "password": "root",
-                            "host": "localhost",
-                            "port": "5432",
-                            "database": "test",
+                            "settings": {
+                                "username": "root",
+                                "password": "root",
+                                "host": "localhost",
+                                "port": "5432",
+                                "database": "test",
+                            },
                         },
                     },
                 ],
