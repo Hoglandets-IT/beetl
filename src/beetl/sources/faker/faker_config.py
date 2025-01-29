@@ -3,14 +3,14 @@ from typing import Annotated, Any, Literal
 from polars import DataFrame
 from pydantic import BaseModel, ConfigDict, Field
 
-from ..interface import SourceConfig, SourceConfigArguments
+from ..interface import SourceConfig, SourceConfigArguments, SourceConnectionArguments
+
+
+class FakerConnectionArguments(SourceConnectionArguments):
+    faker: list[dict[str, Any]]
 
 
 class FakerConfigArguments(SourceConfigArguments):
-    class FakerConnectionArguments(BaseModel):
-        model_config = ConfigDict(extra="forbid")
-
-        faker: list[dict[str, Any]]
 
     type: Annotated[Literal["Faker"], Field(default="Faker")] = "Faker"
     connection: FakerConnectionArguments

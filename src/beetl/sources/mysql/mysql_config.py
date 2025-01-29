@@ -1,44 +1,43 @@
 from typing import Annotated, Optional
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import ConfigDict, Field, model_validator
 
-from ..interface import SourceConfig, SourceConfigArguments
+from ..interface import SourceConfig, SourceConfigArguments, SourceConnectionArguments
+
+
+class MysqlConnectionArguments(SourceConnectionArguments):
+    connection_string: Annotated[Optional[str], Field(default=None)]
+    username: Annotated[Optional[str], Field(default=None)]
+    password: Annotated[Optional[str], Field(default=None)]
+    host: Annotated[Optional[str], Field(default=None)]
+    port: Annotated[Optional[str], Field(default=None)]
+    database: Annotated[Optional[str], Field(default=None)]
+
+    @model_validator(mode="after")
+    def validate_connection_string_or_components(
+        cls, instance: "MysqlConfigArguments.Connection"
+    ):
+        connection_string_is_not_present = not instance.connection_string
+        connection_string_components = [
+            "host",
+            "port",
+            "username",
+            "password",
+            "database",
+        ]
+        if connection_string_is_not_present:
+            dict = instance.model_dump()
+            for component in connection_string_components:
+                if not dict.get(component, None):
+                    raise ValueError(
+                        f"'{component}' is missing. {connection_string_components} are required if 'connection_string' is not provided"
+                    )
+        return instance
 
 
 class MysqlConfigArguments(SourceConfigArguments):
-    class Connection(BaseModel):
-        model_config = ConfigDict(extra="forbid")
-
-        connection_string: Annotated[Optional[str], Field(default=None)]
-        username: Annotated[Optional[str], Field(default=None)]
-        password: Annotated[Optional[str], Field(default=None)]
-        host: Annotated[Optional[str], Field(default=None)]
-        port: Annotated[Optional[str], Field(default=None)]
-        database: Annotated[Optional[str], Field(default=None)]
-
-        @model_validator(mode="after")
-        def validate_connection_string_or_components(
-            cls, instance: "MysqlConfigArguments.Connection"
-        ):
-            connection_string_is_not_present = not instance.connection_string
-            connection_string_components = [
-                "host",
-                "port",
-                "username",
-                "password",
-                "database",
-            ]
-            if connection_string_is_not_present:
-                dict = instance.model_dump()
-                for component in connection_string_components:
-                    if not dict.get(component, None):
-                        raise ValueError(
-                            f"'{component}' is missing. {connection_string_components} are required if 'connection_string' is not provided"
-                        )
-            return instance
-
     type: Annotated[str, Field(default="Mysql")] = "Mysql"
-    connection: Connection
+    connection: MysqlConnectionArguments
 
 
 class MysqlConfig(SourceConfig):
