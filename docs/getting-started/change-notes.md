@@ -1,5 +1,10 @@
 # Change Notes
 ## 1.1.0
+### Changes
+- Beetl now validates your configuration before running, providing you with helpful error messages telling you how to locate and fix the issues.
+   - As of this version `sources`, `sync.*.source`, `sync.*.destination`, `sync.*.sourceConfig`, `sync.*.destinationConfig` are automatically validated. 
+   - Validation of conparisonColumns and transformers will be released in the next versions.
+
 automatic validation
 schema generation
 extras are forbidden will throw error
