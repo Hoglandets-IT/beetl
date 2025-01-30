@@ -1,6 +1,6 @@
-from typing import Annotated, Any, Tuple
+from typing import Annotated, Any
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class ValidationBaseModel(BaseModel):

@@ -1,6 +1,6 @@
 import concurrent.futures
 from dataclasses import dataclass
-from typing import Annotated, List, Literal, Tuple
+from typing import Annotated, Literal
 
 import polars as pl
 import pydantic
@@ -102,8 +102,10 @@ class SourceConfig:
 class SourceSyncArguments(ValidationBaseModel):
     """Class representation of the source configuration settings in the beetl config. Used to validate the source configuration settings using pydantic."""
 
-    model_config = pydantic.ConfigDict(extra="forbid")
     name: Annotated[str, pydantic.Field(min_length=1)]
+    type: Annotated[Literal["Interface"], pydantic.Field(default="Interface")] = (
+        "Interface"
+    )
     direction: Annotated[Literal["source", "destination"], pydantic.Field(min_length=1)]
 
 

@@ -1,1 +1,1 @@
-from .rest_source import RestConfig, RestConfigArguments, RestSource
+from .rest_source import RestConfig, RestConfigArguments, RestSource, RestSyncArguments

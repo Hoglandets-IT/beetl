@@ -1,4 +1,4 @@
-from typing import Annotated, Optional
+from typing import Annotated, Literal, Optional
 
 from pydantic import Field, model_validator
 
@@ -12,6 +12,7 @@ from ..interface import SourceSync, SourceSyncArguments
 
 
 class SqlserverSyncArguments(SourceSyncArguments):
+    type: Annotated[Literal["Sqlserver"], Field(defauls="Sqlserver")] = "Sqlserver"
     table: Annotated[
         Optional[str],
         Field(
@@ -22,6 +23,7 @@ class SqlserverSyncArguments(SourceSyncArguments):
     query: Annotated[
         Optional[str],
         Field(
+            default=None,
             description="SQL query. Defaults to all fields in the specified 'table'.",
         ),
     ]
@@ -61,25 +63,22 @@ class SqlserverSyncArguments(SourceSyncArguments):
         ),
     ]
 
-    @model_validator(mode="before")
-    def validate_and_populate_default_query(cls, values: dict):
-        if not values.get("query", None) and not values.get("table", None):
-            raise ConfigValueError(
-                "table",
-                "Table name is required when query isn't provided",
-                values["location"],
-            )
-        if values.get("table", None) and not values.get("query", None):
-            values["query"] = f"SELECT * FROM {values['table']}"
-
-        return values
-
     @model_validator(mode="after")
     def validate_as_source(cls, instance: "SqlserverSyncArguments"):
         if instance.direction == "destination":
             return instance
 
         errors = []
+
+        if not instance.query:
+            if not instance.table:
+                errors.append(
+                    ConfigValueError(
+                        "table",
+                        "Table name is required when query isn't provided",
+                        instance.location,
+                    )
+                )
 
         forbidden_fields = [
             "deleted_field",
@@ -148,7 +147,9 @@ class SqlserverSync(SourceSync):
     ):
         super().__init__(arguments)
         self.table = arguments.table
-        self.query = arguments.query
+        self.query = (
+            arguments.query if arguments.query else f"SELECT * FROM {arguments.table}"
+        )
         self.soft_delete = arguments.soft_delete
         self.deleted_field = arguments.deleted_field
         self.deleted_value = arguments.deleted_value

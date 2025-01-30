@@ -1,4 +1,4 @@
-from typing import Annotated, Optional
+from typing import Annotated, Literal, Optional
 
 from pydantic import ConfigDict, Field, model_validator
 
@@ -19,6 +19,7 @@ class MysqlSyncArguments(SourceSyncArguments):
     query: Annotated[Optional[str], Field(default=None)]
     uniqueColumns: Annotated[list[str], Field(default=[])]
     skipColumns: Annotated[list[str], Field(default=[])]
+    type: Annotated[Literal["Mysql"], Field(defauls="Mysql")] = "Mysql"
 
     @model_validator(mode="after")
     def validate_as_source(cls, instance: "MysqlSyncArguments"):

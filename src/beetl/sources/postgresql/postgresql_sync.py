@@ -1,4 +1,4 @@
-from typing import Annotated, Optional
+from typing import Annotated, Literal, Optional
 
 from pydantic import Field, model_validator
 
@@ -15,6 +15,7 @@ class PostgresSyncArguments(SourceSyncArguments):
     query: Annotated[Optional[str], Field(default=None)]
     uniqueColumns: Annotated[list[str], Field(default=[])]
     skipColumns: Annotated[list[str], Field(default=[])]
+    type: Annotated[Literal["Postgresql"], Field(defauls="Postgresql")] = "Postgresql"
 
     @model_validator(mode="after")
     def validate_as_source(cls, instance: "PostgresSyncArguments"):

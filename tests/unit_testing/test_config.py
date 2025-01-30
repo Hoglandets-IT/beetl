@@ -492,9 +492,11 @@ class UnitTestBeetlConfig(unittest.TestCase):
                             "types": {
                                 "id": "Int64",
                                 "name": "Utf8",
-                            }
+                            },
                         },
-                        "destinationConfig": {"unique_columns": ("id",)},
+                        "destinationConfig": {
+                            "unique_columns": ("id",),
+                        },
                         "comparisonColumns": {"id": "Int64"},
                         "sourceTransformers": [],
                         "destinationTransformers": [],

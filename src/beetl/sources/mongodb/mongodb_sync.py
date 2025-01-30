@@ -1,4 +1,4 @@
-from typing import Annotated, Any, Optional
+from typing import Annotated, Any, Literal, Optional
 
 from pydantic import Field
 
@@ -13,6 +13,7 @@ class MongodbSyncArguments(SourceSyncArguments):
         Optional[list[str]],
         Field(default=[], description="Required when used as a destination"),
     ]
+    type: Annotated[Literal["Mongodb"], Field(default="Mongodb")] = "Mongodb"
 
 
 class MongodbSync(SourceSync):

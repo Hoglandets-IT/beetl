@@ -35,6 +35,7 @@ class XmlSyncArguments(SourceSyncArguments):
     row_name: Annotated[str, Field(default="row")]
     types: Annotated[Optional[dict[str, str]], Field(default=None)]
     xsl: Annotated[Optional[str], Field(default=None)]
+    type: Annotated[Literal["Xml"], Field(default="Xml")] = "Xml"
 
     @model_validator(mode="after")
     def validate_types(cls, arguments: "XmlSyncArguments"):

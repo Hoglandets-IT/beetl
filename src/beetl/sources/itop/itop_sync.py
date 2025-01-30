@@ -1,4 +1,4 @@
-from typing import Annotated, Optional
+from typing import Annotated, Literal, Optional
 
 from pydantic import BaseModel, Field, model_validator
 
@@ -36,6 +36,7 @@ class ItopSyncArguments(SourceSyncArguments):
     comparison_columns: Annotated[list[str], Field(min_length=1)]
     unique_columns: Annotated[list[str], Field(min_length=1)]
     skip_columns: Annotated[Optional[list[str]], Field(default=[])]
+    type: Annotated[Literal["Itop"], Field(default="Itop")] = "Itop"
 
 
 class ItopSync(SourceSync):

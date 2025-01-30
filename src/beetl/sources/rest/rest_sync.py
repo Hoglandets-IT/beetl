@@ -1,4 +1,4 @@
-from typing import Annotated, Dict, Optional
+from typing import Annotated, Dict, Literal, Optional
 
 from pydantic import ConfigDict, Field
 
@@ -53,6 +53,7 @@ class RestSyncArguments(SourceSyncArguments):
     createRequest: Annotated[Optional[RestRequest], Field(default=None)]
     updateRequest: Annotated[Optional[RestRequest], Field(default=None)]
     deleteRequest: Annotated[Optional[RestRequest], Field(default=None)]
+    type: Annotated[Literal["Rest"], Field(defauls="Rest")] = "Rest"
 
 
 class RestSync(SourceSync):
