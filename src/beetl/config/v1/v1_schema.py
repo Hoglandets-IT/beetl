@@ -24,7 +24,7 @@ from ...sources import (
     XmlSyncArguments,
 )
 
-SourceConfigs = list[
+SourceConfigArguments = list[
     Union[
         (
             StaticConfigArguments,
@@ -41,7 +41,7 @@ SourceConfigs = list[
     ]
 ]
 
-SourceSyncConfig = Union[
+SourceSyncArguments = Union[
     (
         dict[str, Any],
         ItopSyncArguments,
@@ -55,26 +55,28 @@ SourceSyncConfig = Union[
 ]
 
 
-class Sync(BaseModel):
+class V1Sync(BaseModel):
     source_to_type: Annotated[
         dict[str, str],
         Field(
             default={},
-            description="Used at validation time to validate the source and destination config against the correct source type. Should never be provided by the user",
+            description="Should never be provided by the user. Is automatically populated at validation time.",
         ),
     ]
     location: Annotated[
         tuple[str, ...],
         Field(
             default=(),
-            description="The location path of the model in the configuration file. Used to provide more detailed error messages.",
+            description="Should never be provided by the user. Is automatically populated at validation time.",
         ),
     ]
 
     source: Annotated[str, Field(min_length=1)]
     destination: Annotated[str, Field(min_length=1)]
-    sourceConfig: Annotated[SourceSyncConfig, Field()]
-    destinationConfig: Annotated[SourceSyncConfig, Field()]
+    sourceConfig: Annotated[SourceSyncArguments, Field()]
+    destinationConfig: Annotated[SourceSyncArguments, Field()]
+
+    # The following fields are not yet being validated
     comparisonColumns: Annotated[Any, Field()]
     sourceTransformers: Annotated[Optional[Any], Field(default=None)]
     destinationTransformers: Annotated[Optional[Any], Field(default=None)]
@@ -83,7 +85,9 @@ class Sync(BaseModel):
 
     @model_validator(mode="before")
     def validate_sources(cls, values):
-        """Makes sure that each source configuration is only validated against one source type, the one that matches the 'type' field"""
+        """Makes sure that each source configuration is only validated against one source type, the one that matches the 'type' field.
+        This is necessary since without it the static jsonschema validation will display errors from ALL source sync config types if the the config isn't fulfilling any of them, which can be confusing for the user.
+        """
         source_to_type = values.get("source_to_type", {})
         if not source_to_type:
             raise ValueError(
@@ -102,6 +106,7 @@ class Sync(BaseModel):
     def validate_sync_config(
         cls, direction: Literal["source", "destination"], values: dict
     ):
+        """Validates the source or destination sync configuration against the correct source. Makes sure that the configuration matches exactly one source type."""
         errors = []
         source_name = values.get(direction, None)
         source_type = values.get("source_to_type", {}).get(source_name, None)
@@ -124,13 +129,15 @@ class Sync(BaseModel):
 
 
 class BeetlConfigSchemaV1(BaseModel):
+    """Represents the configuration as supplied by the user. This class is used to validate the configuration against the static jsonschema and the dynamic beetl validation rules."""
+
     version: Literal["V1"]
-    sources: Annotated[SourceConfigs, Field(min_items=1)]
-    sync: Annotated[list[Sync], Field(min_items=1)]
+    sources: Annotated[SourceConfigArguments, Field(min_items=1)]
+    sync: Annotated[list[V1Sync], Field(min_items=1)]
 
     @model_validator(mode="before")
     def populate_validation_values_in_nested_types(cls, values):
-        """Makes sure that a map of source names to source types is available in each sync dict. This is neccessary for the validation of the source and destination config. These values are automatically generated and should never be provided by the user."""
+        """Makes sure that a map of source names to source types is available in each sync dict. This is neccessary for the validation of the source and destination config to identify what class each config should be validated against. These values are automatically generated and should never be provided by the user."""
         if not values.get("sync", []) or not values.get("sources", []):
             return values
         source_to_type_dictionary = {}
@@ -143,7 +150,7 @@ class BeetlConfigSchemaV1(BaseModel):
 
     @model_validator(mode="before")
     def validate_sources(cls, values):
-        """Makes sure that each source configuration is only validated against one source type, the one that matches the 'type' field"""
+        """Makes sure that each source in the sources list is valid against the correct source config class."""
         sources: list[dict[str, Any]] = values.get("sources", [])
         errors = []
         for i, source in enumerate(sources):
