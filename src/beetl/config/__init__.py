@@ -1,2 +1,2 @@
-from .config_base import BeetlConfig, SyncConfiguration, ComparisonColumn
-from .config_v1 import BeetlConfigV1
+from .config_base import BeetlConfig, ComparisonColumn, SyncConfiguration
+from .v1.v1_config import BeetlConfigV1
