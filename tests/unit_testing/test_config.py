@@ -504,3 +504,95 @@ class UnitTestBeetlConfig(unittest.TestCase):
                 ],
             }
         )
+
+    def test_that_version_1_supports_comparison_columns_as_list(self):
+        result = BeetlConfig(
+            {
+                "version": "V1",
+                "sources": [
+                    {
+                        "name": "staticsrc",
+                        "type": "Static",
+                        "connection": {
+                            "static": [
+                                {"id": 1, "name": "John", "email": "john@test.com"},
+                            ],
+                        },
+                    },
+                    {
+                        "name": "staticdst",
+                        "type": "Static",
+                        "connection": {
+                            "static": [
+                                {"id": 1, "name": "John", "email": "john@test.com"},
+                            ]
+                        },
+                    },
+                ],
+                "sync": [
+                    {
+                        "source": "staticsrc",
+                        "destination": "staticdst",
+                        "sourceConfig": {},
+                        "destinationConfig": {},
+                        "comparisonColumns": [
+                            {
+                                "name": "id",
+                                "type": "Int64",
+                                "unique": True,
+                            },
+                            {
+                                "name": "name",
+                                "type": "Utf8",
+                            },
+                            {
+                                "name": "email",
+                                "type": "Utf8",
+                            },
+                        ],
+                        "sourceTransformers": [],
+                        "destinationTransformers": [],
+                        "insertionTransformers": [],
+                    }
+                ],
+            }
+        )
+
+    def test_that_version_1_supports_comparison_columns_as_dict(self):
+        result = BeetlConfig(
+            {
+                "version": "V1",
+                "sources": [
+                    {
+                        "name": "staticsrc",
+                        "type": "Static",
+                        "connection": {
+                            "static": [
+                                {"id": 1, "name": "John", "email": "john@test.com"},
+                            ],
+                        },
+                    },
+                    {
+                        "name": "staticdst",
+                        "type": "Static",
+                        "connection": {
+                            "static": [
+                                {"id": 1, "name": "John", "email": "john@test.com"},
+                            ]
+                        },
+                    },
+                ],
+                "sync": [
+                    {
+                        "source": "staticsrc",
+                        "destination": "staticdst",
+                        "sourceConfig": {},
+                        "destinationConfig": {},
+                        "comparisonColumns": {"id": "Int64"},
+                        "sourceTransformers": [],
+                        "destinationTransformers": [],
+                        "insertionTransformers": [],
+                    }
+                ],
+            }
+        )
