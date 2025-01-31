@@ -1,102 +1,31 @@
-import os
 import json
 
-# import asyncio
-import urllib3
 import polars as pl
 import requests
 import requests.adapters
+import urllib3
 from alive_progress import alive_bar
-from .interface import (
-    register_source,
-    SourceInterface,
-    SourceInterfaceConfiguration,
-    SourceInterfaceConnectionSettings,
-    RequestThreader,
-)
+
+from ..interface import SourceInterface
+from ..registrated_source import register_source
+from ..request_threader import RequestThreader
+from .itop_config import ItopConfig, ItopConfigArguments
+from .itop_sync import ItopSync, ItopSyncArguments
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 BULK_CUTOFF = 300
 
-DATAMODELS_WITHOUT_SOFT_DELETE = (
-    "NutanixCluster",
-    "NutanixClusterHost",
-    "NutanixVM",
-    "NutanixVMDisk",
-    "NutanixNetwork",
-    "NutanixNetworkInterface",
-)
 
-
-class ItopSourceConfiguration(SourceInterfaceConfiguration):
-    """The configuration class used for iTop sources"""
-
-    datamodel: str = None
-    oql_key: str = None
-    soft_delete: dict = None
-    link_columns: list = None
-    comparison_columns: list = None
-    unique_columns: list = None
-    skip_columns: list = None
-
-    def __init__(
-        self,
-        datamodel: str = None,
-        oql_key: str = None,
-        soft_delete: dict = None,
-        comparison_columns: list = None,
-        unique_columns: list = None,
-        link_columns: list = [],
-        skip_columns: list = None,
-    ):
-        super().__init__()
-        self.datamodel = datamodel
-        self.oql_key = oql_key
-
-        if comparison_columns is None:
-            raise Exception("Comparison columns must be provided")
-        self.comparison_columns = comparison_columns
-
-        if unique_columns is None:
-            raise Exception("Unique columns must be provided")
-        self.unique_columns = unique_columns
-
-        self.skip_columns = skip_columns
-
-        if soft_delete is not None:
-            if (
-                soft_delete.get("enabled", False)
-                and datamodel in DATAMODELS_WITHOUT_SOFT_DELETE
-            ):
-                raise Exception(
-                    f"Soft delete is not supported for {datamodel} datamodel"
-                )
-
-        self.soft_delete = soft_delete
-
-        self.link_columns = link_columns
-
-
-class ItopSourceConnectionSettings(SourceInterfaceConnectionSettings):
-    """The connection configuration class used for iTop sources"""
-
-    host: str
-    username: str = None
-    password: str = None
-    verify_ssl: bool = True
-
-    def __init__(self, settings: dict):
-        self.host = settings.get("host", False)
-        self.username = settings.get("username", False)
-        self.password = settings.get("password", False)
-        self.verify_ssl = settings.get("verify_ssl", "true") == "true"
-
-
-@register_source("itop", ItopSourceConfiguration, ItopSourceConnectionSettings)
+@register_source("Itop")
 class ItopSource(SourceInterface):
-    ConnectionSettingsClass = ItopSourceConnectionSettings
-    SourceConfigClass = ItopSourceConfiguration
+    ConfigArgumentsClass = ItopConfigArguments
+    ConfigClass = ItopConfig
+    SyncArgumentsClass = ItopSyncArguments
+    SyncClass = ItopSync
+
+    source_configuration: ItopSync = None
+    connection_settings: ItopConfig = None
     auth_data: dict = None
 
     """ A source for Combodo iTop Data data """
@@ -110,7 +39,7 @@ class ItopSource(SourceInterface):
         if self.source_configuration.soft_delete is None:
             return False
 
-        return self.source_configuration.soft_delete.get("enabled", False)
+        return self.source_configuration.soft_delete.enabled
 
     def _configure(self):
         self.auth_data = {
@@ -172,11 +101,11 @@ class ItopSource(SourceInterface):
         oql = self.source_configuration.oql_key
         if self.soft_delete_active():
             soft_delete = self.source_configuration.soft_delete
-            if f"{soft_delete.get('field', 'status').lower()}" not in oql.lower():
+            if f"{soft_delete.field.lower()}" not in oql.lower():
                 combining_word = "WHERE" if "WHERE" not in oql.upper() else "AND"
                 oql += (
-                    f" {combining_word} {soft_delete.get('field', 'status')} "
-                    + f"= '{soft_delete.get('active_value', 'enabled')}'"
+                    f" {combining_word} {soft_delete.field} "
+                    + f"= '{soft_delete.active_value}'"
                 )
 
         all_colums = (
@@ -433,8 +362,8 @@ class ItopSource(SourceInterface):
 
             deleteData = deleteData.with_columns(
                 pl.Series(
-                    soft_delete.get("field", "status"),
-                    [soft_delete.get("inactive_value", "inactive")] * len(deleteData),
+                    soft_delete.field,
+                    [soft_delete.inactive_value] * len(deleteData),
                 )
             )
             deleteFunc = self.update_item

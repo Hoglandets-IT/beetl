@@ -1,13 +1,14 @@
-from typing import List, Union
+from time import perf_counter
+from typing import List, Union, get_args
+
+import polars as pl
+from tabulate import tabulate
 
 from .comparison_result import ComparisonResult
-from .sources.interface import CASTABLE
-from .result import Result, SyncResult
 from .config import BeetlConfig, ComparisonColumn, SyncConfiguration
+from .result import Result, SyncResult
+from .sources import CASTABLE
 from .transformers.interface import TransformerConfiguration
-import polars as pl
-from time import perf_counter
-from tabulate import tabulate
 
 BENCHMARK = []
 
@@ -69,10 +70,10 @@ class Beetl:
             List[pl.DataFrame]: A list of Polars Dataframes (Insert, Update, Delete) containing the differences between source and destination
         """
 
-        if isinstance(source, Union[list, set, tuple]):
+        if isinstance(source, get_args(Union[list, set, tuple])):
             source = pl.DataFrame(source)
 
-        if isinstance(destination, Union[list, set, tuple]):
+        if isinstance(destination, get_args(Union[list, set, tuple])):
             destination = pl.DataFrame(destination)
 
         source = Beetl._initialize_columns_if_empty(source, columns)
@@ -154,8 +155,7 @@ class Beetl:
     def _initialize_columns_if_empty(source, columns):
         if len(source) == 0 and source.width == 0:
             for col in columns:
-                source = source.with_columns(
-                    pl.Series(col.name, dtype=col.type))
+                source = source.with_columns(pl.Series(col.name, dtype=col.type))
         return source
 
     @staticmethod
@@ -274,12 +274,9 @@ class Beetl:
             if dry_run:
                 dry_run_results.append(
                     ComparisonResult(
-                        self.runTransformers(
-                            create, sync.insertionTransformers, sync),
-                        self.runTransformers(
-                            update, sync.insertionTransformers, sync),
-                        self.runTransformers(
-                            delete, sync.deletionTransformers, sync),
+                        self.runTransformers(create, sync.insertionTransformers, sync),
+                        self.runTransformers(update, sync.insertionTransformers, sync),
+                        self.runTransformers(delete, sync.deletionTransformers, sync),
                     )
                 )
                 sync.destination.disconnect()
@@ -290,16 +287,14 @@ class Beetl:
             amount["deletes"] = 0
             if len(delete):
                 amount["deletes"] = sync.destination.delete(
-                    self.runTransformers(
-                        delete, sync.deletionTransformers, sync)
+                    self.runTransformers(delete, sync.deletionTransformers, sync)
                 )
 
             self.benchmark("Finished deletes, starting inserts")
             amount["inserts"] = 0
             if len(create):
                 amount["inserts"] = sync.destination.insert(
-                    self.runTransformers(
-                        create, sync.insertionTransformers, sync)
+                    self.runTransformers(create, sync.insertionTransformers, sync)
                 )
 
             self.benchmark("Finished inserts, starting updates")
@@ -307,8 +302,7 @@ class Beetl:
             amount["updates"] = 0
             if len(update):
                 amount["updates"] = sync.destination.update(
-                    self.runTransformers(
-                        update, sync.insertionTransformers, sync)
+                    self.runTransformers(update, sync.insertionTransformers, sync)
                 )
 
             self.benchmark("Finished updates, sync finished")
@@ -318,7 +312,8 @@ class Beetl:
             print("Deleted: " + str(amount["deletes"]))
 
             allAmounts.append(
-                [sync.name, *[amount["inserts"], amount["updates"], amount["deletes"]]])
+                [sync.name, *[amount["inserts"], amount["updates"], amount["deletes"]]]
+            )
 
             sync.destination.disconnect()
 
@@ -327,8 +322,7 @@ class Beetl:
 
         print(
             "\r\n\r\n"
-            + tabulate(allAmounts,
-                       headers=["Sync", "Inserts", "Updates", "Deletes"])
+            + tabulate(allAmounts, headers=["Sync", "Inserts", "Updates", "Deletes"])
         )
 
         return SyncResult(allAmounts)

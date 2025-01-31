@@ -49,6 +49,7 @@ def to_static() -> dict:
                 "sourceTransformers": [],
                 "destinationTransformers": [],
                 "insertionTransformers": [],
+                "deletionTransformers": [],
             }
         ],
     }

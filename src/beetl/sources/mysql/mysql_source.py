@@ -1,51 +1,18 @@
 import polars as pl
 import sqlalchemy as sqla
-from typing import List
-from .interface import (
-    register_source,
-    SourceInterface,
-    SourceInterfaceConfiguration,
-    SourceInterfaceConnectionSettings,
-)
+
+from ..interface import SourceInterface
+from ..registrated_source import register_source
+from .mysql_config import MysqlConfig, MysqlConfigArguments
+from .mysql_sync import MysqlSync, MysqlSyncArguments
 
 
-class MysqlSourceConfiguration(SourceInterfaceConfiguration):
-    """The configuration class used for MySQL sources"""
-
-    unique_columns: List[str] = None
-    skip_columns: List[str] = None
-    table: str = None
-    query: str = None
-
-    def __init__(self, table: str = None, query: str = None, uniqueColumns: List[str] = [], skipColumns: List[str] = []):
-        super().__init__()
-        self.table = table
-        self.query = query
-        self.unique_columns = uniqueColumns
-        self.skip_columns = skipColumns
-
-
-class MysqlSourceConnectionSettings(SourceInterfaceConnectionSettings):
-    """The connection configuration class used for MySQL sources"""
-
-    connection_string: str
-    query: str = None
-    table: str = None
-
-    def __init__(self, settings: dict):
-        if settings.get("connection_string", False):
-            self.connection_string = settings["connection_string"]
-            return
-
-        self.connection_string = "mysql+pymysql://"
-        f"{settings['username']}:{settings['password']}"
-        f"@{settings['host']}:{settings['port']}/{settings['database']}"
-
-
-@register_source("mysql", MysqlSourceConfiguration, MysqlSourceConnectionSettings)
+@register_source("Mysql")
 class MysqlSource(SourceInterface):
-    ConnectionSettingsClass = MysqlSourceConnectionSettings
-    SourceConfigClass = MysqlSourceConfiguration
+    ConfigArgumentsClass = MysqlConfigArguments
+    ConfigClass = MysqlConfig
+    SyncArgumentsClass = MysqlSyncArguments
+    SyncClass = MysqlSync
 
     """ A source for MySQL data """
 
@@ -114,7 +81,9 @@ class MysqlSource(SourceInterface):
 
         try:
             data.write_database(
-                table, self.connection_settings.connection_string, if_table_exists="append"
+                table,
+                self.connection_settings.connection_string,
+                if_table_exists="append",
             )
         except ModuleNotFoundError:
             data.write_database(
@@ -166,11 +135,14 @@ class MysqlSource(SourceInterface):
         # Insert data into temporary table
         self._insert(data, table=tempDB)
 
-        fields_to_update = [field.name for field in data.get_columns(
-        ) if not field.name in self.source_configuration.skip_columns or not field.name in self.source_configuration.unique_columns]
+        fields_to_update = [
+            field.name
+            for field in data.get_columns()
+            if not field.name in self.source_configuration.skip_columns
+            or not field.name in self.source_configuration.unique_columns
+        ]
 
-        field_spec = ", ".join(
-            (f"`{fieldName}`" for fieldName in fields_to_update))
+        field_spec = ", ".join((f"`{fieldName}`" for fieldName in fields_to_update))
 
         query = f"""
             REPLACE INTO {self.source_configuration.table} ({field_spec})
@@ -189,7 +161,7 @@ class MysqlSource(SourceInterface):
             batches = []
 
             for i in range(0, len(data), batch_size):
-                batches.append(data[i: i + batch_size])
+                batches.append(data[i : i + batch_size])
 
         for batch in batches:
             id_clause = " AND ".join(
@@ -211,7 +183,8 @@ class MysqlSource(SourceInterface):
     def _validate_unique_columns(self):
         if not self.source_configuration.unique_columns:
             raise ValueError(
-                "MySQL source requires the unique_columns to be set if used as a destination")
+                "MySQL source requires the unique_columns to be set if used as a destination"
+            )
 
     def _quote_if_needed(self, id: any) -> str:
         if isinstance(id, str):

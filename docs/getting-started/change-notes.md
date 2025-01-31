@@ -1,4 +1,11 @@
 # Change Notes
+## 1.1.0️
+### Changes ️️🔄️
+- Beetl now validates your configuration before running, providing you with helpful error messages telling you how to locate and fix the issues.
+   - As of this version `sources`, `sync.*.source`, `sync.*.destination`, `sync.*.sourceConfig`, `sync.*.destinationConfig` are automatically validated. 
+   - Validation of comparisonColumns and transformers will be released in the next versions.
+   - It is now forbidden to have extra parameters not part of the schema, validation errors will be raised if this happens.
+- Unused sqlserver source config parameters `query` and `table` have been removed.
 
 ## 1.0.4
 ### Changes ️️🔄️
