@@ -12,7 +12,6 @@ from ...sources import (
     MongodbSyncArguments,
     MysqlConfigArguments,
     MysqlSyncArguments,
-    NoSyncArguments,
     PostgresConfigArguments,
     PostgresSyncArguments,
     RestConfigArguments,

@@ -18,11 +18,3 @@ class SourceSync:
 
     def __init__(cls, arguments: SourceSyncArguments):
         pass
-
-
-class NoSyncArguments(SourceSyncArguments):
-    """Used as sync class when source has no sync config arguments"""
-
-    type: Annotated[Literal["NoSyncArguments"], Field(default="NoSyncArguments")] = (
-        "NoSyncArguments"
-    )

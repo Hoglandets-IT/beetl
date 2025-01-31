@@ -5,7 +5,6 @@ from .csv import CsvConfig, CsvConfigArguments, CsvSource
 from .faker import FakerConfig, FakerConfigArguments, FakerSource
 from .interface import (
     CASTABLE,
-    NoSyncArguments,
     SourceConfig,
     SourceConfigArguments,
     SourceConnectionArguments,
