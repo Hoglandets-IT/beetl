@@ -1,7 +1,8 @@
 from polars import DataFrame, Object
 from pymongo import DeleteOne, MongoClient, UpdateOne
 
-from ..interface import SourceInterface, register_source
+from ..interface import SourceInterface
+from ..registrated_source import register_source
 from .mongodb_config import MongodbConfig, MongodbConfigArguments
 from .mongodb_sync import MongodbSync, MongodbSyncArguments
 

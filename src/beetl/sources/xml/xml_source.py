@@ -3,7 +3,8 @@ import os
 import pandas as pd
 import polars as pl
 
-from ..interface import SourceInterface, register_source
+from ..interface import SourceInterface
+from ..registrated_source import register_source
 from .xml_config import XmlConfig, XmlConfigArguments
 from .xml_sync import XmlSync, XmlSyncArguments
 

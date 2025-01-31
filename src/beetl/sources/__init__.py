@@ -3,7 +3,15 @@ import os
 # re-export
 from .csv import CsvConfig, CsvConfigArguments, CsvSource
 from .faker import FakerConfig, FakerConfigArguments, FakerSource
-from .interface import Sources, SourceSyncArguments
+from .interface import (
+    CASTABLE,
+    NoSyncArguments,
+    SourceConfig,
+    SourceConfigArguments,
+    SourceConnectionArguments,
+    SourceSync,
+    SourceSyncArguments,
+)
 from .itop import ItopConfig, ItopConfigArguments, ItopSource, ItopSyncArguments
 from .mongodb import (
     MongodbConfig,
@@ -19,6 +27,8 @@ from .postgresql import (
     PostgresSource,
     PostgresSyncArguments,
 )
+from .registrated_source import Sources, register_source
+from .request_threader import RequestThreader
 from .rest import RestConfig, RestConfigArguments, RestSource, RestSyncArguments
 from .sqlserver import (
     SqlserverConfig,

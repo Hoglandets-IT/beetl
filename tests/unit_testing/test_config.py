@@ -1,7 +1,6 @@
 import unittest
 
 from polars import Int32, Utf8
-from pydantic import ValidationError
 
 from src.beetl.beetl import BeetlConfig
 

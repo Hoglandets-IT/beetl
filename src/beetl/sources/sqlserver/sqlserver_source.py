@@ -5,7 +5,8 @@ import polars as pl
 import pyodbc
 import sqlalchemy as sqla
 
-from ..interface import SourceInterface, register_source
+from ..interface import SourceInterface
+from ..registrated_source import register_source
 from .sqlserver_config import SqlserverConfig, SqlserverConfigArguments
 from .sqlserver_sync import SqlserverSync, SqlserverSyncArguments
 

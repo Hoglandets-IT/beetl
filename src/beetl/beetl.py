@@ -7,7 +7,7 @@ from tabulate import tabulate
 from .comparison_result import ComparisonResult
 from .config import BeetlConfig, ComparisonColumn, SyncConfiguration
 from .result import Result, SyncResult
-from .sources.interface import CASTABLE
+from .sources import CASTABLE
 from .transformers.interface import TransformerConfiguration
 
 BENCHMARK = []

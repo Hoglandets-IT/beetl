@@ -1,6 +1,7 @@
 from polars import DataFrame
 
-from ..interface import SourceInterface, register_source
+from ..interface import SourceInterface
+from ..registrated_source import register_source
 from .faker_config import FakerConfig, FakerConfigArguments
 
 

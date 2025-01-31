@@ -3,7 +3,8 @@ import uuid
 import polars as pl
 import psycopg
 
-from ..interface import SourceInterface, register_source
+from ..interface import SourceInterface
+from ..registrated_source import register_source
 from .postgresql_config import PostgresConfig, PostgresConfigArguments
 from .postgresql_sync import PostgresSync, PostgresSyncArguments
 

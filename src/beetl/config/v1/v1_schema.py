@@ -12,6 +12,7 @@ from ...sources import (
     MongodbSyncArguments,
     MysqlConfigArguments,
     MysqlSyncArguments,
+    NoSyncArguments,
     PostgresConfigArguments,
     PostgresSyncArguments,
     RestConfigArguments,
@@ -43,7 +44,6 @@ SourceConfigArguments = list[
 
 SourceSyncArguments = Union[
     (
-        dict[str, Any],
         ItopSyncArguments,
         MongodbSyncArguments,
         MysqlSyncArguments,
@@ -51,6 +51,8 @@ SourceSyncArguments = Union[
         RestSyncArguments,
         SqlserverSyncArguments,
         XmlSyncArguments,
+        # Necessary for sources that don't have a sync configuration
+        dict,
     )
 ]
 

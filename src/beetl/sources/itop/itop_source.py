@@ -6,7 +6,9 @@ import requests.adapters
 import urllib3
 from alive_progress import alive_bar
 
-from ..interface import RequestThreader, SourceInterface, register_source
+from ..interface import SourceInterface
+from ..registrated_source import register_source
+from ..request_threader import RequestThreader
 from .itop_config import ItopConfig, ItopConfigArguments
 from .itop_sync import ItopSync, ItopSyncArguments
 

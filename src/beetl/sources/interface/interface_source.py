@@ -1,11 +1,9 @@
-import concurrent.futures
-from dataclasses import dataclass
-from typing import Annotated, Literal
+from typing import Literal
 
 import polars as pl
-import pydantic
 
-from ..validation import ValidationBaseModel
+from .interface_config import SourceConfig, SourceConfigArguments
+from .interface_sync import SourceSync, SourceSyncArguments
 
 CASTABLE = (
     pl.Int8,
@@ -24,96 +22,6 @@ CASTABLE = (
     # Does not quite work
     # pl.Binary,
 )
-
-
-class RequestThreader:
-    threads: int = None
-    executor: concurrent.futures.ThreadPoolExecutor = None
-
-    def __init__(self, threads: int = 10):
-        print("Starting threader...")
-        self.threads = threads
-
-    def __enter__(self):
-        print("Threading the needle...")
-        self.executor = concurrent.futures.ThreadPoolExecutor(max_workers=self.threads)
-
-        return self
-
-    def __exit__(self, exc_type, exc_value, traceback):
-        print("Waiting for threads to finish...")
-        self.executor.shutdown(wait=True)
-
-    def submit(self, func, *args, **kwargs):
-        print("Submitting single thread...")
-        return self.executor.submit(func, *args, **kwargs)
-
-    def submitAndWait(self, func, kwarg_list: list):
-        print("Submitting a list of threads...")
-        for result in self.executor.map(lambda fn: func(**fn), kwarg_list):
-            yield result
-
-
-@dataclass
-class ColumnDefinition:
-    """The definition of a column in a dataset.
-    Name: Name of column
-    Type: Polars data type
-    Unique: Whether it is unique
-    Skip Update: Whether to skip updating this field when inserting/updating source
-    Custom Options: Custom options for some providers
-    """
-
-    name: str
-    type: pl.DataType
-    unique: bool = False
-    skip_update: bool = False
-    custom_options: dict = None
-
-    def __post_init__(self) -> None:
-        """Get the actual data type from Polars"""
-        self.type = getattr(pl, self.type)
-
-
-class SourceConnectionArguments(ValidationBaseModel):
-    pass
-
-
-class SourceConfigArguments(ValidationBaseModel):
-    """Class representation of the source connection settings in the beetl config. Used to validate the source configuration settings using pydantic."""
-
-    name: Annotated[str, pydantic.Field(min_length=1)]
-    type: Annotated[str, pydantic.Field(min_length=1)]
-    connection: SourceConnectionArguments
-
-    @pydantic.model_validator(mode="before")
-    def propagate_nested_location(cls, values: dict):
-        cls.propagate_location("connection", values)
-        return values
-
-
-class SourceConfig:
-    """The connection configuration class used for data sources, abstract"""
-
-    def __init__(cls, arguments: SourceConfigArguments):
-        pass
-
-
-class SourceSyncArguments(ValidationBaseModel):
-    """Class representation of the source configuration settings in the beetl config. Used to validate the source configuration settings using pydantic."""
-
-    name: Annotated[str, pydantic.Field(min_length=1)]
-    type: Annotated[Literal["Interface"], pydantic.Field(default="Interface")] = (
-        "Interface"
-    )
-    direction: Annotated[Literal["source", "destination"], pydantic.Field(min_length=1)]
-
-
-class SourceSync:
-    """The configuration class used for data sources, abstract"""
-
-    def __init__(cls, arguments: SourceSyncArguments):
-        pass
 
 
 class SourceInterface:
@@ -233,25 +141,3 @@ class SourceInterface:
             data (pl.DataFrame): The data to delete
         """
         raise NotImplementedError
-
-
-class RegistratedSource:
-    name: str
-    cls: SourceInterface
-
-    def __init__(self, name: str, cls: SourceInterface):
-        self.name = name
-        self.cls = cls
-
-
-def register_source(name: str):
-    def wrapper(cls: type):
-        Sources.sources[name] = RegistratedSource(name, cls)
-
-        return cls
-
-    return wrapper
-
-
-class Sources:
-    sources: dict[str, RegistratedSource] = {}

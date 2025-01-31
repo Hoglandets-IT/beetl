@@ -3,7 +3,8 @@ import polars as pl
 import requests
 from pyarrow.lib import ArrowInvalid
 
-from ..interface import SourceInterface, register_source
+from ..interface import SourceInterface
+from ..registrated_source import register_source
 from .rest_config import RestConfig, RestConfigArguments
 from .rest_sync import RestSync, RestSyncArguments
 

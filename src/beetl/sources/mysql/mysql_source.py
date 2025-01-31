@@ -1,7 +1,8 @@
 import polars as pl
 import sqlalchemy as sqla
 
-from ..interface import SourceInterface, register_source
+from ..interface import SourceInterface
+from ..registrated_source import register_source
 from .mysql_config import MysqlConfig, MysqlConfigArguments
 from .mysql_sync import MysqlSync, MysqlSyncArguments
 

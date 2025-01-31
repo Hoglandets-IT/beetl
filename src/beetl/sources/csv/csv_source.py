@@ -1,6 +1,7 @@
 import polars as pl
 
-from ..interface import SourceInterface, register_source
+from ..interface import SourceInterface
+from ..registrated_source import register_source
 from .csv_config import CsvConfig, CsvConfigArguments
 
 
