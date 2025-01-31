@@ -38,7 +38,6 @@ class RequiredDestinationFieldError(ConfigValueError):
             f"Field '{field}' is required when used as destination",
             destination_location,
         )
-        self.further_information_url = "https://example.com"
 
 
 class RequiredDestinationFieldError(ConfigValueError):

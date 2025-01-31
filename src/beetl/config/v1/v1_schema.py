@@ -114,7 +114,6 @@ class V1Sync(BaseModel):
         source_type = values.get("source_to_type", {}).get(source_name, None)
         source_sync_config = values.get(f"{direction}Config", None)
         if source_name and source_type and source_sync_config:
-            source_sync_config["type"] = source_type
             registrated_source = Sources.sources.get(source_type, None)
             location = (*values["location"], f"{direction}Config")
             try:
@@ -122,6 +121,7 @@ class V1Sync(BaseModel):
                     direction=direction,
                     name=source_name,
                     location=location,
+                    type=source_type,
                     **source_sync_config,
                 )
             except ValidationError as e:
@@ -168,9 +168,8 @@ class BeetlConfigSchemaV1(BaseModel):
                     f'sources.{i}.type "{source_type}" is not recognized, valid sources are {list(Sources.sources.keys())}'
                 )
             location = ("sources", str(i))
-            source["location"] = location
             try:
-                registrated_source.cls.ConfigArgumentsClass(**source)
+                registrated_source.cls.ConfigArgumentsClass(location=location, **source)
             except ValidationError as e:
                 errors.extend(adjust_validation_error_location(e, location))
 
