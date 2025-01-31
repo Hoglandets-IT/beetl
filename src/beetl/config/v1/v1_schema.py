@@ -1,6 +1,6 @@
 from typing import Annotated, Any, Literal, Optional, Union
 
-from pydantic import BaseModel, Field, ValidationError, model_validator
+from pydantic import BaseModel, ConfigDict, Field, ValidationError, model_validator
 from pydantic_core import ErrorDetails
 
 from ...sources import (
@@ -56,6 +56,16 @@ SourceSyncArguments = Union[
 ]
 
 
+class ComparisonColumnV1(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    name: Annotated[str, Field(min_length=1)]
+    type: Annotated[str, Field(min_length=1)]
+    unique: Annotated[bool, Field(default=False)]
+
+
+ComparisonColumnsV1 = Union[list[ComparisonColumnV1], dict[str, str]]
+
+
 class V1Sync(BaseModel):
     source_to_type: Annotated[
         dict[str, str],
@@ -76,9 +86,12 @@ class V1Sync(BaseModel):
     destination: Annotated[str, Field(min_length=1)]
     sourceConfig: Annotated[SourceSyncArguments, Field()]
     destinationConfig: Annotated[SourceSyncArguments, Field()]
+    comparisonColumns: Annotated[
+        ComparisonColumnsV1,
+        Field(min_length=1),
+    ]
 
     # The following fields are not yet being validated
-    comparisonColumns: Annotated[Any, Field()]
     sourceTransformers: Annotated[Optional[Any], Field(default=None)]
     destinationTransformers: Annotated[Optional[Any], Field(default=None)]
     insertionTransformers: Annotated[Optional[Any], Field(default=None)]
