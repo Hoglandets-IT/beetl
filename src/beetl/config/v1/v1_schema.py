@@ -23,6 +23,7 @@ from ...sources import (
     XmlConfigArguments,
     XmlSyncArguments,
 )
+from ...transformers import TransformerSchemas
 
 SourceConfigArguments = list[
     Union[
@@ -91,8 +92,13 @@ class V1Sync(BaseModel):
         Field(min_length=1),
     ]
 
-    # The following fields are not yet being validated
-    sourceTransformers: Annotated[Optional[Any], Field(default=None)]
+    # TODO: Remove the union with dict when all transformers have schemas.
+    sourceTransformers: list[
+        Union[
+            Annotated[Union[TransformerSchemas], Field(discriminator="transformer")],
+            dict,
+        ]
+    ]
     destinationTransformers: Annotated[Optional[Any], Field(default=None)]
     insertionTransformers: Annotated[Optional[Any], Field(default=None)]
     deletionTransformers: Annotated[Optional[Any], Field(default=None)]

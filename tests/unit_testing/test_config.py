@@ -596,3 +596,98 @@ class UnitTestBeetlConfig(unittest.TestCase):
                 ],
             }
         )
+
+    def test_that_version_1_supports_source_transformers(self):
+        result = BeetlConfig(
+            {
+                "version": "V1",
+                "sources": [
+                    {
+                        "name": "staticsrc",
+                        "type": "Static",
+                        "connection": {
+                            "static": [
+                                {"id": 1, "name": "John", "email": "john@test.com"},
+                            ],
+                        },
+                    },
+                    {
+                        "name": "staticdst",
+                        "type": "Static",
+                        "connection": {
+                            "static": [
+                                {"id": 1, "name": "John", "email": "john@test.com"},
+                            ]
+                        },
+                    },
+                ],
+                "sync": [
+                    {
+                        "source": "staticsrc",
+                        "destination": "staticdst",
+                        "sourceConfig": {},
+                        "destinationConfig": {},
+                        "comparisonColumns": {"id": "Int64"},
+                        "sourceTransformers": [
+                            {
+                                "transformer": "strings.staticfield",
+                                "config": {
+                                    "field": "name",
+                                    "value": "John",
+                                    "extra": "arst",
+                                },
+                            },
+                        ],
+                        "destinationTransformers": [],
+                        "insertionTransformers": [],
+                    }
+                ],
+            }
+        )
+
+    def test_that_version_1_supports_arbitrary_dict_source_transformer_input(self):
+        """This test should only pass as long as we haven't implemented schemas for ALL transformers and removed dict as part of the union in the v1 schema."""
+        result = BeetlConfig(
+            {
+                "version": "V1",
+                "sources": [
+                    {
+                        "name": "staticsrc",
+                        "type": "Static",
+                        "connection": {
+                            "static": [
+                                {"id": 1, "name": "John", "email": "john@test.com"},
+                            ],
+                        },
+                    },
+                    {
+                        "name": "staticdst",
+                        "type": "Static",
+                        "connection": {
+                            "static": [
+                                {"id": 1, "name": "John", "email": "john@test.com"},
+                            ]
+                        },
+                    },
+                ],
+                "sync": [
+                    {
+                        "source": "staticsrc",
+                        "destination": "staticdst",
+                        "sourceConfig": {},
+                        "destinationConfig": {},
+                        "comparisonColumns": {"id": "Int64"},
+                        "sourceTransformers": [
+                            {
+                                "transformer": "non_existent_transformer",
+                                "custom": {
+                                    "field": "value",
+                                },
+                            },
+                        ],
+                        "destinationTransformers": [],
+                        "insertionTransformers": [],
+                    }
+                ],
+            }
+        )
