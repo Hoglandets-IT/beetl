@@ -129,9 +129,6 @@ class UnitTestBeetlConfig(unittest.TestCase):
                                 "type": "Utf8",
                             },
                         ],
-                        "sourceTransformers": [],
-                        "destinationTransformers": [],
-                        "insertionTransformers": [],
                     }
                 ],
             }
@@ -184,9 +181,6 @@ class UnitTestBeetlConfig(unittest.TestCase):
                             "uniqueFields": ["id"],
                         },
                         "comparisonColumns": {"id": "Int64"},
-                        "sourceTransformers": [],
-                        "destinationTransformers": [],
-                        "insertionTransformers": [],
                     }
                 ],
             }
@@ -219,9 +213,6 @@ class UnitTestBeetlConfig(unittest.TestCase):
                         "sourceConfig": {},
                         "destinationConfig": {},
                         "comparisonColumns": {"id": "Int64"},
-                        "sourceTransformers": [],
-                        "destinationTransformers": [],
-                        "insertionTransformers": [],
                     }
                 ],
             }
@@ -250,9 +241,6 @@ class UnitTestBeetlConfig(unittest.TestCase):
                         "sourceConfig": {},
                         "destinationConfig": {},
                         "comparisonColumns": {"id": "Int64"},
-                        "sourceTransformers": [],
-                        "destinationTransformers": [],
-                        "insertionTransformers": [],
                     }
                 ],
             }
@@ -295,9 +283,6 @@ class UnitTestBeetlConfig(unittest.TestCase):
                         },
                         "destinationConfig": {"table": "test", "uniqueColumns": ["Id"]},
                         "comparisonColumns": {"id": "Int64"},
-                        "sourceTransformers": [],
-                        "destinationTransformers": [],
-                        "insertionTransformers": [],
                     }
                 ],
             }
@@ -340,9 +325,6 @@ class UnitTestBeetlConfig(unittest.TestCase):
                         },
                         "destinationConfig": {"table": "test", "uniqueColumns": ["Id"]},
                         "comparisonColumns": {"id": "Int64"},
-                        "sourceTransformers": [],
-                        "destinationTransformers": [],
-                        "insertionTransformers": [],
                     }
                 ],
             }
@@ -405,9 +387,6 @@ class UnitTestBeetlConfig(unittest.TestCase):
                             "listRequest": {},
                         },
                         "comparisonColumns": {"id": "Int64"},
-                        "sourceTransformers": [],
-                        "destinationTransformers": [],
-                        "insertionTransformers": [],
                     }
                 ],
             }
@@ -454,9 +433,6 @@ class UnitTestBeetlConfig(unittest.TestCase):
                             "uniqueColumns": ["id"],
                         },
                         "comparisonColumns": {"id": "Int64"},
-                        "sourceTransformers": [],
-                        "destinationTransformers": [],
-                        "insertionTransformers": [],
                     }
                 ],
             }
@@ -497,9 +473,6 @@ class UnitTestBeetlConfig(unittest.TestCase):
                             "unique_columns": ("id",),
                         },
                         "comparisonColumns": {"id": "Int64"},
-                        "sourceTransformers": [],
-                        "destinationTransformers": [],
-                        "insertionTransformers": [],
                     }
                 ],
             }
@@ -550,9 +523,6 @@ class UnitTestBeetlConfig(unittest.TestCase):
                                 "type": "Utf8",
                             },
                         ],
-                        "sourceTransformers": [],
-                        "destinationTransformers": [],
-                        "insertionTransformers": [],
                     }
                 ],
             }
@@ -589,16 +559,13 @@ class UnitTestBeetlConfig(unittest.TestCase):
                         "sourceConfig": {},
                         "destinationConfig": {},
                         "comparisonColumns": {"id": "Int64"},
-                        "sourceTransformers": [],
-                        "destinationTransformers": [],
-                        "insertionTransformers": [],
                     }
                 ],
             }
         )
 
     def test_that_version_1_supports_source_transformers(self):
-        result = BeetlConfig(
+        BeetlConfig(
             {
                 "version": "V1",
                 "sources": [
@@ -637,8 +604,141 @@ class UnitTestBeetlConfig(unittest.TestCase):
                                 },
                             },
                         ],
-                        "destinationTransformers": [],
-                        "insertionTransformers": [],
+                    }
+                ],
+            }
+        )
+
+    def test_that_version_1_supports_destination_transformers(self):
+        BeetlConfig(
+            {
+                "version": "V1",
+                "sources": [
+                    {
+                        "name": "staticsrc",
+                        "type": "Static",
+                        "connection": {
+                            "static": [
+                                {"id": 1, "name": "John", "email": "john@test.com"},
+                            ],
+                        },
+                    },
+                    {
+                        "name": "staticdst",
+                        "type": "Static",
+                        "connection": {
+                            "static": [
+                                {"id": 1, "name": "John", "email": "john@test.com"},
+                            ]
+                        },
+                    },
+                ],
+                "sync": [
+                    {
+                        "source": "staticsrc",
+                        "destination": "staticdst",
+                        "sourceConfig": {},
+                        "destinationConfig": {},
+                        "comparisonColumns": {"id": "Int64"},
+                        "destinationTransformers": [
+                            {
+                                "transformer": "strings.staticfield",
+                                "config": {
+                                    "field": "name",
+                                    "value": "John",
+                                },
+                            },
+                        ],
+                    }
+                ],
+            }
+        )
+
+    def test_that_version_1_supports_insertion_transformers(self):
+        BeetlConfig(
+            {
+                "version": "V1",
+                "sources": [
+                    {
+                        "name": "staticsrc",
+                        "type": "Static",
+                        "connection": {
+                            "static": [
+                                {"id": 1, "name": "John", "email": "john@test.com"},
+                            ],
+                        },
+                    },
+                    {
+                        "name": "staticdst",
+                        "type": "Static",
+                        "connection": {
+                            "static": [
+                                {"id": 1, "name": "John", "email": "john@test.com"},
+                            ]
+                        },
+                    },
+                ],
+                "sync": [
+                    {
+                        "source": "staticsrc",
+                        "destination": "staticdst",
+                        "sourceConfig": {},
+                        "destinationConfig": {},
+                        "comparisonColumns": {"id": "Int64"},
+                        "insertionTransformers": [
+                            {
+                                "transformer": "strings.staticfield",
+                                "config": {
+                                    "field": "name",
+                                    "value": "John",
+                                },
+                            },
+                        ],
+                    }
+                ],
+            }
+        )
+
+    def test_that_version_1_supports_deletion_transformers(self):
+        BeetlConfig(
+            {
+                "version": "V1",
+                "sources": [
+                    {
+                        "name": "staticsrc",
+                        "type": "Static",
+                        "connection": {
+                            "static": [
+                                {"id": 1, "name": "John", "email": "john@test.com"},
+                            ],
+                        },
+                    },
+                    {
+                        "name": "staticdst",
+                        "type": "Static",
+                        "connection": {
+                            "static": [
+                                {"id": 1, "name": "John", "email": "john@test.com"},
+                            ]
+                        },
+                    },
+                ],
+                "sync": [
+                    {
+                        "source": "staticsrc",
+                        "destination": "staticdst",
+                        "sourceConfig": {},
+                        "destinationConfig": {},
+                        "comparisonColumns": {"id": "Int64"},
+                        "deletionTransformers": [
+                            {
+                                "transformer": "strings.staticfield",
+                                "config": {
+                                    "field": "name",
+                                    "value": "John",
+                                },
+                            },
+                        ],
                     }
                 ],
             }
