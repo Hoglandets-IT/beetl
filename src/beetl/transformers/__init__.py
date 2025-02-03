@@ -1,10 +1,10 @@
 import os
 from typing import Union
 
-# re-exports
 from .strings_schema import StringTransformerSchemas
+from .structs_schema import StructTransformerSchemas
 
-TransformerSchemas = Union[StringTransformerSchemas]
+TransformerSchemas = Union[StringTransformerSchemas, StructTransformerSchemas]
 
 # Automatic import of all transformers
 cDir = os.path.dirname(__file__)
