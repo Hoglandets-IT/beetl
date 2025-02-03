@@ -93,15 +93,20 @@ class V1Sync(BaseModel):
     ]
 
     # TODO: Remove the union with dict when all transformers have schemas.
-    sourceTransformers: list[
-        Union[
-            Annotated[Union[TransformerSchemas], Field(discriminator="transformer")],
-            dict,
-        ]
+    sourceTransformers: Annotated[
+        list[
+            Union[
+                Annotated[
+                    Union[TransformerSchemas], Field(discriminator="transformer")
+                ],
+                dict,
+            ]
+        ],
+        Field(default=[]),
     ]
-    destinationTransformers: Annotated[Optional[Any], Field(default=None)]
-    insertionTransformers: Annotated[Optional[Any], Field(default=None)]
-    deletionTransformers: Annotated[Optional[Any], Field(default=None)]
+    destinationTransformers: Annotated[Optional[Any], Field(default=[])]
+    insertionTransformers: Annotated[Optional[Any], Field(default=[])]
+    deletionTransformers: Annotated[Optional[Any], Field(default=[])]
 
     @model_validator(mode="before")
     def validate_sources(cls, values):
