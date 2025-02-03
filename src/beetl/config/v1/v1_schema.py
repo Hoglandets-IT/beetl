@@ -66,12 +66,7 @@ class ComparisonColumnV1(BaseModel):
 
 ComparisonColumns = Union[list[ComparisonColumnV1], dict[str, str]]
 OptionalTransformers = Annotated[
-    list[
-        Union[
-            Annotated[Union[TransformerSchemas], Field(discriminator="transformer")],
-            dict,
-        ]
-    ],
+    list[Annotated[Union[TransformerSchemas], Field(discriminator="transformer")]],
     Field(default=[]),
 ]
 

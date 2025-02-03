@@ -11,7 +11,7 @@ class RegexTransformerSchema:
             inField: Annotated[str, Field(min_length=1)]
             outField: Annotated[Optional[str], Field(default=None)]
             query: Annotated[str, Field(min_length=1)]
-            replace: Annotated[str, Field(min_length=1)]
+            replace: str
             maxN: Annotated[int, Field(default=-1)]
 
         transformer: Literal["regex.replace"]

@@ -1,6 +1,7 @@
 import os
 from typing import Union
 
+from .frames_schema import FramesTransformerSchemas
 from .integer_schema import IntegerTransformerSchemas
 from .itop_schema import ItopTransformerSchemas
 from .misc_schema import MiscTransformerSchemas
@@ -15,6 +16,7 @@ TransformerSchemas = Union[
     MiscTransformerSchemas,
     ItopTransformerSchemas,
     IntegerTransformerSchemas,
+    FramesTransformerSchemas,
 ]
 
 # Automatic import of all transformers

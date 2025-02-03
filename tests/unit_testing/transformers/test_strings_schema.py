@@ -1,5 +1,7 @@
 from unittest import TestCase
 
+from pydantic import ValidationError
+
 from src.beetl.transformers.interface import TransformerSchemaBase
 from src.beetl.transformers.strings_schema import StringTransformerSchema
 
@@ -66,6 +68,19 @@ class UnitTestStringTransformersSchema(TestCase):
         }
 
         self.assertValidatesSuccessfully(input, cls)
+
+    def test_uppercase_infield_validator__both_map_and_infield_is_missing__exception_is_raised(
+        self,
+    ):
+        cls = StringTransformerSchema.Uppercase
+        input = {
+            "transformer": "strings.uppercase",
+            "config": {"outField": "field2"},
+        }
+
+        callable_function = lambda: self.assertValidatesSuccessfully(input, cls)
+
+        self.assertRaises(ValidationError, callable_function)
 
     def test_match_contains__with_valid_input__model_is_valid(self):
         cls = StringTransformerSchema.MatchContains

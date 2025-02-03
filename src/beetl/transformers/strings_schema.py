@@ -1,6 +1,6 @@
 from typing import Annotated, Literal, Optional, Union
 
-from pydantic import Field
+from pydantic import Field, model_validator
 
 from .interface import TransformerConfigBase, TransformerSchemaBase
 
@@ -42,9 +42,25 @@ class StringTransformerSchema:
 
     class Uppercase(TransformerSchemaBase):
         class Config(TransformerConfigBase):
-            inField: Annotated[str, Field(min_length=1)]
             outField: Annotated[Optional[str], Field(default=None)]
             inOutMap: Annotated[dict[str, str], Field(default={})]
+            inField: Annotated[str, Field(default="")]
+
+            @model_validator(mode="wrap")
+            def model_validator(cls, values: dict, handler):
+                model: "StringTransformerSchema.Uppercase.Config" = handler(values)
+
+                in_out_map_missing_or_empty: bool = (
+                    not model.inOutMap or len(model.inOutMap) == 0
+                )
+                if in_out_map_missing_or_empty:
+                    if model.inField is None:
+                        raise ValueError(
+                            "inField is required when inOutMap is missing or empty"
+                        )
+                    if len(model.inField) == 0:
+                        raise ValueError("inField must have a length greater than 0")
+                return
 
         transformer: Literal["strings.uppercase"]
         config: "StringTransformerSchema.Uppercase.Config"
@@ -60,7 +76,7 @@ class StringTransformerSchema:
 
     class Join(TransformerSchemaBase):
         class Config(TransformerConfigBase):
-            inField: Annotated[str, Field(min_length=1)]
+            inFields: Annotated[list[str], Field(min_length=1)]
             outField: Annotated[str, Field(min_length=1)]
             separator: Annotated[str, Field(default="")]
 
