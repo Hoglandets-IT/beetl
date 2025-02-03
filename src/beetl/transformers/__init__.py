@@ -1,6 +1,7 @@
 import os
 from typing import Union
 
+from .integer_schema import IntegerTransformerSchemas
 from .itop_schema import ItopTransformerSchemas
 from .misc_schema import MiscTransformerSchemas
 from .regex_schema import RegexTransformerSchemas
@@ -13,6 +14,7 @@ TransformerSchemas = Union[
     RegexTransformerSchemas,
     MiscTransformerSchemas,
     ItopTransformerSchemas,
+    IntegerTransformerSchemas,
 ]
 
 # Automatic import of all transformers
