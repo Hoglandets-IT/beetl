@@ -14,7 +14,6 @@ class UnitTestFramesTransformers(TestCase):
             [
                 {
                     "id": 1,
-                    "name": "A",
                     "items": [
                         {
                             "id": 3,
@@ -26,7 +25,6 @@ class UnitTestFramesTransformers(TestCase):
                 },
                 {
                     "id": 2,
-                    "name": "B",
                     "items": [
                         {
                             "id": 4,
