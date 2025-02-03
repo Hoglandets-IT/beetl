@@ -1,6 +1,8 @@
-from typing import List
 import json
+from typing import List
+
 import polars as pl
+
 from .interface import TransformerInterface, register_transformer_class
 
 
@@ -32,7 +34,13 @@ class FrameTransformer(TransformerInterface):
         return data
 
     @staticmethod
-    def conditional(data: pl.DataFrame, conditionField: str, ifTrue: str, ifFalse: str, targetField: str = ""):
+    def conditional(
+        data: pl.DataFrame,
+        conditionField: str,
+        ifTrue: str,
+        ifFalse: str,
+        targetField: str = "",
+    ):
         """Apply a conditional to a DataFrame
 
         Args:
@@ -51,8 +59,14 @@ class FrameTransformer(TransformerInterface):
         __class__._validate_fields(data.columns, [conditionField])
 
         data = data.with_columns(
-            pl.when(data[conditionField] == True).then(ifTrue).otherwise(ifFalse).alias(
-                targetField if targetField is not None and targetField != "" else conditionField)
+            pl.when(data[conditionField] == True)
+            .then(ifTrue)
+            .otherwise(ifFalse)
+            .alias(
+                targetField
+                if targetField is not None and targetField != ""
+                else conditionField
+            )
         )
 
         return data
@@ -81,10 +95,7 @@ class FrameTransformer(TransformerInterface):
         if isinstance(columns, dict):
             ncolumns = []
             for k, v in columns.items():
-                ncolumns.append({
-                    "from": k,
-                    "to": v
-                })
+                ncolumns.append({"from": k, "to": v})
 
         for column in ncolumns:
             data = data.rename({column["from"]: column["to"]})
@@ -152,10 +163,15 @@ class FrameTransformer(TransformerInterface):
         if columns is not None and len(columns) > 0:
             __class__._validate_fields(data.columns, columns)
 
-        return data.unique(subset=columns if columns is not None and len(columns) > 0 else None, maintain_order=True)
+        return data.unique(
+            subset=columns if columns is not None and len(columns) > 0 else None,
+            maintain_order=True,
+        )
 
     @staticmethod
-    def extract_nested_rows(data: pl.DataFrame, iterField: str = "", fieldMap: dict = {}, colMap: dict = {}):
+    def extract_nested_rows(
+        data: pl.DataFrame, iterField: str = "", fieldMap: dict = {}, colMap: dict = {}
+    ):
         """
         Convert each list item in a list column to a row
 
@@ -166,7 +182,6 @@ class FrameTransformer(TransformerInterface):
             column_path (str): The path in the list item to the value of the new column
             includeColumns (List[str]): Columns to include in the result
         """
-        __class__._validate_fields(data.columns, [x for x in colMap.keys()])
         new_obj = []
 
         def extract_field(data: dict, path: str):

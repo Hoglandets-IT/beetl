@@ -5,6 +5,9 @@
    - It is now forbidden to have extra parameters not part of the schema, validation errors will be raised if this happens.
 - Unused sqlserver source config parameters `query` and `table` have been removed.
 
+### Bugfixes 🐛
+- Fixed issue where `frames.extract_nested_rows` transformer failed due to it checking if fields exists before creating them.
+
 ## 1.0.4
 ### Changes ️️🔄️
 - It is now possible to use Xml files as a data source and destination. Read more about it in the [docs](/sources/xml.html).
