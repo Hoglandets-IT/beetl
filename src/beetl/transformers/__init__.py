@@ -1,10 +1,13 @@
 import os
 from typing import Union
 
+from .regex_schema import RegexTransformerSchemas
 from .strings_schema import StringTransformerSchemas
 from .structs_schema import StructTransformerSchemas
 
-TransformerSchemas = Union[StringTransformerSchemas, StructTransformerSchemas]
+TransformerSchemas = Union[
+    StringTransformerSchemas, StructTransformerSchemas, RegexTransformerSchemas
+]
 
 # Automatic import of all transformers
 cDir = os.path.dirname(__file__)

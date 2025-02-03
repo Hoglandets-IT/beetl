@@ -4,7 +4,7 @@ from src.beetl.transformers.interface import TransformerSchemaBase
 from src.beetl.transformers.structs_schema import StructTransformerSchema
 
 
-class UnitTestStringsTransformersSchema(TestCase):
+class UnitTestStructTransformersSchema(TestCase):
     """Theses tests makes sure that we're not breaking the schema for the structs transformer without noticing it.
 
     Altering these tests is a good way to double check that the changes you made are as expected.
