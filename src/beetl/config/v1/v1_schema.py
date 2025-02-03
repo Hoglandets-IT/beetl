@@ -64,7 +64,16 @@ class ComparisonColumnV1(BaseModel):
     unique: Annotated[bool, Field(default=False)]
 
 
-ComparisonColumnsV1 = Union[list[ComparisonColumnV1], dict[str, str]]
+ComparisonColumns = Union[list[ComparisonColumnV1], dict[str, str]]
+OptionalTransformers = Annotated[
+    list[
+        Union[
+            Annotated[Union[TransformerSchemas], Field(discriminator="transformer")],
+            dict,
+        ]
+    ],
+    Field(default=[]),
+]
 
 
 class V1Sync(BaseModel):
@@ -88,22 +97,12 @@ class V1Sync(BaseModel):
     sourceConfig: Annotated[SourceSyncArguments, Field()]
     destinationConfig: Annotated[SourceSyncArguments, Field()]
     comparisonColumns: Annotated[
-        ComparisonColumnsV1,
+        ComparisonColumns,
         Field(min_length=1),
     ]
 
     # TODO: Remove the union with dict when all transformers have schemas.
-    sourceTransformers: Annotated[
-        list[
-            Union[
-                Annotated[
-                    Union[TransformerSchemas], Field(discriminator="transformer")
-                ],
-                dict,
-            ]
-        ],
-        Field(default=[]),
-    ]
+    sourceTransformers: OptionalTransformers
     destinationTransformers: Annotated[Optional[Any], Field(default=[])]
     insertionTransformers: Annotated[Optional[Any], Field(default=[])]
     deletionTransformers: Annotated[Optional[Any], Field(default=[])]
