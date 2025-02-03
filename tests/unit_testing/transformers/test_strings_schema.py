@@ -100,8 +100,8 @@ class UnitTestStringTransformersSchema(TestCase):
         input = {
             "transformer": "strings.join",
             "config": {
-                "inField": "field1",
-                "outField": "field2",
+                "inFields": ["field1", "field2"],
+                "outField": "field3",
                 "separator": ",",
             },
         }
