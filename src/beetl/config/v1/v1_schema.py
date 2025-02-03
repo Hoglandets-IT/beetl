@@ -23,6 +23,7 @@ from ...sources import (
     XmlConfigArguments,
     XmlSyncArguments,
 )
+from ...transformers import TransformerSchemas
 
 SourceConfigArguments = list[
     Union[
@@ -63,7 +64,11 @@ class ComparisonColumnV1(BaseModel):
     unique: Annotated[bool, Field(default=False)]
 
 
-ComparisonColumnsV1 = Union[list[ComparisonColumnV1], dict[str, str]]
+ComparisonColumns = Union[list[ComparisonColumnV1], dict[str, str]]
+OptionalTransformers = Annotated[
+    list[Annotated[TransformerSchemas, Field(discriminator="transformer")]],
+    Field(default=[]),
+]
 
 
 class V1Sync(BaseModel):
@@ -87,15 +92,13 @@ class V1Sync(BaseModel):
     sourceConfig: Annotated[SourceSyncArguments, Field()]
     destinationConfig: Annotated[SourceSyncArguments, Field()]
     comparisonColumns: Annotated[
-        ComparisonColumnsV1,
+        ComparisonColumns,
         Field(min_length=1),
     ]
-
-    # The following fields are not yet being validated
-    sourceTransformers: Annotated[Optional[Any], Field(default=None)]
-    destinationTransformers: Annotated[Optional[Any], Field(default=None)]
-    insertionTransformers: Annotated[Optional[Any], Field(default=None)]
-    deletionTransformers: Annotated[Optional[Any], Field(default=None)]
+    sourceTransformers: OptionalTransformers
+    destinationTransformers: OptionalTransformers
+    insertionTransformers: OptionalTransformers
+    deletionTransformers: OptionalTransformers
 
     @model_validator(mode="before")
     def validate_sources(cls, values):
