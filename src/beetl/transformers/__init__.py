@@ -1,12 +1,16 @@
 import os
 from typing import Union
 
+from .misc_schema import MiscTransformerSchemas
 from .regex_schema import RegexTransformerSchemas
 from .strings_schema import StringTransformerSchemas
 from .structs_schema import StructTransformerSchemas
 
 TransformerSchemas = Union[
-    StringTransformerSchemas, StructTransformerSchemas, RegexTransformerSchemas
+    StringTransformerSchemas,
+    StructTransformerSchemas,
+    RegexTransformerSchemas,
+    MiscTransformerSchemas,
 ]
 
 # Automatic import of all transformers
