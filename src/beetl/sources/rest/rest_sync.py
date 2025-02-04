@@ -8,7 +8,7 @@ from ..interface import SourceSync, SourceSyncArguments
 
 
 class RestResponse(ValidationBaseModel):
-    length: str
+    length: Annotated[Optional[str], Field(default=None)]
     items: str
 
 
@@ -30,7 +30,7 @@ class PaginationSettings(ValidationBaseModel):
 
 class RestRequest(ValidationBaseModel):
     path: Annotated[str, Field(default=None)]
-    query: Annotated[Dict[str, Any], Field(default={})]
+    query: Annotated[Dict[str, Union[str, int]], Field(default={})]
     method: Annotated[
         Literal["GET", "POST", "PUT", "HEAD", "DELETE", "OPTIONS", "PATCH"],
         Field(default="GET"),
