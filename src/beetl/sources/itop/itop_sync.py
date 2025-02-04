@@ -22,7 +22,7 @@ class SoftDeleteArguments(BaseModel):
 
     @model_validator(mode="before")
     def transform_input(cls, values):
-        if not values["enabled"]:
+        if values.get("enabled", None) is None:
             values["enabled"] = False
         return values
 
