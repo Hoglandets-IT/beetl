@@ -12,7 +12,7 @@ class StringTransformerSchema:
             value: str
 
         transformer: Literal["strings.staticfield"]
-        config: "StringTransformerSchema.StaticField.Config"
+        config: Config
 
     class SetDefaults(TransformerSchemaBase):
         class Config(TransformerConfigBase):
@@ -20,7 +20,7 @@ class StringTransformerSchema:
             defaultValue: str
 
         transformer: Literal["strings.set_default"]
-        config: "StringTransformerSchema.SetDefaults.Config"
+        config: Config
 
     class Strip(TransformerSchemaBase):
         class Config(TransformerConfigBase):
@@ -29,7 +29,7 @@ class StringTransformerSchema:
             outField: Annotated[Optional[str], Field(default=None)]
 
         transformer: Literal["strings.strip"]
-        config: "StringTransformerSchema.Strip.Config"
+        config: Config
 
     class Lowercase(TransformerSchemaBase):
         class Config(TransformerConfigBase):
@@ -38,7 +38,7 @@ class StringTransformerSchema:
             inOutMap: Annotated[dict[str, str], Field(default={})]
 
         transformer: Literal["strings.lowercase"]
-        config: "StringTransformerSchema.Lowercase.Config"
+        config: Config
 
     class Uppercase(TransformerSchemaBase):
         class Config(TransformerConfigBase):
@@ -63,7 +63,7 @@ class StringTransformerSchema:
                 return model
 
         transformer: Literal["strings.uppercase"]
-        config: "StringTransformerSchema.Uppercase.Config"
+        config: Config
 
     class MatchContains(TransformerSchemaBase):
         class Config(TransformerConfigBase):
@@ -72,7 +72,7 @@ class StringTransformerSchema:
             match: str
 
         transformer: Literal["strings.match_contains"]
-        config: "StringTransformerSchema.MatchContains.Config"
+        config: Config
 
     class Join(TransformerSchemaBase):
         class Config(TransformerConfigBase):
@@ -81,7 +81,7 @@ class StringTransformerSchema:
             separator: Annotated[str, Field(default="")]
 
         transformer: Literal["strings.join"]
-        config: "StringTransformerSchema.Join.Config"
+        config: Config
 
     class JoinListfield(TransformerSchemaBase):
         class Config(TransformerConfigBase):
@@ -90,7 +90,7 @@ class StringTransformerSchema:
             separator: Annotated[str, Field(default="")]
 
         transformer: Literal["strings.join_listfield"]
-        config: "StringTransformerSchema.JoinListfield.Config"
+        config: Config
 
     class Split(TransformerSchemaBase):
         class Config(TransformerConfigBase):
@@ -99,7 +99,7 @@ class StringTransformerSchema:
             separator: Annotated[str, Field(default="")]
 
         transformer: Literal["strings.split"]
-        config: "StringTransformerSchema.Split.Config"
+        config: Config
 
     class SplitIntoListfield(TransformerSchemaBase):
         class Config(TransformerConfigBase):
@@ -108,7 +108,7 @@ class StringTransformerSchema:
             separator: Annotated[str, Field(default="")]
 
         transformer: Literal["strings.split_into_listfield"]
-        config: "StringTransformerSchema.SplitIntoListfield.Config"
+        config: Config
 
     class Quote(TransformerSchemaBase):
         class Config(TransformerConfigBase):
@@ -117,7 +117,7 @@ class StringTransformerSchema:
             quote: Annotated[str, Field(default="'")]
 
         transformer: Literal["strings.quote"]
-        config: "StringTransformerSchema.Quote.Config"
+        config: Config
 
     class Replace(TransformerSchemaBase):
         class Config(TransformerConfigBase):
@@ -127,7 +127,7 @@ class StringTransformerSchema:
             replace: str
 
         transformer: Literal["strings.replace"]
-        config: "StringTransformerSchema.Replace.Config"
+        config: Config
 
     class ReplaceAll(TransformerSchemaBase):
         class Config(TransformerConfigBase):
@@ -137,7 +137,7 @@ class StringTransformerSchema:
             replace: str
 
         transformer: Literal["strings.replace_all"]
-        config: "StringTransformerSchema.ReplaceAll.Config"
+        config: Config
 
     class Substring(TransformerSchemaBase):
         class Config(TransformerConfigBase):
@@ -147,7 +147,7 @@ class StringTransformerSchema:
             length: Annotated[Optional[int], Field(default=None)]
 
         transformer: Literal["strings.substring"]
-        config: "StringTransformerSchema.Substring.Config"
+        config: Config
 
     class AddPrefix(TransformerSchemaBase):
         class Config(TransformerConfigBase):
@@ -156,7 +156,7 @@ class StringTransformerSchema:
             prefix: Annotated[str, Field(min_length=1)]
 
         transformer: Literal["strings.add_prefix"]
-        config: "StringTransformerSchema.AddPrefix.Config"
+        config: Config
 
     class Cast(TransformerSchemaBase):
         class Config(TransformerConfigBase):
@@ -164,7 +164,7 @@ class StringTransformerSchema:
             outField: Annotated[str, Field(default="")]
 
         transformer: Literal["strings.cast"]
-        config: "StringTransformerSchema.Cast.Config"
+        config: Config
 
     class Hash(TransformerSchemaBase):
         class Config(TransformerConfigBase):
@@ -172,14 +172,23 @@ class StringTransformerSchema:
             outField: Annotated[str, Field(default="")]
 
         transformer: Literal["strings.hash"]
-        config: "StringTransformerSchema.Hash.Config"
+        config: Config
 
     class ToObjectId(TransformerSchemaBase):
         class Config(TransformerConfigBase):
             inField: Annotated[str, Field(min_length=1)]
 
         transformer: Literal["strings.to_object_id"]
-        config: "StringTransformerSchema.ToObjectId.Config"
+        config: Config
+
+    class Format(TransformerSchemaBase):
+        class Config(TransformerConfigBase):
+            inField: Annotated[str, Field(min_length=1)]
+            outField: Annotated[str, Field(default="")]
+            format_string: Annotated[str, Field(default="{value}")]
+
+        transformer: Literal["strings.format"]
+        config: Config
 
 
 StringTransformerSchemas = Union[
@@ -201,4 +210,5 @@ StringTransformerSchemas = Union[
     StringTransformerSchema.Cast,
     StringTransformerSchema.Hash,
     StringTransformerSchema.ToObjectId,
+    StringTransformerSchema.Format,
 ]
