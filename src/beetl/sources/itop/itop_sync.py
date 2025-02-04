@@ -20,14 +20,6 @@ class SoftDeleteArguments(BaseModel):
     active_value: Annotated[str, Field(min_length=1, default="enabled")]
     inactive_value: Annotated[str, Field(min_length=1, default="inactive")]
 
-    @model_validator(mode="before")
-    def transform_input(cls, values: dict):
-        if not values:
-            return values
-        if values.get("enabled", None) is None:
-            values["enabled"] = False
-        return values
-
 
 class ItopSyncArguments(SourceSyncArguments):
 
