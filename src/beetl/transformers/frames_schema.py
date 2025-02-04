@@ -32,7 +32,9 @@ class FramesTransformerSchema:
 
     class RenameColumns(TransformerSchemaBase):
         class Config(TransformerConfigBase):
-            columns: Annotated[list[Mapping], Field(min_length=1)]
+            columns: Annotated[
+                Union[list[Mapping], dict[str, str]], Field(min_length=1)
+            ]
 
         transformer: Literal["frames.rename_columns"]
         config: Config
