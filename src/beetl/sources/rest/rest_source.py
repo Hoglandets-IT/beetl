@@ -130,8 +130,8 @@ class RestSource(SourceInterface):
                     elif lrSettings.pagination.totalQueryIn == "header":
                         total = response.headers[lrSettings.pagination.totalQuery]
 
-                if len(lrSettings.response["items"]) > 0:
-                    for key in lrSettings.response["items"].split("."):
+                if len(lrSettings.response.items) > 0:
+                    for key in lrSettings.response.items.split("."):
                         page_response_data = page_response_data[key]
 
                 if len(response_data) == 0 and len(page_response_data) < pageSize:
@@ -153,12 +153,12 @@ class RestSource(SourceInterface):
 
             if (
                 self.source_configuration.listRequest.response
-                and self.source_configuration.listRequest.response["items"]
-                and len(self.source_configuration.listRequest.response["items"]) > 0
+                and self.source_configuration.listRequest.response.items
+                and len(self.source_configuration.listRequest.response.items) > 0
             ):
-                for key in self.source_configuration.listRequest.response[
-                    "items"
-                ].split("."):
+                for key in self.source_configuration.listRequest.response.items.split(
+                    "."
+                ):
                     response_data = response_data[key]
 
             if len(response_data) == 0:
