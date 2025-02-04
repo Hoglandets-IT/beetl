@@ -60,7 +60,7 @@ class StringTransformerSchema:
                         )
                     if len(model.inField) == 0:
                         raise ValueError("inField must have a length greater than 0")
-                return
+                return model
 
         transformer: Literal["strings.uppercase"]
         config: "StringTransformerSchema.Uppercase.Config"
