@@ -29,11 +29,6 @@ class PaginationSettings(ValidationBaseModel):
 
 
 class RestRequest(ValidationBaseModel):
-    # Arbitrary types is needed since the response is placed in the request when made but not present when intializing the request.
-    model_config = ConfigDict(
-        extra="forbid", ignored_types=(RestResponse,), arbitrary_types_allowed=True
-    )
-
     path: Annotated[str, Field(default=None)]
     query: Annotated[Dict[str, str], Field(default={})]
     method: Annotated[
@@ -57,6 +52,7 @@ class RestRequest(ValidationBaseModel):
                 "Body must be of type dictionary when body_type is set to 'application/json'.",
                 instance.location,
             )
+        return instance
 
 
 class RestSyncArguments(SourceSyncArguments):
