@@ -12,6 +12,11 @@ class UnitTestStringTransformersSchema(TestCase):
     Altering these tests is a good way to double check that the changes you made are as expected.
     """
 
+    def assertValidatesSuccessfully(self, input, cls: TransformerSchemaBase):
+        result = cls(**input)
+
+        self.assertIsNotNone(result)
+
     def test_staticfield__with_valid_input__model_is_valid(self):
         cls = StringTransformerSchema.StaticField
         input = {
@@ -250,7 +255,15 @@ class UnitTestStringTransformersSchema(TestCase):
 
         self.assertValidatesSuccessfully(input, cls)
 
-    def assertValidatesSuccessfully(self, input, cls: TransformerSchemaBase):
-        result = cls(**input)
+    def test_format__with_valid_input__model_is_valid(self):
+        cls = StringTransformerSchema.Format
+        input = {
+            "transformer": "strings.format",
+            "config": {
+                "inField": "field1",
+                "outField": "field2",
+                "format_string": "{value}",
+            },
+        }
 
-        self.assertIsNotNone(result)
+        self.assertValidatesSuccessfully(input, cls)

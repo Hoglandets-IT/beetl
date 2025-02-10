@@ -41,11 +41,11 @@ class RestAuthenticationArguments(ValidationBaseModel):
 
     @model_validator(mode="after")
     def validate_authentication(cls, instance: "RestAuthenticationArguments"):
-        errors = []
         if not any([instance.basic, instance.bearer, instance.oauth2]):
             raise ValueError("At least one authentication method must be set")
         if sum([instance.basic, instance.bearer, instance.oauth2]) > 1:
             raise ValueError("Only one authentication method can be set")
+        return instance
 
 
 class RestSettingsArguments(ValidationBaseModel):

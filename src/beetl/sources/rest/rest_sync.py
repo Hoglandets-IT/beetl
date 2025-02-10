@@ -1,18 +1,15 @@
-from typing import Annotated, Dict, Literal, Optional
+from typing import Annotated, Any, Dict, Literal, Optional, Union
 
-from pydantic import ConfigDict, Field
+from pydantic import ConfigDict, Field, model_validator
 
+from ...errors import ConfigValueError
 from ...validation import ValidationBaseModel
 from ..interface import SourceSync, SourceSyncArguments
 
 
-class RestResponse:
-    length: str
+class RestResponse(ValidationBaseModel):
+    length: Annotated[Optional[str], Field(default=None)]
     items: str
-
-    def __init__(self, length: str, items: str):
-        self.length = length
-        self.items = items
 
 
 class BodyOptions(ValidationBaseModel):
@@ -32,20 +29,30 @@ class PaginationSettings(ValidationBaseModel):
 
 
 class RestRequest(ValidationBaseModel):
-    # Arbitrary types is needed since the response is placed in the request when made but not present when intializing the request.
-    model_config = ConfigDict(
-        extra="forbid", ignored_types=(RestResponse,), arbitrary_types_allowed=True
-    )
-
     path: Annotated[str, Field(default=None)]
-    query: Annotated[Dict[str, str], Field(default={})]
-    method: Annotated[str, Field(default="GET")]
+    query: Annotated[Dict[str, Union[str, int]], Field(default={})]
+    method: Annotated[
+        Literal["GET", "POST", "PUT", "HEAD", "DELETE", "OPTIONS", "PATCH"],
+        Field(default="GET"),
+    ]
     pagination: Annotated[Optional[PaginationSettings], Field(default=None)]
     body_type: Annotated[str, Field(default="application/json")]
-    body: Annotated[Optional[str], Field(default=None)]
+    body: Annotated[
+        Optional[Union[dict[Union[str, int], Any], str]], Field(default=None)
+    ]
     body_options: Annotated[Optional[BodyOptions], Field(default=None)]
     return_type: Annotated[str, Field(default="application/json")]
-    response: RestResponse = None
+    response: Annotated[Optional[RestResponse], Field(default=None)]
+
+    @model_validator(mode="after")
+    def validate_body_type(cls, instance: "RestRequest"):
+        if instance.body_type == "application/json" and isinstance(instance.body, str):
+            raise ConfigValueError(
+                "body",
+                "Body must be of type dictionary when body_type is set to 'application/json'.",
+                instance.location,
+            )
+        return instance
 
 
 class RestSyncArguments(SourceSyncArguments):
@@ -54,6 +61,15 @@ class RestSyncArguments(SourceSyncArguments):
     updateRequest: Annotated[Optional[RestRequest], Field(default=None)]
     deleteRequest: Annotated[Optional[RestRequest], Field(default=None)]
     type: Annotated[Literal["Rest"], Field(defauls="Rest")] = "Rest"
+
+    @model_validator(mode="before")
+    def propagate_nested_location(cls, values: dict):
+        cls.propagate_location("listRequest", values)
+        cls.propagate_location("createRequest", values)
+        cls.propagate_location("updateRequest", values)
+        cls.propagate_location("deleteRequest", values)
+
+        return values
 
 
 class RestSync(SourceSync):
