@@ -1,6 +1,8 @@
 from enum import Enum
-from typing import Union
+from typing import Any, Literal, Union
+
 from polars import DataFrame as POLARS_DF
+from pydantic import BaseModel, ConfigDict
 
 FUNC_TYPE = type(print)
 CLS_TYPE = type(Enum)
@@ -30,8 +32,7 @@ class TransformerInterface:
         if isinstance(fields, str):
             fields = [fields]
 
-        fields_not_in_columns = [
-            field for field in fields if field not in columns]
+        fields_not_in_columns = [field for field in fields if field not in columns]
         if any(fields_not_in_columns):
             raise KeyError(
                 f'Some of the field(s) {",".join(fields_not_in_columns)} are not present '
@@ -54,8 +55,7 @@ class Transformers:
         namespace = namespace if namespace is not None else cls.__name__
         for fun in dir(cls):
             if not fun.startswith("_"):
-                Transformers._registerFunction(
-                    namespace, fun, getattr(cls, fun))
+                Transformers._registerFunction(namespace, fun, getattr(cls, fun))
 
     @staticmethod
     def runTransformer(transformer: str, data: POLARS_DF, **kwargs) -> POLARS_DF:
@@ -99,3 +99,13 @@ class TransformerConfiguration:
             return data
 
         return Transformers.runTransformer(self.identifier, data, **config, **kwargs)
+
+
+class TransformerSchemaBase(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    transformer: Literal["TransformerBaseClass"]
+    config: dict[str, Any]
+
+
+class TransformerConfigBase(BaseModel):
+    model_config = ConfigDict(extra="forbid")

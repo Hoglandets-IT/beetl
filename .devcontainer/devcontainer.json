@@ -22,7 +22,9 @@
 				"ms-python.autopep8",
 				"github.vscode-github-actions",
 				"tamasfe.even-better-toml",
-				"redhat.vscode-xml"
+				"redhat.vscode-xml",
+				"ms-python.isort",
+				"ms-python.black-formatter"
 			]
 		}
 	}

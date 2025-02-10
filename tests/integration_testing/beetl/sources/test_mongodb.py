@@ -1,3 +1,4 @@
+from typing import Union
 import unittest
 
 from bson import ObjectId
@@ -36,14 +37,14 @@ class TestMongodbSource(unittest.TestCase):
             self.assertEqual(len(result.inserted_ids), len(inserts))
             return result.inserted_ids
 
-    def update_test_data(self, id: str | ObjectId, email: str, mongodb: MongoDbContainer) -> None:
+    def update_test_data(self, id: Union[str, ObjectId], email: str, mongodb: MongoDbContainer) -> None:
         with mongodb.get_connection_client() as client:
             collection = client[DATABASE_NAME][SOURCE_TABLE_NAME]
             result = collection.update_one(
                 {"_id": id}, {"$set": {"email": email}})
             self.assertEqual(result.modified_count, 1)
 
-    def delete_test_data(self, id: str | ObjectId, mongodb: MongoDbContainer) -> None:
+    def delete_test_data(self, id: Union[str, ObjectId], mongodb: MongoDbContainer) -> None:
         with mongodb.get_connection_client() as client:
             collection = client[DATABASE_NAME][SOURCE_TABLE_NAME]
             result = collection.delete_one({"_id": id})

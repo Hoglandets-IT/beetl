@@ -11,6 +11,7 @@ mysql-connector-python
 alive-progress
 tabulate
 pymongo==4.10.1
+pydantic>=2.10.5
 
 # subdependencies of pandas
 lxml

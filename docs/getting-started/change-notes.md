@@ -1,4 +1,12 @@
 # Change Notes
+## 1.1.0 - 1.1.1
+### Changes ️️🔄️
+- Beetl now validates your configuration before running, providing you with helpful error messages telling you how to locate and fix the issues.
+   - It is now forbidden to have extra parameters not part of the schema, validation errors will be raised if this happens.
+- Unused sqlserver source config parameters `query` and `table` have been removed.
+
+### Bugfixes 🐛
+- Fixed issue where `frames.extract_nested_rows` transformer failed due to it checking if fields exists before creating them.
 
 ## 1.0.4
 ### Changes ️️🔄️

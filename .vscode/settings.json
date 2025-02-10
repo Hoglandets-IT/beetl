@@ -1,4 +1,5 @@
 {
+  "python.defaultInterpreterPath": "./venv/bin/python",
   "python.testing.unittestArgs": [
     "-v",
     "-s",
@@ -6,6 +7,13 @@
     "-p",
     "test_*.py"
   ],
+  "[python]": {
+    "editor.defaultFormatter": "ms-python.black-formatter",
+    "editor.formatOnSave": true,
+    "editor.codeActionsOnSave": {
+      "source.organizeImports": "always"
+    }
+  },
   "python.testing.autoTestDiscoverOnSaveEnabled": true,
   "python.testing.unittestEnabled": true,
   "files.eol": "\n",
