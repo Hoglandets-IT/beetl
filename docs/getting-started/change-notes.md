@@ -1,5 +1,5 @@
 # Change Notes
-## 1.1.0️
+## 1.1.0 - 1.1.1
 ### Changes ️️🔄️
 - Beetl now validates your configuration before running, providing you with helpful error messages telling you how to locate and fix the issues.
    - It is now forbidden to have extra parameters not part of the schema, validation errors will be raised if this happens.
