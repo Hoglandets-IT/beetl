@@ -36,6 +36,10 @@ sync:
       # oql_key: <string> (mandatory)
       # The query to use when fetching data
       oql_key: "SELECT Organization WHERE orgpath LIKE 'Top->Testing->%'"
+      # send_null_columns: <boolean> (optional, default=False)
+      # Determines if columns with null values should be sent to iTop.
+      # Default behavior is that they are filtered out.
+      send_null_columns: False
       # soft_delete: <object> (optional)
       # if provided and enabled is True resources will be set to inactive instead of being acually deleted.
       soft_delete:

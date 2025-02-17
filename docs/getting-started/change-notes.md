@@ -1,4 +1,8 @@
 # Change Notes
+## 1.2.1
+### Changes ️️🔄️
+- iTop destinations can now be configured to allow sending in null values that were previously filtered out.
+
 ## 1.1.0 - 1.1.1
 ### Changes ️️🔄️
 - Beetl now validates your configuration before running, providing you with helpful error messages telling you how to locate and fix the issues.

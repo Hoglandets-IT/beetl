@@ -39,3 +39,26 @@ class UnitTestItopSyncSchema(TestCase):
             },
         }
         CLS(**args, **self.metadata)
+
+    def test_sync_schema__without_send_null_values__schema_is_valid(self):
+        args = {
+            "datamodel": "value",
+            "oql_key": "value",
+            "link_columns": ["value"],
+            "comparison_columns": ["value"],
+            "unique_columns": ["value"],
+            "skip_columns": ["value"],
+        }
+        CLS(**args, **self.metadata)
+
+    def test_sync_schema__with_send_null_values__schema_is_valid(self):
+        args = {
+            "datamodel": "value",
+            "oql_key": "value",
+            "link_columns": ["value"],
+            "comparison_columns": ["value"],
+            "unique_columns": ["value"],
+            "skip_columns": ["value"],
+            "send_null_columns": True,
+        }
+        CLS(**args, **self.metadata)

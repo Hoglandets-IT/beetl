@@ -160,17 +160,22 @@ class ItopSource(SourceInterface):
 
     def create_item(self, type: str, data: dict, comment: str = ""):
 
+        data_to_send = {
+            key: value
+            for key, value in data.items()
+            if key not in self.source_configuration.link_columns
+        }
+        if not self.source_configuration.send_null_columns:
+            data_to_send = {
+                key: value for key, value, in data_to_send.items() if value is not None
+            }
         body = self._create_body(
             "core/create",
             {
                 "comment": comment,
                 "class": type,
                 "output_fields": "*",
-                "fields": {
-                    x: y
-                    for x, y in data.items()
-                    if y is not None and x not in self.source_configuration.link_columns
-                },
+                "fields": data_to_send,
             },
         )
 
@@ -212,15 +217,19 @@ class ItopSource(SourceInterface):
             [f"{key} = '{value}'" for key, value in identifiers.items()]
         )
 
+        data_to_send = {**data}
+        if not self.source_configuration.send_null_columns:
+            data_to_send = {
+                key: value for key, value, in data_to_send.items() if value is not None
+            }
+
         body = self._create_body(
             "core/update",
             {
                 "comment": comment,
                 "class": type,
                 "key": f"SELECT {type} WHERE {where_clause_conditions}",
-                "fields": {
-                    key: value for key, value in data.items() if value is not None
-                },
+                "fields": data_to_send,
             },
         )
 
