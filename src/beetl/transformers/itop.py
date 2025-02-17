@@ -96,7 +96,6 @@ class ItopTransformer(TransformerInterface):
             foreign_class_type = field_relation["foreign_class_type"]
             foreign_comparison_field = field_relation["foreign_comparison_field"]
             use_like_operator = field_relation.get("use_like_operator", False)
-            default_value = field_relation.get("default_value", None)
 
             if (
                 not source_field
@@ -123,7 +122,7 @@ class ItopTransformer(TransformerInterface):
                             query + f"'{source_comparison_field_value}'"
                             if source_comparison_field_value is not None
                             and source_comparison_field_value != ""
-                            else default_value
+                            else None
                         ),
                         return_dtype=str,
                         skip_nulls=False,

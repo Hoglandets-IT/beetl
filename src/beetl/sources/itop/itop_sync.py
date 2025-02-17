@@ -30,6 +30,7 @@ class ItopSyncArguments(SourceSyncArguments):
     comparison_columns: Annotated[list[str], Field(min_length=1)]
     unique_columns: Annotated[list[str], Field(min_length=1)]
     skip_columns: Annotated[Optional[list[str]], Field(default=[])]
+    foreign_key_columns: Annotated[Optional[list[str]], Field(default=[])]
     type: Annotated[Literal["Itop"], Field(default="Itop")] = "Itop"
 
 
@@ -43,6 +44,7 @@ class ItopSync(SourceSync):
     comparison_columns: list[str]
     unique_columns: list[str]
     skip_columns: list[str]
+    foreign_key_columns: list[str]
 
     def __init__(self, arguments: ItopSyncArguments):
         super().__init__(arguments)
@@ -54,6 +56,7 @@ class ItopSync(SourceSync):
         self.skip_columns = arguments.skip_columns
         self.soft_delete = arguments.soft_delete
         self.link_columns = arguments.link_columns
+        self.foreign_key_columns = arguments.foreign_key_columns
 
         # TODO: This can be made redundant by adding the model to the soft delete and only allowing the values to be models that support soft delete
         if arguments.soft_delete is not None:

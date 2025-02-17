@@ -35,7 +35,6 @@ class ItopTransformerSchema:
                 foreign_class_type: Annotated[str, Field(min_length=1)]
                 foreign_comparison_field: Annotated[str, Field(min_length=1)]
                 use_like_operator: Annotated[bool, Field(default=False)]
-                default_value: Annotated[Optional[Any], Field(default=None)]
 
             field_relations: Annotated[list[FieldRelation], Field(min_length=1)]
 

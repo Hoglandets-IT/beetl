@@ -159,6 +159,7 @@ class ItopSource(SourceInterface):
             ) from e
 
     def create_item(self, type: str, data: dict, comment: str = ""):
+        self.set_foreign_key_none_values_to_itop_unassigned(data)
 
         body = self._create_body(
             "core/create",
@@ -202,15 +203,11 @@ class ItopSource(SourceInterface):
             if column_name in self.source_configuration.unique_columns:
                 identifiers[column_name] = data.pop(column_name)
 
-        # if len(identifiers) == 0:
-        #    dKeys = tuple(data.keys())
-        #    for column_name in self.source_configuration.unique_columns:
-        #        if column_name in dKeys:
-        #            identifiers[column_name] = data.pop(column_name)
-
         where_clause_conditions = " AND ".join(
             [f"{key} = '{value}'" for key, value in identifiers.items()]
         )
+
+        self.set_foreign_key_none_values_to_itop_unassigned(data)
 
         body = self._create_body(
             "core/update",
@@ -243,6 +240,12 @@ class ItopSource(SourceInterface):
             return False
 
         return True
+
+    def set_foreign_key_none_values_to_itop_unassigned(self, data):
+        for key, value in data.items():
+            if key in self.source_configuration.foreign_key_columns:
+                if value is None:
+                    data[key] = 0
 
     def delete_item(self, type: str, data: dict, comment: str = ""):
         identifiers = {}

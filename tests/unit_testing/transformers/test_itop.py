@@ -1,6 +1,6 @@
 import unittest
 
-from polars import DataFrame, Series
+from polars import DataFrame, Series, Unknown
 
 from src.beetl.transformers.itop import ItopTransformer
 from src.beetl.transformers.itop_schema import ItopTransformerSchema
@@ -96,31 +96,3 @@ class UnitTestItopTransformers(unittest.TestCase):
 
         # assert
         self.assertNotEqual(with_space_hash, no_space_hash)
-
-    def test_relations__when_specifying_default_value__nones_are_converted_into_default_value(
-        self,
-    ):
-        # arrange
-        in_field = "inField"
-        out_field = "outField"
-        expected_value = 0
-        data = DataFrame().with_columns(Series(in_field, [None]))
-        transformer = ItopTransformer()
-        input = ItopTransformerSchema.Relations.Config(
-            field_relations=[
-                {
-                    "source_field": out_field,
-                    "source_comparison_field": in_field,
-                    "foreign_class_type": "Person",
-                    "foreign_comparison_field": "foreign_field",
-                    "default_value": expected_value,
-                }
-            ]
-        ).model_dump()
-
-        # act
-        result = transformer.relations(data, **input)
-
-        # assert
-        out_field_value = result.to_dicts()[0][out_field]
-        self.assertEqual(out_field_value, expected_value)
