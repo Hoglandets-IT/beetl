@@ -70,6 +70,10 @@ sync:
       # is included in fields fetched when querying itop, but excluded when inserting, updating and deleting.
       link_columns:
         - parent_code
+      # foreign_key_columns: <list<string>> (optional)
+      # defines what field names are foreign keys, e.g `person_id`. Beetl will then convert any None values to `0` in order for iTop to unassign the field.
+      link_columns:
+        - parent_code
     destination: itop_2
     destinationConfig:
       datamodel: "Organization"
