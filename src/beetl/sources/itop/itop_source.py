@@ -108,6 +108,11 @@ class ItopSource(SourceInterface):
                     + f"= '{soft_delete.active_value}'"
                 )
 
+            # TODO: Also fetch all the rows that are soft deleted
+            # it is enough if we fetch the columns that are unique
+            # at create time we can search for the current item in the dataframe of soft-deleted items
+            # if we have a match we update it instead.
+
         all_colums = (
             self.source_configuration.unique_columns
             + self.source_configuration.comparison_columns
