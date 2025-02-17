@@ -147,3 +147,21 @@ And is then appended to the now transformed dataset:
 Since `parent_code` is defined in `link_columns` it will be excluded from the insertions, updates and deletions.
 
 Since `parent_id` is defined in the `comparison_columns` it will be sent to the destination and itop will resolve the resource for us as the organizations parent.
+
+### Default value
+By default, if the value that you use for source_comparision_field is None or an empty string `None` will be used as the output for that row.
+If you want to change this you can provide the `default_value` property.
+
+```yaml
+insertionTransformers:
+  - transformer: itop.relations
+    config:
+      field_relations:
+      - source_field: parent_id
+        source_comparison_field: parent_code
+        foreign_class_type: Organization
+        foreign_comparison_field: code
+        use_like_operator: False
+        # None values will be transformed into 0's
+        default_value: 0
+```

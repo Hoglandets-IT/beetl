@@ -1,10 +1,9 @@
-from typing import Any
-from .interface import (
-    register_transformer_class,
-    TransformerInterface,
-)
-import polars as pl
 from hashlib import sha1
+from typing import Any
+
+import polars as pl
+
+from .interface import TransformerInterface, register_transformer_class
 
 
 def concat_and_sha(separator: str = "-", *args):
@@ -28,8 +27,9 @@ class ItopTransformer(TransformerInterface):
             return concat_and_sha("-", toplevel, *st.values())
 
         new = data.with_columns(
-            pl.struct(inFields).map_elements(
-                make_code, return_dtype=str).alias(outField)
+            pl.struct(inFields)
+            .map_elements(make_code, return_dtype=str)
+            .alias(outField)
         )
 
         return new
@@ -96,6 +96,7 @@ class ItopTransformer(TransformerInterface):
             foreign_class_type = field_relation["foreign_class_type"]
             foreign_comparison_field = field_relation["foreign_comparison_field"]
             use_like_operator = field_relation.get("use_like_operator", False)
+            default_value = field_relation.get("default_value", None)
 
             if (
                 not source_field
@@ -122,9 +123,10 @@ class ItopTransformer(TransformerInterface):
                             query + f"'{source_comparison_field_value}'"
                             if source_comparison_field_value is not None
                             and source_comparison_field_value != ""
-                            else None
+                            else default_value
                         ),
                         return_dtype=str,
+                        skip_nulls=False,
                     )
                     .alias(source_field)
                 )
@@ -133,7 +135,6 @@ class ItopTransformer(TransformerInterface):
                     f"Error: The source_comparison_field {source_comparison_field} is not present in DataFrame"
                 ) from e
             except KeyError as e:
-                raise Exception(
-                    "Error: The key definition is not valid") from e
+                raise Exception("Error: The key definition is not valid") from e
 
         return transformed

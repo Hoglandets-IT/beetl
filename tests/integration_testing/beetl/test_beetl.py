@@ -110,3 +110,20 @@ class TestBeetlFunctions(unittest.TestCase):
         result = comparison_results[0]
 
         self.assertTrue(isinstance(result, ComparisonResult))
+
+    def test_generate_update_diff_sync(self):
+        # Arrange
+        beetl_config = beetl.BeetlConfig(to_static())
+        beetl_instance = beetl.Beetl(beetl_config)
+
+        # Act
+        comparison_results = beetl_instance.sync(generate_update_diff=True)
+
+        # Assert
+        self.assertTrue(len(comparison_results) > 0)
+
+        diff = comparison_results[0][0][0]
+        self.assertIsNotNone(diff)
+
+        changed_columns = comparison_results[0][1]
+        self.assertIsNotNone(changed_columns)
