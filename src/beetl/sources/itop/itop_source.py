@@ -342,7 +342,11 @@ class ItopSource(SourceInterface):
                     pr_bar()
 
     def insert(self, data: pl.DataFrame):
-        if self.soft_delete_active() and self.soft_deleted_items is not None:
+        if (
+            self.soft_delete_active()
+            and self.soft_deleted_items is not None
+            and len(self.soft_deleted_items) > 0
+        ):
             # When soft delete is active we need to update the soft deleted items that are being reinserted.
             # We do this to avoid creating duplicates in iTop.
             self.update(

@@ -119,6 +119,34 @@ class TestItopSource(unittest.TestCase):
             self.delete_pc(skip_assertions=True)
             self.delete_organizations(skip_assertions=True)
 
+    def test_itop_soft_delete__when_fetching_with_soft_delete_and_no_soft_deleted_items_exist__does_not_throw(
+        self,
+    ):
+        """This test makes sure that a bug that existed in the iTop source where fetching with soft delete enabled and no soft deleted items existed would throw an error is fixed.
+
+        To replicate we need to fetch with soft_delete enabled before there are any soft_deleted items present.
+        """
+
+        try:
+            # Clean up potenitally failed previous tests
+            self.delete_pc(skip_assertions=True)
+            self.delete_organizations(skip_assertions=True)
+
+            # Create dependencies
+            self.create_organizations()
+
+            # Create PCs
+            self.create_pc(soft_delete=True)
+            self.delete_pc()
+
+        except Exception as e:
+            raise e
+
+        finally:
+            # Clean up dependencies and potential failures
+            self.delete_pc(skip_assertions=True)
+            self.delete_organizations(skip_assertions=True)
+
     def test_itop_nutanix_clusters(self):
         """This test tests that the iTop source can insert, update, and delete nutanix clusters. Soft deletion is not supported for nutanix clusters."""
         try:
