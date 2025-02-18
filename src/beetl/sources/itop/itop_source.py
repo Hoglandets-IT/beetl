@@ -99,19 +99,22 @@ class ItopSource(SourceInterface):
             Output Fields: List of fields to return
         """
         oql = self.source_configuration.oql_key
+        soft_deleted_oql = None
         if self.soft_delete_active():
             soft_delete = self.source_configuration.soft_delete
-            if f"{soft_delete.field.lower()}" not in oql.lower():
-                combining_word = "WHERE" if "WHERE" not in oql.upper() else "AND"
-                oql += (
-                    f" {combining_word} {soft_delete.field} "
-                    + f"= '{soft_delete.active_value}'"
+            if f"{soft_delete.field.lower()}" in oql.lower():
+                raise Exception(
+                    "Soft delete where clause is managed by beetl please remove it from the OQL."
                 )
 
-            # TODO: Also fetch all the rows that are soft deleted
-            # it is enough if we fetch the columns that are unique
-            # at create time we can search for the current item in the dataframe of soft-deleted items
-            # if we have a match we update it instead.
+            combining_word = "WHERE" if "WHERE" not in oql.upper() else "AND"
+            oql += (
+                f" {combining_word} {soft_delete.field} "
+                + f"= '{soft_delete.active_value}'"
+            )
+
+            # TODO: Build oql key for getting deleted items
+            soft_deleted_oql = self.source_configuration.oql_key
 
         all_colums = (
             self.source_configuration.unique_columns
@@ -156,6 +159,7 @@ class ItopSource(SourceInterface):
                 else:
                     re_obj.append(item["fields"])
 
+            # TODO: Do the same request but for soft deleted items
             return pl.DataFrame(re_obj)
 
         except Exception as e:
@@ -293,6 +297,7 @@ class ItopSource(SourceInterface):
         return True
 
     def insert(self, data: pl.DataFrame):
+        # TODO: Set insert function to create_item, check for soft delete and set the function to update_item if found.
         insertData = data.clone()
 
         insert_cols = tuple(
