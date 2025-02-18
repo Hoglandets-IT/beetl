@@ -1,6 +1,8 @@
 # Change Notes
 ## 1.2.1 🔄
+TODO: Rewrite these
 - iTop has a new destination configuration value `foreign_key_columns`. If you define a foreign key field, for example `person_id` beetl will set the value to `0` if the value is `None` since `0` is the value you need to pass to itop to unassign the field.
+- itop soft delete now works as it should.
 
 ### Changes 
 ## 1.1.0 - 1.1.1

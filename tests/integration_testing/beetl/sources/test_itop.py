@@ -1,26 +1,29 @@
-from typing import Callable, Union
 import unittest
+from typing import Callable, Union
+
 from src.beetl.beetl import Beetl, BeetlConfig
 from tests.configurations.itop import (
-    delete_14_organizations_from_static_to_itop,
+    delete_1_pc_from_static_to_itop,
     delete_2_nutanix_cluster_hosts_from_static_to_itop,
-    delete_2_nutanix_networks_from_static_to_itop,
     delete_2_nutanix_clusters_from_static_to_itop,
+    delete_2_nutanix_networks_from_static_to_itop,
     delete_2_nutanix_virtual_machine_disks_from_static_to_itop,
     delete_2_nutanix_virtual_machine_nics_from_static_to_itop,
     delete_2_nutanix_virtual_machines_from_static_to_itop,
     delete_3_persons_from_static_to_itop,
-    insert_14_organizations_from_static_to_itop,
+    delete_14_organizations_from_static_to_itop,
+    insert_1_pc_from_static_to_itop,
     insert_2_nutanix_cluster_hosts_from_static_to_itop,
-    insert_2_nutanix_networks_from_static_to_itop,
     insert_2_nutanix_clusters_from_static_to_itop,
+    insert_2_nutanix_networks_from_static_to_itop,
     insert_2_nutanix_virtual_machine_disks_from_static_to_itop,
     insert_2_nutanix_virtual_machine_nics_from_static_to_itop,
     insert_2_nutanix_virtual_machines_from_static_to_itop,
     insert_3_persons_from_static_to_itop,
+    insert_14_organizations_from_static_to_itop,
     update_2_nutanix_cluster_hosts_from_static_to_itop,
-    update_2_nutanix_networks_from_static_to_itop,
     update_2_nutanix_clusters_from_static_to_itop,
+    update_2_nutanix_networks_from_static_to_itop,
     update_2_nutanix_virtual_machine_disks_from_static_to_itop,
     update_2_nutanix_virtual_machine_nics_from_static_to_itop,
     update_2_nutanix_virtual_machines_from_static_to_itop,
@@ -85,6 +88,35 @@ class TestItopSource(unittest.TestCase):
         finally:
             # Clean up dependencies and potential failures
             self.delete_persons(skip_assertions=True)
+            self.delete_organizations(skip_assertions=True)
+
+    def test_itop_soft_delete(self):
+        """This test makes sure that soft delete works as expected.
+
+        iTop soft delete works by setting a status field to a known "active" or "inactive" value indicating if the resource is "deleted" or not.
+
+        This test will create a resource, soft delete it, re-activate it an finally hard delete it, and makes sure that the resource is not duplicated.
+        """
+        try:
+            # Clean up potenitally failed previous tests
+            self.delete_pc(skip_assertions=True)
+            self.delete_organizations(skip_assertions=True)
+
+            # Create dependencies
+            self.create_organizations()
+
+            # Create PCs
+            self.create_pc()
+            self.delete_pc(soft_delete=True)
+            self.create_pc(soft_delete=True)
+            self.delete_pc()
+
+        except Exception as e:
+            raise e
+
+        finally:
+            # Clean up dependencies and potential failures
+            self.delete_pc(skip_assertions=True)
             self.delete_organizations(skip_assertions=True)
 
     def test_itop_nutanix_clusters(self):
@@ -303,6 +335,38 @@ class TestItopSource(unittest.TestCase):
             return
 
         self.assertEqual(created_15_result, ManualResult(14, 0, 0))
+
+    def create_pc(self, soft_delete: bool = False, skip_assertions: bool = False):
+        config_dict = insert_1_pc_from_static_to_itop(
+            secrets.itop.url,
+            secrets.itop.username,
+            secrets.itop.password,
+            soft_delete=soft_delete,
+        )
+        config = BeetlConfig(config_dict)
+        beetl_instance = Beetl(config)
+        created_1_result = beetl_instance.sync()
+
+        if skip_assertions:
+            return
+
+        self.assertEqual(created_1_result, ManualResult(1, 0, 0))
+
+    def delete_pc(self, soft_delete: bool = False, skip_assertions: bool = False):
+        config_dict = delete_1_pc_from_static_to_itop(
+            secrets.itop.url,
+            secrets.itop.username,
+            secrets.itop.password,
+            soft_delete=soft_delete,
+        )
+        config = BeetlConfig(config_dict)
+        beetl_instance = Beetl(config)
+        deleted_1_result = beetl_instance.sync()
+
+        if skip_assertions:
+            return
+
+        self.assertEqual(deleted_1_result, ManualResult(0, 0, 1))
 
     def create_persons(self, soft_delete: bool = False, skip_assertions: bool = False):
         config_dict = insert_3_persons_from_static_to_itop(
