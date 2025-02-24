@@ -166,14 +166,6 @@ class StringTransformerSchema:
         transformer: Literal["strings.cast"]
         config: Config
 
-    class Hash(TransformerSchemaBase):
-        class Config(TransformerConfigBase):
-            inField: Annotated[str, Field(min_length=1)]
-            outField: Annotated[str, Field(default="")]
-
-        transformer: Literal["strings.hash"]
-        config: Config
-
     class ToObjectId(TransformerSchemaBase):
         class Config(TransformerConfigBase):
             inField: Annotated[str, Field(min_length=1)]
@@ -188,6 +180,24 @@ class StringTransformerSchema:
             format_string: Annotated[str, Field(default="{value}")]
 
         transformer: Literal["strings.format"]
+        config: Config
+
+    class Hash(TransformerSchemaBase):
+        class Config(TransformerConfigBase):
+            inField: Annotated[Optional[str], Field(default=None)]
+            inFields: Annotated[list[str], Field(default=[])]
+            outField: Annotated[str, Field(min_length=1)]
+            hashEmptyValues: Annotated[bool, Field(default=False)]
+
+            @model_validator(mode="after")
+            def validate_fields(cls, model: "StringTransformerSchema.Hash.Config"):
+                if not model.inField and not model.inFields:
+                    raise ValueError("Either inField or inFields must be provided")
+                if len(model.inField or "") > 0 and len(model.inFields) > 0:
+                    raise ValueError("Only one of inField or inFields can be provided")
+                return model
+
+        transformer: Literal["strings.hash"]
         config: Config
 
 
@@ -211,4 +221,5 @@ StringTransformerSchemas = Union[
     StringTransformerSchema.Hash,
     StringTransformerSchema.ToObjectId,
     StringTransformerSchema.Format,
+    StringTransformerSchema.Hash,
 ]

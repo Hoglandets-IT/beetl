@@ -1,3 +1,6 @@
+from hashlib import sha1
+from typing import Any, Optional
+
 import polars as pl
 from bson import ObjectId
 
@@ -311,15 +314,6 @@ class StringTransformer(TransformerInterface):
         return data.with_columns(data[inField].cast(pl.Utf8).alias(outField))
 
     @staticmethod
-    def hash(data: pl.DataFrame, inField: str, outField: str = ""):
-        """Hash a column"""
-
-        if outField == "":
-            outField = inField
-
-        return data.with_columns(data[inField].hash().cast(pl.Utf8).alias(outField))
-
-    @staticmethod
     def to_object_id(data: pl.DataFrame, inField: str) -> pl.DataFrame:
         """Convert the given field to a bson.ObjectId
 
@@ -370,3 +364,47 @@ class StringTransformer(TransformerInterface):
             .alias(outField)
         )
         return data
+
+    @staticmethod
+    def hash(
+        data: pl.DataFrame,
+        outField: str,
+        inField: Optional[str] = None,
+        inFields: list[str] = [],
+        hashEmptyValues: bool = False,
+    ):
+        """
+        Generates a hash from the concatinated field values
+
+        Args:
+            data (pl.DataFrame): The dataFrame to modify
+            in_fields (str): The fields to hash
+            out_field (str): The field to put the result in
+            hash_empty_values (bool): Whether to hash empty values. Defaults to False.
+
+        Returns:
+            pl.DataFrame: The resulting DataFrame
+        """
+
+        if inField:
+            inFields.append(inField)
+
+        def hash_function(fields: dict[str, Any]) -> str:
+            for key, value in fields.items():
+                if value is None:
+                    fields[key] = ""
+
+            concatenated_fields = "".join(fields.values())
+
+            if concatenated_fields == "" and not hashEmptyValues:
+                return None
+
+            return sha1(concatenated_fields.encode("utf-8")).hexdigest()
+
+        transformed_dataframe = data.with_columns(
+            pl.struct(inFields)
+            .map_elements(hash_function, return_dtype=str)
+            .alias(outField)
+        )
+
+        return transformed_dataframe

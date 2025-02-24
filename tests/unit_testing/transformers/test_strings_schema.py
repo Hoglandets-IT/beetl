@@ -232,7 +232,7 @@ class UnitTestStringTransformersSchema(TestCase):
 
         self.assertValidatesSuccessfully(input, cls)
 
-    def test_hash__with_valid_input__model_is_valid(self):
+    def test_hash__using_inField__model_is_valid(self):
         cls = StringTransformerSchema.Hash
         input = {
             "transformer": "strings.hash",
@@ -243,6 +243,46 @@ class UnitTestStringTransformersSchema(TestCase):
         }
 
         self.assertValidatesSuccessfully(input, cls)
+
+    def test_hash__using_inFields__model_is_valid(self):
+        cls = StringTransformerSchema.Hash
+        input = {
+            "transformer": "strings.hash",
+            "config": {
+                "inFields": ["field1"],
+                "outField": "field2",
+            },
+        }
+
+        self.assertValidatesSuccessfully(input, cls)
+
+    def test_hash__using_both_inField_and_inFields__model_is_invalid(self):
+        cls = StringTransformerSchema.Hash
+        input = {
+            "transformer": "strings.hash",
+            "config": {
+                "inField": "field1",
+                "inFields": ["field1"],
+                "outField": "field2",
+            },
+        }
+
+        self.assertRaises(
+            ValueError, lambda: self.assertValidatesSuccessfully(input, cls)
+        )
+
+    def test_hash__using_neither_inField_or_inFields__model_is_invalid(self):
+        cls = StringTransformerSchema.Hash
+        input = {
+            "transformer": "strings.hash",
+            "config": {
+                "outField": "field2",
+            },
+        }
+
+        self.assertRaises(
+            ValueError, lambda: self.assertValidatesSuccessfully(input, cls)
+        )
 
     def test_to_object_id__with_valid_input__model_is_valid(self):
         cls = StringTransformerSchema.ToObjectId

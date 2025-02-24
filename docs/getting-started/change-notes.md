@@ -3,6 +3,7 @@
 TODO: Rewrite these
 - iTop has a new destination configuration value `foreign_key_columns`. If you define a foreign key field, for example `person_id` beetl will set the value to `0` if the value is `None` since `0` is the value you need to pass to itop to unassign the field.
 - itop soft delete now works as it should.
+- strings.hash transformer has been extended to be able to take multiple fields as input. Produces none value by default if all values are None, can be set using a flag.
 
 ### Changes 
 ## 1.1.0 - 1.1.1
