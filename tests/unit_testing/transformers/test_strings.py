@@ -48,9 +48,14 @@ class UnitTestStringTransformers(unittest.TestCase):
             data = data.with_columns(Series(field, ["value"]))
 
         transformer = StringTransformer()
+        config = {
+            "inFields": in_fields,
+            "outField": out_field,
+            "hashEmptyValues": False,
+        }
 
         # act
-        result = transformer.hash(data, in_fields, out_field)
+        result = transformer.hash(data, **config)
 
         # assert
         resultingHash = result[out_field][0]
