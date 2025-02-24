@@ -284,6 +284,54 @@ class UnitTestStringTransformersSchema(TestCase):
             ValueError, lambda: self.assertValidatesSuccessfully(input, cls)
         )
 
+    def test_hash__using_valid_hashWhen_parameters__model_is_valid(self):
+        for hashWhen in [
+            "always",
+            "any-value-is-populated",
+            "all-values-are-populated",
+        ]:
+            cls = StringTransformerSchema.Hash
+            input = {
+                "transformer": "strings.hash",
+                "config": {
+                    "inField": "field1",
+                    "outField": "field2",
+                    "hashWhen": hashWhen,
+                },
+            }
+
+            self.assertValidatesSuccessfully(input, cls)
+
+    def test_hash__using_invalid_hashWhen_parameters__model_is_invalid(self):
+        for hashWhen in [
+            "never",
+        ]:
+            cls = StringTransformerSchema.Hash
+            input = {
+                "transformer": "strings.hash",
+                "config": {
+                    "inField": "field1",
+                    "outField": "field2",
+                    "hashWhen": hashWhen,
+                },
+            }
+
+            self.assertRaises(
+                ValueError, lambda: self.assertValidatesSuccessfully(input, cls)
+            )
+
+        cls = StringTransformerSchema.Hash
+        input = {
+            "transformer": "strings.hash",
+            "config": {
+                "outField": "field2",
+            },
+        }
+
+        self.assertRaises(
+            ValueError, lambda: self.assertValidatesSuccessfully(input, cls)
+        )
+
     def test_to_object_id__with_valid_input__model_is_valid(self):
         cls = StringTransformerSchema.ToObjectId
         input = {

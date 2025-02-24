@@ -187,7 +187,10 @@ class StringTransformerSchema:
             inField: Annotated[Optional[str], Field(default=None)]
             inFields: Annotated[list[str], Field(default=[])]
             outField: Annotated[str, Field(min_length=1)]
-            hashEmptyValues: Annotated[bool, Field(default=False)]
+            hashWhen: Annotated[
+                Literal["always", "any-value-is-populated", "all-values-are-populated"],
+                Field(default="always"),
+            ]
 
             @model_validator(mode="after")
             def validate_fields(cls, model: "StringTransformerSchema.Hash.Config"):

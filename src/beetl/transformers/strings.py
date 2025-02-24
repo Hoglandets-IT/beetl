@@ -1,5 +1,5 @@
 from hashlib import sha1
-from typing import Any, Optional
+from typing import Any, Literal, Optional
 
 import polars as pl
 from bson import ObjectId
@@ -371,7 +371,9 @@ class StringTransformer(TransformerInterface):
         outField: str,
         inField: Optional[str] = None,
         inFields: list[str] = [],
-        hashEmptyValues: bool = False,
+        hashWhen: Literal[
+            "always", "any-value-is-populated", "all-values-are-populated"
+        ] = "always",
     ):
         """
         Generates a hash from the concatinated field values
@@ -396,7 +398,9 @@ class StringTransformer(TransformerInterface):
 
             concatenated_fields = "".join(fields.values())
 
-            if concatenated_fields == "" and not hashEmptyValues:
+            if hashWhen == "all-values-are-populated" and "" in fields.values():
+                return None
+            if hashWhen == "any-value-is-populated" and concatenated_fields == "":
                 return None
 
             return sha1(concatenated_fields.encode("utf-8")).hexdigest()

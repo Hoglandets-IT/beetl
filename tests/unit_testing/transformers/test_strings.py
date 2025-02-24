@@ -39,41 +39,65 @@ class UnitTestStringTransformers(unittest.TestCase):
         resultingString = result[outField][0]
         self.assertEqual(expected, resultingString)
 
-    def test_hash__when_passed_populated_fields__hash_is_created(self):
+    def test_hash__with_mode_always__hash_is_created_regardless_of_input(self):
+        for value in ["", None, "value"]:
+            # arrange
+            in_fields = ["input1", "input2"]
+            out_field = "hash"
+            data = DataFrame()
+            for field in in_fields:
+                data = data.with_columns(Series(field, [value]))
+
+            transformer = StringTransformer()
+            config = {
+                "inFields": in_fields,
+                "outField": out_field,
+                "hashWhen": "always",
+            }
+
+            # act
+            result = transformer.hash(data, **config)
+
+            # assert
+            resultingHash = result[out_field][0]
+            self.assertIsNotNone(resultingHash)
+
+    def test_hash__with_mode_if_any_value_and_one_value_is_none__hash_is_created(self):
         # arrange
-        in_fields = ["input1", "input2"]
+        in_fields = ["field1", "field2"]
         out_field = "hash"
         data = DataFrame()
-        for field in in_fields:
-            data = data.with_columns(Series(field, ["value"]))
+        data = data.with_columns(Series("field1", ["value"]))
+        data = data.with_columns(Series("field2", [None]))
 
         transformer = StringTransformer()
         config = {
             "inFields": in_fields,
             "outField": out_field,
-            "hashEmptyValues": False,
+            "hashWhen": "any-value-is-populated",
         }
-
         # act
         result = transformer.hash(data, **config)
 
         # assert
         resultingHash = result[out_field][0]
-        self.assertEqual(resultingHash, "8230c65c2c84fece204598b8af732c11c31ea0a8")
+        self.assertIsNotNone(resultingHash)
 
-    def test_hash__when_passed_fields_with_none_values__hash_is_not_created(self):
+    def test_hash__with_mode_if_any_value_and_all_values_are_none__hash_is_not_created(
+        self,
+    ):
         # arrange
         in_fields = ["field1", "field2"]
         out_field = "hash"
         data = DataFrame()
-        for field in in_fields:
-            data = data.with_columns(Series(field, [None]))
+        data = data.with_columns(Series("field1", [None]))
+        data = data.with_columns(Series("field2", [None]))
 
         transformer = StringTransformer()
         config = {
             "inFields": in_fields,
             "outField": out_field,
-            "hashEmptyValues": False,
+            "hashWhen": "any-value-is-populated",
         }
         # act
         result = transformer.hash(data, **config)
@@ -82,23 +106,22 @@ class UnitTestStringTransformers(unittest.TestCase):
         resultingHash = result[out_field][0]
         self.assertIsNone(resultingHash)
 
-    def test_hash__when_passed_fields_with_empty_string_values__hash_is_not_created(
+    def test_hash__with_mode_if_all_values_are_populated_and_all_values_are_none__hash_is_not_created(
         self,
     ):
         # arrange
         in_fields = ["field1", "field2"]
         out_field = "hash"
         data = DataFrame()
-        for field in in_fields:
-            data = data.with_columns(Series(field, [""]))
+        data = data.with_columns(Series("field1", [None]))
+        data = data.with_columns(Series("field2", [None]))
 
         transformer = StringTransformer()
         config = {
             "inFields": in_fields,
             "outField": out_field,
-            "hashEmptyValues": False,
+            "hashWhen": "all-values-are-populated",
         }
-
         # act
         result = transformer.hash(data, **config)
 
@@ -106,74 +129,48 @@ class UnitTestStringTransformers(unittest.TestCase):
         resultingHash = result[out_field][0]
         self.assertIsNone(resultingHash)
 
-    def test_hash__when_passed_fields_with_empty_string_values_and_hash_empty_fields_set_to_true__hash_is_created(
+    def test_hash__with_mode_if_all_values_are_populated_and_one_value_is_none__hash_is_not_created(
         self,
     ):
         # arrange
         in_fields = ["field1", "field2"]
         out_field = "hash"
         data = DataFrame()
-        for field in in_fields:
-            data = data.with_columns(Series(field, [""]))
+        data = data.with_columns(Series("field1", [None]))
+        data = data.with_columns(Series("field2", ["value"]))
 
         transformer = StringTransformer()
-        config = {"inFields": in_fields, "outField": out_field, "hashEmptyValues": True}
-
+        config = {
+            "inFields": in_fields,
+            "outField": out_field,
+            "hashWhen": "all-values-are-populated",
+        }
         # act
         result = transformer.hash(data, **config)
 
         # assert
         resultingHash = result[out_field][0]
-        self.assertEqual(resultingHash, "da39a3ee5e6b4b0d3255bfef95601890afd80709")
+        self.assertIsNone(resultingHash)
 
-    def test_hash__when_passed_fields_with_none_values_and_hash_empty_fields_set_to_true__hash_is_created(
+    def test_hash__with_mode_if_all_values_are_populated_and_all_values_are_populated__hash_is_not_created(
         self,
     ):
         # arrange
         in_fields = ["field1", "field2"]
         out_field = "hash"
         data = DataFrame()
-        for field in in_fields:
-            data = data.with_columns(Series(field, [None]))
+        data = data.with_columns(Series("field1", ["value"]))
+        data = data.with_columns(Series("field2", ["value"]))
 
         transformer = StringTransformer()
         config = {
             "inFields": in_fields,
             "outField": out_field,
-            "hashEmptyValues": True,
+            "hashWhen": "all-values-are-populated",
         }
-
         # act
         result = transformer.hash(data, **config)
 
         # assert
         resultingHash = result[out_field][0]
-        self.assertEqual(resultingHash, "da39a3ee5e6b4b0d3255bfef95601890afd80709")
-
-    def test_hash__when_passed_both_inFields_and_inField__inField_is_appended_to_inFields(
-        self,
-    ):
-        # arrange
-        in_field = "field2"
-        in_fields = ["field1"]
-        out_field = "hash"
-        data = DataFrame()
-        data = data.with_columns(Series(in_field, ["value"]))
-        for field in in_fields:
-            data = data.with_columns(Series(field, ["value"]))
-
-        transformer = StringTransformer()
-        config = {
-            "inField": in_field,
-            "inFields": in_fields,
-            "outField": out_field,
-            "hashEmptyValues": False,
-        }
-
-        # act
-        result = transformer.hash(data, **config)
-
-        # assert
-        resulting_hash = result[out_field][0]
-        field_1_and_2_hash = "8230c65c2c84fece204598b8af732c11c31ea0a8"
-        self.assertEqual(resulting_hash, field_1_and_2_hash)
+        self.assertIsNotNone(resultingHash)
