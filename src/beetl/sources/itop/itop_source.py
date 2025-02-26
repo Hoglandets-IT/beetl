@@ -6,6 +6,7 @@ import requests.adapters
 import urllib3
 from alive_progress import alive_bar
 
+from ...config.polar_types import PolarTypeOverridesParameters
 from ..interface import SourceInterface
 from ..registrated_source import register_source
 from ..request_threader import RequestThreader
@@ -132,10 +133,19 @@ class ItopSource(SourceInterface):
                 self.source_configuration.unique_columns,
             )
 
-        return self._run_oql_query(self.source_configuration.datamodel, oql, all_colums)
+        return self._run_oql_query(
+            self.source_configuration.datamodel,
+            oql,
+            all_colums,
+            self.source_configuration.type_overrides,
+        )
 
     def _run_oql_query(
-        self, data_model: str, oql: str, all_colums: tuple[str]
+        self,
+        data_model: str,
+        oql: str,
+        all_colums: tuple[str],
+        type_overrides: PolarTypeOverridesParameters = {},
     ) -> pl.DataFrame:
         files = self._create_body(
             "core/get",
@@ -175,7 +185,7 @@ class ItopSource(SourceInterface):
                 else:
                     re_obj.append(item["fields"])
 
-            return pl.DataFrame(re_obj)
+            return pl.DataFrame(re_obj, schema_overrides=type_overrides)
 
         except Exception as e:
             raise Exception(

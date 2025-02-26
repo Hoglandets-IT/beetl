@@ -1,7 +1,8 @@
 from typing import Annotated, Literal, Optional
 
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, Field
 
+from ...config.polar_types import PolarTypeOverrides, PolarTypeOverridesParameters
 from ..interface import SourceSync, SourceSyncArguments
 
 DATAMODELS_WITHOUT_SOFT_DELETE = (
@@ -22,7 +23,6 @@ class SoftDeleteArguments(BaseModel):
 
 
 class ItopSyncArguments(SourceSyncArguments):
-
     datamodel: Annotated[str, Field(min_length=1)]
     oql_key: Annotated[str, Field(min_length=1)]
     soft_delete: Annotated[Optional[SoftDeleteArguments], Field(default=None)]
@@ -31,6 +31,8 @@ class ItopSyncArguments(SourceSyncArguments):
     unique_columns: Annotated[list[str], Field(min_length=1)]
     skip_columns: Annotated[Optional[list[str]], Field(default=[])]
     foreign_key_columns: Annotated[Optional[list[str]], Field(default=[])]
+    type_overrides: Annotated[Optional[PolarTypeOverridesParameters], Field(default={})]
+
     type: Annotated[Literal["Itop"], Field(default="Itop")] = "Itop"
 
 
@@ -45,6 +47,7 @@ class ItopSync(SourceSync):
     unique_columns: list[str]
     skip_columns: list[str]
     foreign_key_columns: list[str]
+    type_overrides: PolarTypeOverrides
 
     def __init__(self, arguments: ItopSyncArguments):
         super().__init__(arguments)
@@ -57,6 +60,7 @@ class ItopSync(SourceSync):
         self.soft_delete = arguments.soft_delete
         self.link_columns = arguments.link_columns
         self.foreign_key_columns = arguments.foreign_key_columns
+        self.type_overrides = PolarTypeOverrides(arguments.type_overrides)
 
         # TODO: This can be made redundant by adding the model to the soft delete and only allowing the values to be models that support soft delete
         if arguments.soft_delete is not None:
