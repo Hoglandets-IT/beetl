@@ -2522,3 +2522,325 @@ def delete_2_nutanix_virtual_machine_disks_from_static_to_itop(
             }
         ],
     }
+
+
+def insert_1_pc_from_static_to_itop(
+    itop_url: str, itop_user: str, itop_pass: str, soft_delete: bool = True
+):
+    return {
+        "version": "V1",
+        "sources": [
+            {
+                "name": "src",
+                "type": "Static",
+                "connection": {
+                    "static": [
+                        {
+                            "serialnumber": "testing_beetl_001",
+                            "name": "testing_beetl_001",
+                            "status": "production",
+                            "l1": "Testing_Beetl",
+                            "l2": "Beetl City",
+                            "l3": "School of Beetl",
+                            "l4": "1A",
+                        },
+                    ]
+                },
+            },
+            {
+                "name": "dst",
+                "type": "Itop",
+                "connection": {
+                    "settings": {
+                        "host": itop_url,
+                        "username": itop_user,
+                        "password": itop_pass,
+                        "verify_ssl": False,
+                    }
+                },
+            },
+        ],
+        "sync": [
+            {
+                "name": "PC Sync",
+                "source": "src",
+                "destination": "dst",
+                "sourceConfig": {},
+                "destinationConfig": {
+                    "datamodel": "PC",
+                    "oql_key": "SELECT PC WHERE serialnumber = 'testing_beetl_001'",
+                    "soft_delete": {
+                        "enabled": soft_delete,
+                        "field": "status",
+                        "active_value": "production",
+                        "inactive_value": "obsolete",
+                    },
+                    "unique_columns": ["serialnumber"],
+                    "comparison_columns": ["status", "name", "org_id"],
+                    "link_columns": [],
+                },
+                "comparisonColumns": {
+                    "serialnumber": "Utf8",
+                    "status": "Utf8",
+                },
+                "sourceTransformers": [
+                    {
+                        "transformer": "itop.orgcode",
+                        "config": {
+                            "inFields": ["l1", "l2", "l3", "l4"],
+                            "outField": "org_code",
+                            "toplevel": "Hoglandet",
+                        },
+                    },
+                ],
+                "insertionTransformers": [
+                    {
+                        "transformer": "itop.relations",
+                        "config": {
+                            "field_relations": [
+                                {
+                                    "source_field": "org_id",
+                                    "source_comparison_field": "org_code",
+                                    "foreign_class_type": "Organization",
+                                    "foreign_comparison_field": "code",
+                                }
+                            ]
+                        },
+                    }
+                ],
+            }
+        ],
+    }
+
+
+def delete_1_pc_from_static_to_itop(
+    itop_url: str, itop_user: str, itop_pass: str, soft_delete: bool = True
+):
+    return {
+        "version": "V1",
+        "sources": [
+            {
+                "name": "src",
+                "type": "Static",
+                "connection": {"static": []},
+            },
+            {
+                "name": "dst",
+                "type": "Itop",
+                "connection": {
+                    "settings": {
+                        "host": itop_url,
+                        "username": itop_user,
+                        "password": itop_pass,
+                        "verify_ssl": False,
+                    }
+                },
+            },
+        ],
+        "sync": [
+            {
+                "name": "PC Sync",
+                "source": "src",
+                "destination": "dst",
+                "sourceConfig": {},
+                "destinationConfig": {
+                    "datamodel": "PC",
+                    "oql_key": "SELECT PC WHERE serialnumber = 'testing_beetl_001'",
+                    "soft_delete": {
+                        "enabled": soft_delete,
+                        "field": "status",
+                        "active_value": "production",
+                        "inactive_value": "obsolete",
+                    },
+                    "unique_columns": ["serialnumber"],
+                    "comparison_columns": ["status", "name", "org_id"],
+                    "link_columns": [],
+                },
+                "comparisonColumns": {
+                    "serialnumber": "Utf8",
+                    "status": "Utf8",
+                },
+                "sourceTransformers": [
+                    {
+                        "transformer": "itop.orgcode",
+                        "config": {
+                            "inFields": ["l1", "l2", "l3", "l4"],
+                            "outField": "org_code",
+                            "toplevel": "Hoglandet",
+                        },
+                    },
+                ],
+                "insertionTransformers": [
+                    {
+                        "transformer": "itop.relations",
+                        "config": {
+                            "field_relations": [
+                                {
+                                    "source_field": "org_id",
+                                    "source_comparison_field": "org_code",
+                                    "foreign_class_type": "Organization",
+                                    "foreign_comparison_field": "code",
+                                }
+                            ]
+                        },
+                    }
+                ],
+            }
+        ],
+    }
+
+
+def delete_1_pc_from_static_to_itop__with_invalid_type_override(
+    itop_url: str, itop_user: str, itop_pass: str, soft_delete: bool = True
+):
+    return {
+        "version": "V1",
+        "sources": [
+            {
+                "name": "src",
+                "type": "Static",
+                "connection": {"static": []},
+            },
+            {
+                "name": "dst",
+                "type": "Itop",
+                "connection": {
+                    "settings": {
+                        "host": itop_url,
+                        "username": itop_user,
+                        "password": itop_pass,
+                        "verify_ssl": False,
+                    }
+                },
+            },
+        ],
+        "sync": [
+            {
+                "name": "PC Sync",
+                "source": "src",
+                "destination": "dst",
+                "sourceConfig": {},
+                "destinationConfig": {
+                    "datamodel": "PC",
+                    "oql_key": "SELECT PC WHERE serialnumber = 'testing_beetl_001'",
+                    "soft_delete": {
+                        "enabled": soft_delete,
+                        "field": "status",
+                        "active_value": "production",
+                        "inactive_value": "obsolete",
+                    },
+                    "unique_columns": ["serialnumber"],
+                    "comparison_columns": ["status", "name", "org_id"],
+                    "link_columns": [],
+                    "type_overrides": {"name": "Int64"},
+                },
+                "comparisonColumns": {
+                    "serialnumber": "Utf8",
+                    "status": "Utf8",
+                },
+                "sourceTransformers": [
+                    {
+                        "transformer": "itop.orgcode",
+                        "config": {
+                            "inFields": ["l1", "l2", "l3", "l4"],
+                            "outField": "org_code",
+                            "toplevel": "Hoglandet",
+                        },
+                    },
+                ],
+                "insertionTransformers": [
+                    {
+                        "transformer": "itop.relations",
+                        "config": {
+                            "field_relations": [
+                                {
+                                    "source_field": "org_id",
+                                    "source_comparison_field": "org_code",
+                                    "foreign_class_type": "Organization",
+                                    "foreign_comparison_field": "code",
+                                }
+                            ]
+                        },
+                    }
+                ],
+            }
+        ],
+    }
+
+
+def delete_1_pc_from_static_to_itop__with_valid_type_override(
+    itop_url: str, itop_user: str, itop_pass: str, soft_delete: bool = True
+):
+    return {
+        "version": "V1",
+        "sources": [
+            {
+                "name": "src",
+                "type": "Static",
+                "connection": {"static": []},
+            },
+            {
+                "name": "dst",
+                "type": "Itop",
+                "connection": {
+                    "settings": {
+                        "host": itop_url,
+                        "username": itop_user,
+                        "password": itop_pass,
+                        "verify_ssl": False,
+                    }
+                },
+            },
+        ],
+        "sync": [
+            {
+                "name": "PC Sync",
+                "source": "src",
+                "destination": "dst",
+                "sourceConfig": {},
+                "destinationConfig": {
+                    "datamodel": "PC",
+                    "oql_key": "SELECT PC WHERE serialnumber = 'testing_beetl_001'",
+                    "soft_delete": {
+                        "enabled": soft_delete,
+                        "field": "status",
+                        "active_value": "production",
+                        "inactive_value": "obsolete",
+                    },
+                    "unique_columns": ["serialnumber"],
+                    "comparison_columns": ["status", "name", "org_id"],
+                    "link_columns": [],
+                    "type_overrides": {"name": "Utf8"},
+                },
+                "comparisonColumns": {
+                    "serialnumber": "Utf8",
+                    "status": "Utf8",
+                },
+                "sourceTransformers": [
+                    {
+                        "transformer": "itop.orgcode",
+                        "config": {
+                            "inFields": ["l1", "l2", "l3", "l4"],
+                            "outField": "org_code",
+                            "toplevel": "Hoglandet",
+                        },
+                    },
+                ],
+                "insertionTransformers": [
+                    {
+                        "transformer": "itop.relations",
+                        "config": {
+                            "field_relations": [
+                                {
+                                    "source_field": "org_id",
+                                    "source_comparison_field": "org_code",
+                                    "foreign_class_type": "Organization",
+                                    "foreign_comparison_field": "code",
+                                }
+                            ]
+                        },
+                    }
+                ],
+            }
+        ],
+    }

@@ -22,3 +22,8 @@ cryptography
 # Only used for testing
 testcontainers==4.8.2
 faker
+
+# TODO: Remove this once the following issue is resolved
+# Also remove the pinned version in the pyproject.toml
+# https://github.com/pola-rs/polars/pull/21277
+connectorx==0.4.1

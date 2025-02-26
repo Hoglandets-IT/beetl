@@ -6,6 +6,7 @@ import requests.adapters
 import urllib3
 from alive_progress import alive_bar
 
+from ...config.polar_types import PolarTypeOverridesParameters
 from ..interface import SourceInterface
 from ..registrated_source import register_source
 from ..request_threader import RequestThreader
@@ -27,6 +28,7 @@ class ItopSource(SourceInterface):
     source_configuration: ItopSync = None
     connection_settings: ItopConfig = None
     auth_data: dict = None
+    soft_deleted_items: pl.DataFrame = None
 
     """ A source for Combodo iTop Data data """
 
@@ -99,24 +101,56 @@ class ItopSource(SourceInterface):
             Output Fields: List of fields to return
         """
         oql = self.source_configuration.oql_key
+        soft_deleted_oql = None
         if self.soft_delete_active():
             soft_delete = self.source_configuration.soft_delete
-            if f"{soft_delete.field.lower()}" not in oql.lower():
-                combining_word = "WHERE" if "WHERE" not in oql.upper() else "AND"
-                oql += (
-                    f" {combining_word} {soft_delete.field} "
-                    + f"= '{soft_delete.active_value}'"
+            if f"{soft_delete.field.lower()}" in oql.lower():
+                raise Exception(
+                    "Soft delete where clause is managed by beetl please remove it from the OQL."
                 )
+
+            combining_word = "WHERE" if "WHERE" not in oql.upper() else "AND"
+            oql += (
+                f" {combining_word} {soft_delete.field} "
+                + f"= '{soft_delete.active_value}'"
+            )
+
+            soft_deleted_oql = self.source_configuration.oql_key + (
+                f" {combining_word} {soft_delete.field} "
+                + f"= '{soft_delete.inactive_value}'"
+            )
 
         all_colums = (
             self.source_configuration.unique_columns
             + self.source_configuration.comparison_columns
             + self.source_configuration.link_columns
         )
+
+        if soft_deleted_oql:
+            self.soft_deleted_items = self._run_oql_query(
+                self.source_configuration.datamodel,
+                soft_deleted_oql,
+                self.source_configuration.unique_columns,
+            )
+
+        return self._run_oql_query(
+            self.source_configuration.datamodel,
+            oql,
+            all_colums,
+            self.source_configuration.type_overrides,
+        )
+
+    def _run_oql_query(
+        self,
+        data_model: str,
+        oql: str,
+        all_colums: tuple[str],
+        type_overrides: PolarTypeOverridesParameters = {},
+    ) -> pl.DataFrame:
         files = self._create_body(
             "core/get",
             {
-                "class": self.source_configuration.datamodel,
+                "class": data_model,
                 "key": oql,
                 "output_fields": ",".join(all_colums),
             },
@@ -151,7 +185,7 @@ class ItopSource(SourceInterface):
                 else:
                     re_obj.append(item["fields"])
 
-            return pl.DataFrame(re_obj)
+            return pl.DataFrame(re_obj, schema_overrides=type_overrides)
 
         except Exception as e:
             raise Exception(
@@ -159,6 +193,7 @@ class ItopSource(SourceInterface):
             ) from e
 
     def create_item(self, type: str, data: dict, comment: str = ""):
+        self.set_foreign_key_none_values_to_itop_unassigned(data)
 
         body = self._create_body(
             "core/create",
@@ -202,15 +237,11 @@ class ItopSource(SourceInterface):
             if column_name in self.source_configuration.unique_columns:
                 identifiers[column_name] = data.pop(column_name)
 
-        # if len(identifiers) == 0:
-        #    dKeys = tuple(data.keys())
-        #    for column_name in self.source_configuration.unique_columns:
-        #        if column_name in dKeys:
-        #            identifiers[column_name] = data.pop(column_name)
-
         where_clause_conditions = " AND ".join(
             [f"{key} = '{value}'" for key, value in identifiers.items()]
         )
+
+        self.set_foreign_key_none_values_to_itop_unassigned(data)
 
         body = self._create_body(
             "core/update",
@@ -243,6 +274,12 @@ class ItopSource(SourceInterface):
             return False
 
         return True
+
+    def set_foreign_key_none_values_to_itop_unassigned(self, data):
+        for key, value in data.items():
+            if key in self.source_configuration.foreign_key_columns:
+                if value is None:
+                    data[key] = 0
 
     def delete_item(self, type: str, data: dict, comment: str = ""):
         identifiers = {}
@@ -284,9 +321,8 @@ class ItopSource(SourceInterface):
 
         return True
 
-    def insert(self, data: pl.DataFrame):
+    def _insert(self, data: pl.DataFrame):
         insertData = data.clone()
-
         insert_cols = tuple(
             self.source_configuration.unique_columns
             + self.source_configuration.comparison_columns
@@ -314,6 +350,32 @@ class ItopSource(SourceInterface):
                 for item in iters:
                     self.create_item(**item)
                     pr_bar()
+
+    def insert(self, data: pl.DataFrame):
+        if (
+            self.soft_delete_active()
+            and self.soft_deleted_items is not None
+            and len(self.soft_deleted_items) > 0
+        ):
+            # When soft delete is active we need to update the soft deleted items that are being reinserted.
+            # We do this to avoid creating duplicates in iTop.
+            self.update(
+                data.join(
+                    self.soft_deleted_items,
+                    on=self.source_configuration.unique_columns,
+                    how="inner",
+                )
+            )
+
+            self._insert(
+                data.join(
+                    self.soft_deleted_items,
+                    on=self.source_configuration.unique_columns,
+                    how="anti",
+                )
+            )
+        else:
+            self._insert(data)
 
         return len(data)
 

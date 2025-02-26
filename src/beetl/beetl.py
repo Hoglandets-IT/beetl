@@ -4,6 +4,7 @@ from typing import List, Union, get_args
 import polars as pl
 from tabulate import tabulate
 
+from .compare.compare import Difftool
 from .comparison_result import ComparisonResult
 from .config import BeetlConfig, ComparisonColumn, SyncConfiguration
 from .result import Result, SyncResult
@@ -194,15 +195,19 @@ class Beetl:
 
         return transformed
 
-    def sync(self, dry_run: bool = False) -> Union[Result, List[ComparisonResult]]:
+    def sync(
+        self, dry_run: bool = False, generate_update_diff: bool = False
+    ) -> Union[Result, List[ComparisonResult]]:
         """Executes the ETL process.
 
         Args:
             dry_run (bool, optional): If set to true, the function will not execute any database operations and will return the dataframes that would have been used in the operations. Defaults to False.
+            generate_update_diff (bool, optional): If set to true, the function will return the differences between the source and destination update dataframes. Defaults to False.
 
         Returns:
             ComparisonResult: If the argument dry_run was passed as true, returns a list of ComparisionResult objects that contain the create, update and delete dataframes that would have been used by the destination if the dry_run argument was false.
             Result: A Result object containing the amount of inserts, updates and deletes for each sync
+            list[tuple[list[DataFrame], set[str]]]: If generate_update_diff is set to true, returns a list of tuples containing the differences between the source and destination update dataframes and a set with the keys that have differences across the whole dataframe.
 
         The following steps will be performed:
 
@@ -216,6 +221,7 @@ class Beetl:
 
         """
         dry_run_results = []
+        generate_update_diff_results = []
         self.benchmark("Starting sync and retrieving source data")
         allAmounts = []
         for i, sync in enumerate(self.config.sync_list, 1):
@@ -271,6 +277,21 @@ class Beetl:
                 f"Insert: {len(create)}, Update: {len(update)}, Delete: {len(delete)}"
             )
 
+            if generate_update_diff:
+                generate_update_diff_results.append(
+                    Difftool.diff_update(
+                        update,
+                        transformedDestination,
+                        [
+                            column.name
+                            for column in sync.comparisonColumns
+                            if not column.unique
+                        ],
+                        unique_columns,
+                    )
+                )
+                continue
+
             if dry_run:
                 dry_run_results.append(
                     ComparisonResult(
@@ -316,6 +337,9 @@ class Beetl:
             )
 
             sync.destination.disconnect()
+
+        if generate_update_diff:
+            return generate_update_diff_results
 
         if dry_run:
             return dry_run_results
