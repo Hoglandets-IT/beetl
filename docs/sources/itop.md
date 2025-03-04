@@ -72,8 +72,15 @@ sync:
         - parent_code
       # foreign_key_columns: <list<string>> (optional)
       # defines what field names are foreign keys, e.g `person_id`. Beetl will then convert any None values to `0` in order for iTop to unassign the field.
-      link_columns:
-        - parent_code
+      foreign_key_columns:
+        - parent_id
+      # type_overrides: <dict<string,string>> (optional)
+      # lets you explicitly set what type any column should be interpreted as.
+      # Format is {"column_name": "polars_datatype_as_string"}
+      # See related types section below for valid values.
+      type_overrides:
+        name: Utf8
+        id: Int64
     destination: itop_2
     destinationConfig:
       datamodel: "Organization"
@@ -108,6 +115,7 @@ sync:
 ```
 *Related types:*
 - [ColumnDefinitions](/sources/types/column-definition.html)
+- [PolarDatatypesAsString](/sources/types/polar-datatypes.html)
 
 ## Explaining itop.relations
 The best way is to read the up to date documentation that can be found [here](/transformers/itop.html#relations).

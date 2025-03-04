@@ -1,10 +1,12 @@
 # Change Notes
-## 1.2.1 🔄
-TODO: Rewrite these
-- iTop has a new destination configuration value `foreign_key_columns`. If you define a foreign key field, for example `person_id` beetl will set the value to `0` if the value is `None` since `0` is the value you need to pass to itop to unassign the field.
-- itop soft delete now works as it should.
-- strings.hash transformer has been extended to be able to take multiple fields as input. Produces none value by default if all values are None, can be set using a flag.
-- itop source now has type_overrides (document this)
+## 1.2.1 
+### Changes 🔄
+- iTop requires foreign key fields to be 0 in order for them to be unset. It is now possible to specify columns as `foreign_key_columns` in the iTop destination in order for the source to automatically convert `None` values in these columns to 0. See the [documentation](/sources/itop.html) for more details. 
+- The iTop source now has [type overrides](/sources/itop.html) in order to explicitly set how data should be interpreted.
+- It is now possible to configure the `strings.hash` transformer to use multiple fields as source for the hash. It can also be configured to output `None` if `all` or `any` of the input values are `None` or empty strings. See the [documentation](/transformers/strings.html#Hash) for more details.
+
+### Bugfixes 🐛
+- A bug was fixed that caused soft delete for iTop resources to not work as expected.
 
 ### Changes 
 ## 1.1.0 - 1.1.1
