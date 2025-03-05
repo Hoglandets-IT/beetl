@@ -71,7 +71,13 @@ OptionalTransformers = Annotated[
 ]
 
 
+class V1Diff(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+
 class V1Sync(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     source_to_type: Annotated[
         dict[str, str],
         Field(
@@ -99,6 +105,8 @@ class V1Sync(BaseModel):
     destinationTransformers: OptionalTransformers
     insertionTransformers: OptionalTransformers
     deletionTransformers: OptionalTransformers
+
+    diff = Annotated[Optional[V1Diff], Field(default=None)]
 
     @model_validator(mode="before")
     def validate_sources(cls, values):
@@ -147,6 +155,8 @@ class V1Sync(BaseModel):
 
 class BeetlConfigSchemaV1(BaseModel):
     """Represents the configuration as supplied by the user. This class is used to validate the configuration against the static jsonschema and the dynamic beetl validation rules."""
+
+    config = ConfigDict(extra="forbid")
 
     version: Literal["V1"]
     sources: Annotated[SourceConfigArguments, Field(min_items=1)]
