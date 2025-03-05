@@ -1,26 +1,31 @@
-from typing import Callable, Union
 import unittest
+from typing import Callable, Union
+
 from src.beetl.beetl import Beetl, BeetlConfig
 from tests.configurations.itop import (
-    delete_14_organizations_from_static_to_itop,
+    delete_1_pc_from_static_to_itop,
+    delete_1_pc_from_static_to_itop__with_invalid_type_override,
+    delete_1_pc_from_static_to_itop__with_valid_type_override,
     delete_2_nutanix_cluster_hosts_from_static_to_itop,
-    delete_2_nutanix_networks_from_static_to_itop,
     delete_2_nutanix_clusters_from_static_to_itop,
+    delete_2_nutanix_networks_from_static_to_itop,
     delete_2_nutanix_virtual_machine_disks_from_static_to_itop,
     delete_2_nutanix_virtual_machine_nics_from_static_to_itop,
     delete_2_nutanix_virtual_machines_from_static_to_itop,
     delete_3_persons_from_static_to_itop,
-    insert_14_organizations_from_static_to_itop,
+    delete_14_organizations_from_static_to_itop,
+    insert_1_pc_from_static_to_itop,
     insert_2_nutanix_cluster_hosts_from_static_to_itop,
-    insert_2_nutanix_networks_from_static_to_itop,
     insert_2_nutanix_clusters_from_static_to_itop,
+    insert_2_nutanix_networks_from_static_to_itop,
     insert_2_nutanix_virtual_machine_disks_from_static_to_itop,
     insert_2_nutanix_virtual_machine_nics_from_static_to_itop,
     insert_2_nutanix_virtual_machines_from_static_to_itop,
     insert_3_persons_from_static_to_itop,
+    insert_14_organizations_from_static_to_itop,
     update_2_nutanix_cluster_hosts_from_static_to_itop,
-    update_2_nutanix_networks_from_static_to_itop,
     update_2_nutanix_clusters_from_static_to_itop,
+    update_2_nutanix_networks_from_static_to_itop,
     update_2_nutanix_virtual_machine_disks_from_static_to_itop,
     update_2_nutanix_virtual_machine_nics_from_static_to_itop,
     update_2_nutanix_virtual_machines_from_static_to_itop,
@@ -38,6 +43,55 @@ except:
 @unittest.skipIf(skip_tests, "No iTop secrets provided")
 class TestItopSource(unittest.TestCase):
     """Since iTop isnt't easy to set up as a 3rd party dependency container for testing you have to provide the hostname and credentials to your test instance in the test.secrets.yaml file for now."""
+
+    def test_query_type_overrides__when_provided_and_type_isnt_matching_data__raises_an_exception(
+        self,
+    ):
+        try:
+            # Clean up potenitally failed previous tests
+            self.delete_pc(skip_assertions=True)
+            self.delete_organizations(skip_assertions=True)
+
+            # Create dependencies
+            self.create_organizations()
+
+            # Create PCs
+            self.create_pc()
+
+            act = lambda: self.delete_pc_using_invalid_type_override()
+            self.assertRaises(Exception, act)
+
+        except Exception as e:
+            raise e
+
+        finally:
+            # Clean up dependencies and potential failures
+            self.delete_pc(skip_assertions=True)
+            self.delete_organizations(skip_assertions=True)
+
+    def test_query_type_overrides__when_provided_and_type_is_matching_data_successfully_parses_the_response(
+        self,
+    ):
+        """This tests makes sure that the type_overrides functionality of the _query method works as expected when it is not provided by the user. Types should be inferred by polars as usual."""
+        try:
+            # Clean up potenitally failed previous tests
+            self.delete_pc(skip_assertions=True)
+            self.delete_organizations(skip_assertions=True)
+
+            # Create dependencies
+            self.create_organizations()
+
+            # Create PCs
+            self.create_pc()
+            self.delete_pc_using_valid_type_override()
+
+        except Exception as e:
+            raise e
+
+        finally:
+            # Clean up dependencies and potential failures
+            self.delete_pc(skip_assertions=True)
+            self.delete_organizations(skip_assertions=True)
 
     def test_itop_organizations(self):
         """This test tests that the iTop source can insert, update, and delete organizations, both hard and soft."""
@@ -85,6 +139,63 @@ class TestItopSource(unittest.TestCase):
         finally:
             # Clean up dependencies and potential failures
             self.delete_persons(skip_assertions=True)
+            self.delete_organizations(skip_assertions=True)
+
+    def test_itop_soft_delete(self):
+        """This test makes sure that soft delete works as expected.
+
+        iTop soft delete works by setting a status field to a known "active" or "inactive" value indicating if the resource is "deleted" or not.
+
+        This test will create a resource, soft delete it, re-activate it an finally hard delete it, and makes sure that the resource is not duplicated.
+        """
+        try:
+            # Clean up potenitally failed previous tests
+            self.delete_pc(skip_assertions=True)
+            self.delete_organizations(skip_assertions=True)
+
+            # Create dependencies
+            self.create_organizations()
+
+            # Create PCs
+            self.create_pc()
+            self.delete_pc(soft_delete=True)
+            self.create_pc(soft_delete=True)
+            self.delete_pc()
+
+        except Exception as e:
+            raise e
+
+        finally:
+            # Clean up dependencies and potential failures
+            self.delete_pc(skip_assertions=True)
+            self.delete_organizations(skip_assertions=True)
+
+    def test_itop_soft_delete__when_fetching_with_soft_delete_and_no_soft_deleted_items_exist__does_not_throw(
+        self,
+    ):
+        """This test makes sure that a bug that existed in the iTop source where fetching with soft delete enabled and no soft deleted items existed would throw an error is fixed.
+
+        To replicate we need to fetch with soft_delete enabled before there are any soft_deleted items present.
+        """
+
+        try:
+            # Clean up potenitally failed previous tests
+            self.delete_pc(skip_assertions=True)
+            self.delete_organizations(skip_assertions=True)
+
+            # Create dependencies
+            self.create_organizations()
+
+            # Create PCs
+            self.create_pc(soft_delete=True)
+            self.delete_pc()
+
+        except Exception as e:
+            raise e
+
+        finally:
+            # Clean up dependencies and potential failures
+            self.delete_pc(skip_assertions=True)
             self.delete_organizations(skip_assertions=True)
 
     def test_itop_nutanix_clusters(self):
@@ -303,6 +414,60 @@ class TestItopSource(unittest.TestCase):
             return
 
         self.assertEqual(created_15_result, ManualResult(14, 0, 0))
+
+    def create_pc(self, soft_delete: bool = False, skip_assertions: bool = False):
+        config_dict = insert_1_pc_from_static_to_itop(
+            secrets.itop.url,
+            secrets.itop.username,
+            secrets.itop.password,
+            soft_delete=soft_delete,
+        )
+        config = BeetlConfig(config_dict)
+        beetl_instance = Beetl(config)
+        created_1_result = beetl_instance.sync()
+
+        if skip_assertions:
+            return
+
+        self.assertEqual(created_1_result, ManualResult(1, 0, 0))
+
+    def delete_pc(self, soft_delete: bool = False, skip_assertions: bool = False):
+        config_dict = delete_1_pc_from_static_to_itop(
+            secrets.itop.url,
+            secrets.itop.username,
+            secrets.itop.password,
+            soft_delete=soft_delete,
+        )
+        config = BeetlConfig(config_dict)
+        beetl_instance = Beetl(config)
+        deleted_1_result = beetl_instance.sync()
+
+        if skip_assertions:
+            return
+
+        self.assertEqual(deleted_1_result, ManualResult(0, 0, 1))
+
+    def delete_pc_using_invalid_type_override(self):
+        config_dict = delete_1_pc_from_static_to_itop__with_invalid_type_override(
+            secrets.itop.url,
+            secrets.itop.username,
+            secrets.itop.password,
+            soft_delete=False,
+        )
+        config = BeetlConfig(config_dict)
+        beetl_instance = Beetl(config)
+        beetl_instance.sync()
+
+    def delete_pc_using_valid_type_override(self):
+        config_dict = delete_1_pc_from_static_to_itop__with_valid_type_override(
+            secrets.itop.url,
+            secrets.itop.username,
+            secrets.itop.password,
+            soft_delete=False,
+        )
+        config = BeetlConfig(config_dict)
+        beetl_instance = Beetl(config)
+        beetl_instance.sync()
 
     def create_persons(self, soft_delete: bool = False, skip_assertions: bool = False):
         config_dict = insert_3_persons_from_static_to_itop(
