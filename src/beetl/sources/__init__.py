@@ -1,4 +1,5 @@
 import os
+from typing import Literal
 
 # re-export
 from .csv import CsvConfig, CsvConfigArguments, CsvSource
@@ -8,6 +9,9 @@ from .interface import (
     SourceConfig,
     SourceConfigArguments,
     SourceConnectionArguments,
+    SourceDiffArguments,
+    SourceDiffConfig,
+    SourceDiffConfigArguments,
     SourceSync,
     SourceSyncArguments,
 )
@@ -38,6 +42,19 @@ from .sqlserver import (
 )
 from .static import StaticConfig, StaticConfigArguments, StaticSource
 from .xml import XmlConfig, XmlConfigArguments, XmlSource, XmlSync, XmlSyncArguments
+
+SourceTypes = Literal[
+    "Sqlserver",
+    "Mysql",
+    "Postgresql",
+    "Mongodb",
+    "Itop",
+    "Rest",
+    "Csv",
+    "Faker",
+    "Static",
+    "Xml",
+]
 
 cDir = os.path.dirname(__file__)
 for file in os.listdir(cDir):

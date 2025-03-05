@@ -55,8 +55,8 @@ class BeetlConfigV1(BeetlConfig):
                 )
 
             source_name = sync["source"]
-            temp_source = copy.deepcopy(self.sources[source_name])
-            temp_source.set_sourceconfig(
+            source_instance = copy.deepcopy(self.sources[source_name])
+            source_instance.set_sourceconfig(
                 sync["sourceConfig"],
                 direction="source",
                 name=source_name,
@@ -64,13 +64,23 @@ class BeetlConfigV1(BeetlConfig):
             )
 
             destination_name = sync["destination"]
-            temp_destination = copy.deepcopy(self.sources[destination_name])
-            temp_destination.set_sourceconfig(
+            destination_instance = copy.deepcopy(self.sources[destination_name])
+            destination_instance.set_sourceconfig(
                 sync["destinationConfig"],
                 direction="destination",
                 name=destination_name,
                 location=(*location, "destinationConfig"),
             )
+
+            diff_config = sync.get("diff", None)
+            if diff_config:
+                diff_name = 
+                diff_instance = copy.deepcopy(self.sources.get(diff_name, None))
+                if not diff_instance:
+                    raise Exception(
+                        "The diff source name in the sync section does not match a source name in the sources section."
+                    )
+                source_instance.set_diff_config(diff_config)
 
             comparisonColumnsConf = sync.get("comparisonColumns", None)
             if not comparisonColumnsConf:
@@ -106,14 +116,14 @@ class BeetlConfigV1(BeetlConfig):
 
             syncConfig = SyncConfiguration(
                 name=sync.get("name", ""),
-                source=temp_source,
+                source=source_instance,
                 sourceConfig=sync["sourceConfig"],
-                destination=temp_destination,
+                destination=destination_instance,
                 destinationConfig=sync["destinationConfig"],
                 comparisonColumns=comparisonColumns,
             )
 
-            temp_source = temp_destination = None
+            source_instance = destination_instance = None
 
             if sync.get("sourceTransformer", None) is not None:
                 syncConfig.sourceTransformer = TransformerConfiguration(

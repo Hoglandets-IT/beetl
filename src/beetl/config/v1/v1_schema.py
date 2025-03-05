@@ -17,6 +17,7 @@ from ...sources import (
     RestConfigArguments,
     RestSyncArguments,
     Sources,
+    SourceTypes,
     SqlserverConfigArguments,
     SqlserverSyncArguments,
     StaticConfigArguments,
@@ -56,6 +57,8 @@ SourceSyncArguments = Union[
     )
 ]
 
+DiffConfigArguments = Annotated[]
+
 
 class ComparisonColumnV1(BaseModel):
     model_config = ConfigDict(extra="forbid")
@@ -73,6 +76,8 @@ OptionalTransformers = Annotated[
 
 class V1Diff(BaseModel):
     model_config = ConfigDict(extra="forbid")
+    type: SourceTypes
+    config: DiffConfigs
 
 
 class V1Sync(BaseModel):

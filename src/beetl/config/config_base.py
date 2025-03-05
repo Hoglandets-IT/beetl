@@ -1,12 +1,11 @@
-import yaml
 import json
-from typing import Any, List, Dict, Literal
 from dataclasses import dataclass
+from typing import Any, Dict, List, Literal
+
 import polars as pl
-from ..sources.interface import (
-    SourceSync,
-    SourceConfig,
-)
+import yaml
+
+from ..sources.interface import SourceConfig, SourceInterface, SourceSync
 from ..transformers.interface import TransformerConfiguration
 
 
@@ -28,8 +27,7 @@ class SourceSettings:
             source_class, f"{source_type}SourceConnectionSettings"
         )(**connection)
 
-        self.config = getattr(
-            source_class, f"{source_type}SourceConfig")(**config)
+        self.config = getattr(source_class, f"{source_type}SourceConfig")(**config)
 
 
 @dataclass
@@ -56,9 +54,9 @@ class ComparisonColumn:
 class SyncConfiguration:
     """The configuration for a single sync between two sources"""
 
-    source: SourceSettings
+    source: SourceInterface
     sourceConfig: SourceSync
-    destination: SourceSettings
+    destination: SourceInterface
     destinationConfig: SourceSync
     comparisonColumns: List[ComparisonColumn]
     name: str = ""
