@@ -1,4 +1,14 @@
 # Change Notes
+## 1.2.1 
+### Changes 🔄
+- iTop requires foreign key fields to be 0 in order for them to be unset. It is now possible to specify columns as `foreign_key_columns` in the iTop destination in order for the source to automatically convert `None` values in these columns to 0. See the [documentation](/sources/itop.html) for more details. 
+- The iTop source now has [type overrides](/sources/itop.html) in order to explicitly set how data should be interpreted.
+- It is now possible to configure the `strings.hash` transformer to use multiple fields as source for the hash. It can also be configured to output `None` if `all` or `any` of the input values are `None` or empty strings. See the [documentation](/transformers/strings.html#Hash) for more details.
+- It is now possible to run beetl in a diff mode. This mode performs a dry run and then outputs a list with one tuple per sync in the config. These tuples contain two values, the first is a list of dataframes containing the diff between the source and destination for each row in the update dataframe. The second value is a list of all the columns that have changes across all the update rows. [More info here](/getting-started.html#generate-update-diffs).
+
+### Bugfixes 🐛
+- A bug was fixed that caused soft delete for iTop resources to not work as expected.
+
 ## 1.1.0 - 1.1.1
 ### Changes ️️🔄️
 - Beetl now validates your configuration before running, providing you with helpful error messages telling you how to locate and fix the issues.
