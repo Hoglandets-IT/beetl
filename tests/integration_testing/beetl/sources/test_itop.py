@@ -47,7 +47,6 @@ class TestItopSource(unittest.TestCase):
     def test_query_type_overrides__when_provided_and_type_isnt_matching_data__raises_an_exception(
         self,
     ):
-        """This tests makes sure that the type_overrides functionality of the _query method works as expected when it is not provided by the used. Types should be inferred by polars as usual."""
         try:
             # Clean up potenitally failed previous tests
             self.delete_pc(skip_assertions=True)
@@ -73,7 +72,7 @@ class TestItopSource(unittest.TestCase):
     def test_query_type_overrides__when_provided_and_type_is_matching_data_successfully_parses_the_response(
         self,
     ):
-        """This tests makes sure that the type_overrides functionality of the _query method works as expected when it is not provided by the used. Types should be inferred by polars as usual."""
+        """This tests makes sure that the type_overrides functionality of the _query method works as expected when it is not provided by the user. Types should be inferred by polars as usual."""
         try:
             # Clean up potenitally failed previous tests
             self.delete_pc(skip_assertions=True)

@@ -152,7 +152,7 @@ class UnitTestStringTransformers(unittest.TestCase):
         resultingHash = result[out_field][0]
         self.assertIsNone(resultingHash)
 
-    def test_hash__with_mode_if_all_values_are_populated_and_all_values_are_populated__hash_is_not_created(
+    def test_hash__with_mode_if_all_values_are_populated_and_all_values_are_populated__hash_is_created(
         self,
     ):
         # arrange

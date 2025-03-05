@@ -71,11 +71,14 @@ sync:
       link_columns:
         - parent_code
       # foreign_key_columns: <list<string>> (optional)
-      # defines what field names are foreign keys, e.g `person_id`. Beetl will then convert any None values to `0` in order for iTop to unassign the field.
+      # Columns specified here will have their `None` values changed into `0`'s. 
+      # This should be used for fields that are references to other related resources in iTop such as people and organizations.
+      # Setting these values to 0 means that iTop will 
       foreign_key_columns:
         - parent_id
       # type_overrides: <dict<string,string>> (optional)
-      # lets you explicitly set what type any column should be interpreted as.
+      # Lets you explicitly set what type any column should be interpreted as.
+      # Might be necessary is some cases when first value in a column is null and beetl incorrectly identifies the data as Int64.
       # Format is {"column_name": "polars_datatype_as_string"}
       # See related types section below for valid values.
       type_overrides:

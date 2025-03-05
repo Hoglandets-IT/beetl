@@ -380,9 +380,10 @@ class StringTransformer(TransformerInterface):
 
         Args:
             data (pl.DataFrame): The dataFrame to modify
-            in_fields (str): The fields to hash
-            out_field (str): The field to put the result in
-            hash_empty_values (bool): Whether to hash empty values. Defaults to False.
+            inField (str): The field to hash (if not inFields)
+            inFields (list[str]): The fields to hash
+            outField (str): The field to put the result n
+            hashWhen ("always", "any-value-is-populated", "all-values-are-populated"): When to return a hashed value instead of none. Defaults to "always".
 
         Returns:
             pl.DataFrame: The resulting DataFrame

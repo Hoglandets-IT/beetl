@@ -196,8 +196,8 @@ Can be configured to output None if any or none of the provided fields are empty
     # hashWhen: Selects how the transformer handles None or empty string values <string> (Optional, default="always").
     # Valid values:
     #    `always`: Will always generate a hash, even if the input is None or empty.
-    #    `any-value-is-populated`: Will generate a hash when any of the input fields are populated. Means that all but one field can be none and a hash is still generated. Otherwise None.
-    #    `all-values-are-populated`: Will only generate a hash if all provided fields are popultadet. Output will be None if ANY of the input fields are None or empty strings.
+    #    `any-value-is-populated`: Will generate a hash when any of the input fields are populated. If all input fields are None or empty strings the output will be None.
+    #    `all-values-are-populated`: Will only generate a hash if all provided fields are populated. If any of the input fields are None or empty then the output will be None.
     hashWhen: always
 
 ```
