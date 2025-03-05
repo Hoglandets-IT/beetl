@@ -326,7 +326,7 @@ If you print any of the dataframes you will be presented by an ascii table repre
 
 ### Generate update diffs
 
-As a tool to help you understand what is going to be updated you can tell beetl to perform a dry run and output a diff for each row that is going to be updated containing only the unique indentifiers and the values that have change. You can do this by passing `generate_update_diff=True` to the `sync` method.
+As a tool to help you understand what is going to be updated you can tell beetl to perform a dry run and output a diff for each row that is going to be updated containing only the unique indentifiers and the values that have changed. You can do this by passing `generate_update_diff=True` to the `sync` method.
 
 ```python
 from beetl.beetl import Beetl
