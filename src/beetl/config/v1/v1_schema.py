@@ -4,6 +4,7 @@ from pydantic import BaseModel, ConfigDict, Field, ValidationError, model_valida
 from pydantic_core import ErrorDetails
 
 from ...sources import (
+    ExcelConfigArguments,
     CsvConfigArguments,
     FakerConfigArguments,
     ItopConfigArguments,
@@ -31,6 +32,7 @@ SourceConfigArguments = list[
             StaticConfigArguments,
             ItopConfigArguments,
             MongodbConfigArguments,
+            ExcelConfigArguments,
             CsvConfigArguments,
             FakerConfigArguments,
             MysqlConfigArguments,
