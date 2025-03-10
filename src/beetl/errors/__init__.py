@@ -31,6 +31,22 @@ class ConfigValueError(Exception):
         return f"\n{location}\n{'  '}{self.message}{further_information}"
 
 
+class InvalidDependencyError(ConfigValueError):
+    def __init__(self, field: str, details: str, location: tuple[str]):
+        super().__init__(
+            field,
+            f"Field '{field}' results in an invalid dependency: {details}",
+            location,
+        )
+
+class MissingDependencyError(ConfigValueError):
+    def __init__(self, field: str, details: str, location: tuple[str]):
+        super().__init__(
+            field,
+            f"Field '{field}' results in a missing dependency: {details}",
+            location,
+        )
+
 class RequiredDestinationFieldError(ConfigValueError):
     def __init__(self, field: str, destination_location: tuple[str]):
         super().__init__(
@@ -61,3 +77,4 @@ class ForbiddenSourceFieldError(ConfigValueError):
         super().__init__(
             field, f"Field '{field}' is forbidden when used as source", source_location
         )
+
