@@ -2,7 +2,7 @@ import copy
 import json
 import os
 
-from ...sources import Sources
+from ...sources import SourceDiffArguments, Sources
 from ...transformers.interface import TransformerConfiguration
 from ..config_base import BeetlConfig, ComparisonColumn, SyncConfiguration
 from .v1_schema import BeetlConfigSchemaV1
@@ -72,15 +72,15 @@ class BeetlConfigV1(BeetlConfig):
                 location=(*location, "destinationConfig"),
             )
 
-            diff_config = sync.get("diff", None)
+            raw_diff_config = sync.get("diff", None)
             if diff_config:
-                diff_name = 
-                diff_instance = copy.deepcopy(self.sources.get(diff_name, None))
+                diff_config = SourceDiffArguments(raw_diff_config)
+                diff_instance = copy.deepcopy(self.sources.get(diff_config.name, None))
                 if not diff_instance:
                     raise Exception(
                         "The diff source name in the sync section does not match a source name in the sources section."
                     )
-                source_instance.set_diff_config(diff_config)
+                source_instance.set_diff_config(raw_diff_config)
 
             comparisonColumnsConf = sync.get("comparisonColumns", None)
             if not comparisonColumnsConf:

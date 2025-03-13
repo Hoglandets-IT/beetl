@@ -69,7 +69,7 @@ class SourceInterface:
         )
         self.source_configuration = self.SyncClass(self.source_configuration_arguments)
 
-    def set_diff_config(self, diff_config: SourceDiff) -> None:
+    def set_diff_config(self, diff_config: dict) -> None:
         self.diff_config_arguments = self.DiffArgumentsClass(**diff_config)
         self.diff_config = self.DiffClass(self.diff_config_arguments)
 
