@@ -44,7 +44,13 @@ from .sqlserver import (
     SqlserverSync,
     SqlserverSyncArguments,
 )
-from .static import StaticConfig, StaticConfigArguments, StaticSource
+from .static import (
+    StaticConfig,
+    StaticConfigArguments,
+    StaticDiff,
+    StaticDiffArguments,
+    StaticSource,
+)
 from .xml import XmlConfig, XmlConfigArguments, XmlSource, XmlSync, XmlSyncArguments
 
 SourceTypes = Literal[

@@ -23,6 +23,7 @@ from ...sources import (
     SqlserverDiffArguments,
     SqlserverSyncArguments,
     StaticConfigArguments,
+    StaticDiffArguments,
     XmlConfigArguments,
     XmlSyncArguments,
 )
@@ -61,7 +62,7 @@ SourceSyncArguments = Union[
 ]
 
 DiffConfigArguments = Annotated[
-    Union[SqlserverDiffArguments], Field(discriminator="type")
+    Union[SqlserverDiffArguments, StaticDiffArguments], Field(discriminator="type")
 ]
 
 

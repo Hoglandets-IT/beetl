@@ -74,8 +74,8 @@ class BeetlConfigV1(BeetlConfig):
 
             raw_diff_config = sync.get("diff", None)
             if raw_diff_config:
-                diff_config = SourceDiffArguments(raw_diff_config)
-                diff_instance = copy.deepcopy(self.sources.get(diff_config.name, None))
+                diff_name = raw_diff_config.get("name", None)
+                diff_instance = copy.deepcopy(self.sources.get(diff_name, None))
                 if not diff_instance:
                     raise Exception(
                         "The diff source name in the sync section does not match a source name in the sources section."
