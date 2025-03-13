@@ -1,12 +1,20 @@
 from typing import Literal
 
-from ..interface.interface_diff import SourceDiffConfigArguments
+from ..interface.interface_diff import (
+    SourceDiff,
+    SourceDiffArguments,
+    SourceDiffConfigArguments,
+)
 
 
-class SqlserverDiffConfig(SourceDiffConfigArguments):
+class SqlserverDiffConfigArguments(SourceDiffConfigArguments):
     pass
 
 
-class SqlserverDiffArguments(SourceDiffConfigArguments):
+class SqlserverDiffArguments(SourceDiffArguments):
     type: Literal["Sqlserver"]
-    config: SqlserverDiffConfig
+    config: SqlserverDiffConfigArguments
+
+
+class SqlserverDiff(SourceDiff):
+    pass

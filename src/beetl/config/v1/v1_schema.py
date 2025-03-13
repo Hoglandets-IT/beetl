@@ -4,8 +4,8 @@ from pydantic import BaseModel, ConfigDict, Field, ValidationError, model_valida
 from pydantic_core import ErrorDetails
 
 from ...sources import (
-    ExcelConfigArguments,
     CsvConfigArguments,
+    ExcelConfigArguments,
     FakerConfigArguments,
     ItopConfigArguments,
     ItopSyncArguments,
@@ -20,6 +20,7 @@ from ...sources import (
     Sources,
     SourceTypes,
     SqlserverConfigArguments,
+    SqlserverDiffArguments,
     SqlserverSyncArguments,
     StaticConfigArguments,
     XmlConfigArguments,
@@ -59,7 +60,9 @@ SourceSyncArguments = Union[
     )
 ]
 
-DiffConfigArguments = Annotated[]
+DiffConfigArguments = Annotated[
+    Union[SqlserverDiffArguments], Field(discriminator="type")
+]
 
 
 class ComparisonColumnV1(BaseModel):
@@ -74,12 +77,6 @@ OptionalTransformers = Annotated[
     list[Annotated[TransformerSchemas, Field(discriminator="transformer")]],
     Field(default=[]),
 ]
-
-
-class V1Diff(BaseModel):
-    model_config = ConfigDict(extra="forbid")
-    type: SourceTypes
-    config: DiffConfigs
 
 
 class V1Sync(BaseModel):
@@ -113,7 +110,7 @@ class V1Sync(BaseModel):
     insertionTransformers: OptionalTransformers
     deletionTransformers: OptionalTransformers
 
-    diff = Annotated[Optional[V1Diff], Field(default=None)]
+    diff: Annotated[Optional[DiffConfigArguments], Field(default=None)]
 
     @model_validator(mode="before")
     def validate_sources(cls, values):
@@ -163,7 +160,7 @@ class V1Sync(BaseModel):
 class BeetlConfigSchemaV1(BaseModel):
     """Represents the configuration as supplied by the user. This class is used to validate the configuration against the static jsonschema and the dynamic beetl validation rules."""
 
-    config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="forbid")
 
     version: Literal["V1"]
     sources: Annotated[SourceConfigArguments, Field(min_items=1)]
