@@ -73,7 +73,7 @@ class BeetlConfigV1(BeetlConfig):
             )
 
             raw_diff_config = sync.get("diff", None)
-            if diff_config:
+            if raw_diff_config:
                 diff_config = SourceDiffArguments(raw_diff_config)
                 diff_instance = copy.deepcopy(self.sources.get(diff_config.name, None))
                 if not diff_instance:
