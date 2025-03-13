@@ -26,6 +26,10 @@ sources:
 ### Connection String
 The connection string is the generalized pyodbc/pymyssql connection string. You might have to append a driver specifier after your string like follows, depending on which drivers you have installed on your system. To determine which drivers are installed, you can use the following python scrript:
 
+::: info
+When running on Windows, the default driver is 'SQL Server' if you haven't installed the ODBC driver (17+). This default driver is not compatible with Beetl, and you will have to install the ODBC driver (17+).
+:::
+
 ```python
 import pyodbc
 
