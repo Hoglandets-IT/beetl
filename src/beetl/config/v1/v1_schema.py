@@ -97,6 +97,7 @@ class V1Sync(BaseModel):
         ),
     ]
 
+    name: Annotated[Optional[str], Field(default=None)]
     source: Annotated[str, Field(min_length=1)]
     destination: Annotated[str, Field(min_length=1)]
     sourceConfig: Annotated[SourceSyncArguments, Field()]
