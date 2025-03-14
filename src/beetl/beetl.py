@@ -7,6 +7,7 @@ from tabulate import tabulate
 from .compare.compare import Difftool
 from .comparison_result import ComparisonResult
 from .config import BeetlConfig, ComparisonColumn, SyncConfiguration
+from .diff import Diff
 from .result import Result, SyncResult
 from .sources import CASTABLE
 from .transformers.interface import TransformerConfiguration
@@ -304,6 +305,11 @@ class Beetl:
                 continue
 
             # TODO: Implement diff functinality here
+            if sync.diff is not None:
+                print("########## DIFF ###########")
+                print("diff is not none")
+                sync.diff.diff(Diff(sync.name))
+                print("########## END ###########")
 
             self.benchmark("Starting database operations")
             self.benchmark("Starting deletes")

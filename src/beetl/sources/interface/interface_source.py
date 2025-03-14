@@ -2,6 +2,7 @@ from typing import Literal
 
 import polars as pl
 
+from ...diff import Diff
 from .interface_config import SourceConfig, SourceConfigArguments
 from .interface_diff import SourceDiff, SourceDiffArguments
 from .interface_sync import SourceSync, SourceSyncArguments
@@ -148,5 +149,13 @@ class SourceInterface:
 
         Args:
             data (pl.DataFrame): The data to delete
+        """
+        raise NotImplementedError
+
+    def diff(self, diff: Diff):
+        """Store the diff in the source
+
+        Args:
+            diff (Diff): The diff to store
         """
         raise NotImplementedError

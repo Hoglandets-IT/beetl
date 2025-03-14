@@ -1,5 +1,8 @@
+import json
+
 from polars import DataFrame
 
+from ...diff import Diff
 from ..interface import SourceInterface
 from ..registrated_source import register_source
 from .static_config import StaticConfig, StaticConfigArguments
@@ -41,3 +44,7 @@ class StaticSource(SourceInterface):
         print("Deleting data from static source")
         print(data)
         return len(data)
+
+    def diff(self, data: Diff):
+        print("Storing diff in static source...")
+        print(data.dump_json())

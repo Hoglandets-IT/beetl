@@ -1,4 +1,6 @@
+import json
 from datetime import datetime
+from json import JSONEncoder
 from typing import Any, Literal, Union
 from uuid import uuid4
 
@@ -36,6 +38,16 @@ class DiffStats:
     def __init__(self, updates: int, inserts: int, deletes: int):
         self.updates, self.inserts, self.deletes = updates, inserts, deletes
 
+    class JsonEncoder(JSONEncoder):
+        def default(self, o: Any):
+            if isinstance(o, DiffStats):
+                return {
+                    "updates": o.updates,
+                    "inserts": o.inserts,
+                    "deletes": o.deletes,
+                }
+            return super().default(o)
+
 
 class Diff:
     name: str
@@ -55,3 +67,22 @@ class Diff:
         self.inserts = ()
         self.deletes = ()
         self.stats = DiffStats(0, 0, 0)
+
+    def dump_json(self):
+        return json.dumps(self, cls=DiffJsonEncoder)
+
+
+class DiffJsonEncoder(JSONEncoder):
+    def default(self, o: Any):
+        if isinstance(o, Diff):
+            return {
+                "name": o.name,
+                "date": o.date.isoformat(),
+                "uuid": str(o.uuid),
+                "version": o.version,
+                "updates": o.updates,
+                "inserts": o.inserts,
+                "deletes": o.deletes,
+                "stats": json.dumps(o.stats, cls=DiffStats.JsonEncoder),
+            }
+        return super().default(o)
