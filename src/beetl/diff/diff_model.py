@@ -84,16 +84,17 @@ class Diff:
     def __init__(
         self,
         name: str,
+        updates: tuple[DiffInsert, ...],
         inserts: tuple[DiffInsert, ...],
         deletes: tuple[DiffDelete, ...],
     ):
         self.name = name
         self.date = datetime.now()
         self.uuid = uuid4()
-        self.updates = ()
+        self.updates = updates
         self.inserts = inserts
         self.deletes = deletes
-        self.stats = DiffStats(0, len(inserts), len(deletes))
+        self.stats = DiffStats(len(updates), len(inserts), len(deletes))
 
     def dump_json(self):
         return json.dumps(self, cls=DiffJsonEncoder)

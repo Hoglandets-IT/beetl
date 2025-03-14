@@ -13,10 +13,12 @@ class DiffIntegrationTests(TestCase):
                     "type": "Static",
                     "connection": {
                         "static": [
-                            {"id": 1, "name": "test1"},
-                            {"id": 2, "name": "test2"},
-                            {"id": 3, "name": "test3"},
-                            {"id": 4, "name": "test4"},
+                            {"id": 1, "name": "test1", "age": 20},
+                            {"id": 2, "name": "test2", "age": 20},
+                            {"id": 3, "name": "test3", "age": 20},
+                            {"id": 4, "name": "test4", "age": 20},
+                            {"id": 6, "name": "test6", "age": 20},
+                            {"id": 7, "name": "test7", "age": 20},
                         ]
                     },
                 },
@@ -25,7 +27,9 @@ class DiffIntegrationTests(TestCase):
                     "type": "Static",
                     "connection": {
                         "static": [
-                            {"id": 5, "name": "test5"},
+                            {"id": 5, "name": "test5", "age": 20},
+                            {"id": 6, "name": "test", "age": 20},
+                            {"id": 7, "name": "test", "age": 21},
                         ]
                     },
                 },
@@ -37,9 +41,11 @@ class DiffIntegrationTests(TestCase):
                     "destination": "dst",
                     "sourceConfig": {},
                     "destinationConfig": {},
-                    "comparisonColumns": [
-                        {"name": "id", "type": "Int64", "unique": True}
-                    ],
+                    "comparisonColumns": {
+                        "id": "Int64",
+                        "name": "Utf8",
+                        "age": "Int64",
+                    },
                     "diff": {"type": "Static", "name": "dst", "config": {}},
                 }
             ],

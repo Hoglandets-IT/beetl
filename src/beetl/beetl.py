@@ -308,10 +308,17 @@ class Beetl:
             if sync.diff_destination_instance is not None:
                 diff = create_diff(
                     sync.name,
+                    transformedSource,
+                    transformedDestination,
                     create,
+                    update,
                     delete,
                     unique_columns,
-                    [column.name for column in sync.comparisonColumns],
+                    [
+                        column.name
+                        for column in sync.comparisonColumns
+                        if column.name not in unique_columns
+                    ],
                 )
                 sync.diff_destination_instance.store_diff(diff)
 
