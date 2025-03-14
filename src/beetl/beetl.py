@@ -303,6 +303,8 @@ class Beetl:
                 sync.destination.disconnect()
                 continue
 
+            # TODO: Implement diff functinality here
+
             self.benchmark("Starting database operations")
             self.benchmark("Starting deletes")
             amount["deletes"] = 0

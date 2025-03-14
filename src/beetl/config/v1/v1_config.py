@@ -121,6 +121,7 @@ class BeetlConfigV1(BeetlConfig):
                 destination=destination_instance,
                 destinationConfig=sync["destinationConfig"],
                 comparisonColumns=comparisonColumns,
+                diff=diff_instance,
             )
 
             source_instance = destination_instance = None

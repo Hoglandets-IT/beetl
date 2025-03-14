@@ -1,6 +1,6 @@
 from unittest import TestCase
 
-from src.beetl.config.config_base import BeetlConfig
+from src.beetl.beetl import Beetl, BeetlConfig
 
 
 class DiffIntegrationTests(TestCase):
@@ -41,3 +41,5 @@ class DiffIntegrationTests(TestCase):
             ],
         }
         config = BeetlConfig(dict_config)
+        result = Beetl(config).sync()
+        print(result)
