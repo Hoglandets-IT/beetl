@@ -4,8 +4,10 @@ from json import JSONEncoder
 from typing import Any, Literal, Union
 from uuid import uuid4
 
+from polars import DataFrame
 
-class DiffRowIdendifiers(dict[str, Union[str, int, float]]):
+
+class DiffRowIdentifiers(dict[str, Union[str, int, float]]):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -16,18 +18,38 @@ class DiffRowData(dict[str, Any]):
 
 
 class DiffUpdate:
-    identifiers: DiffRowIdendifiers
+    identifiers: DiffRowIdentifiers
     old: DiffRowData
     new: DiffRowData
 
+    class JsonEncoder(JSONEncoder):
+        def default(self, o: Any):
+            if isinstance(o, DiffInsert):
+                return {"identifiers": o.identifiers, "old": o.old, "new": o.new}
+
+            return super().default(o)
+
 
 class DiffInsert:
-    identifiers: DiffRowIdendifiers
+    identifiers: DiffRowIdentifiers
     data: DiffRowData
+
+    def __init__(self, identifiers: DiffRowIdentifiers, data: DiffRowData):
+        self.identifiers, self.data = identifiers, data
+
+    class JsonEncoder(JSONEncoder):
+        def default(self, o: Any):
+            if isinstance(o, DiffInsert):
+                return {
+                    "identifiers": o.identifiers,
+                    "data": o.data,
+                }
+
+            return super().default(o)
 
 
 class DiffDelete:
-    identifiers: DiffRowIdendifiers
+    identifiers: DiffRowIdentifiers
 
 
 class DiffStats:
@@ -59,14 +81,19 @@ class Diff:
     deletes: tuple[DiffDelete, ...]
     stats: DiffStats
 
-    def __init__(self, name: str):
+    def __init__(
+        self,
+        name: str,
+        inserts: tuple[DiffInsert, ...],
+        deletes: tuple[DiffDelete, ...],
+    ):
         self.name = name
         self.date = datetime.now()
         self.uuid = uuid4()
         self.updates = ()
-        self.inserts = ()
-        self.deletes = ()
-        self.stats = DiffStats(0, 0, 0)
+        self.inserts = inserts
+        self.deletes = deletes
+        self.stats = DiffStats(0, len(inserts), len(deletes))
 
     def dump_json(self):
         return json.dumps(self, cls=DiffJsonEncoder)
@@ -80,8 +107,18 @@ class DiffJsonEncoder(JSONEncoder):
                 "date": o.date.isoformat(),
                 "uuid": str(o.uuid),
                 "version": o.version,
-                "updates": o.updates,
-                "inserts": o.inserts,
+                "updates": list(
+                    map(
+                        lambda ins: json.dumps(ins, cls=DiffUpdate.JsonEncoder),
+                        o.updates,
+                    )
+                ),
+                "inserts": list(
+                    map(
+                        lambda ins: json.dumps(ins, cls=DiffInsert.JsonEncoder),
+                        o.inserts,
+                    )
+                ),
                 "deletes": o.deletes,
                 "stats": json.dumps(o.stats, cls=DiffStats.JsonEncoder),
             }

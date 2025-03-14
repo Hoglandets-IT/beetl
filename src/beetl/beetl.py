@@ -306,7 +306,13 @@ class Beetl:
 
             # TODO: Implement diff functinality here
             if sync.diff_destination_instance is not None:
-                diff = create_diff()
+                diff = create_diff(
+                    sync.name,
+                    create,
+                    delete,
+                    unique_columns,
+                    [column.name for column in sync.comparisonColumns],
+                )
                 sync.diff_destination_instance.store_diff(diff)
 
             self.benchmark("Starting database operations")

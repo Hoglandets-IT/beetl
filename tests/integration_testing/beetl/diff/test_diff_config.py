@@ -23,7 +23,11 @@ class DiffIntegrationTests(TestCase):
                 {
                     "name": "dst",
                     "type": "Static",
-                    "connection": {"static": []},
+                    "connection": {
+                        "static": [
+                            {"id": 5, "name": "test5"},
+                        ]
+                    },
                 },
             ],
             "sync": [
