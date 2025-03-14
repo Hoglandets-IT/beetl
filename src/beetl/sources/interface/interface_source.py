@@ -152,7 +152,7 @@ class SourceInterface:
         """
         raise NotImplementedError
 
-    def diff(self, diff: Diff):
+    def store_diff(self, diff: Diff):
         """Store the diff in the source
 
         Args:

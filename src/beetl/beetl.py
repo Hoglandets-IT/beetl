@@ -305,11 +305,9 @@ class Beetl:
                 continue
 
             # TODO: Implement diff functinality here
-            if sync.diff is not None:
-                print("########## DIFF ###########")
-                print("diff is not none")
-                sync.diff.diff(create_diff())
-                print("########## END ###########")
+            if sync.diff_destination_instance is not None:
+                diff = create_diff()
+                sync.diff_destination_instance.store_diff(diff)
 
             self.benchmark("Starting database operations")
             self.benchmark("Starting deletes")

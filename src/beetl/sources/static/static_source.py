@@ -45,6 +45,6 @@ class StaticSource(SourceInterface):
         print(data)
         return len(data)
 
-    def diff(self, data: Diff):
+    def store_diff(self, data: Diff):
         print("Storing diff in static source...")
         print(data.dump_json())

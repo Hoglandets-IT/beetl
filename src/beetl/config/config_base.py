@@ -66,7 +66,7 @@ class SyncConfiguration:
     insertionTransformers: List[TransformerConfiguration] = None
     deletionTransformers: List[TransformerConfiguration] = None
 
-    diff: SourceInterface = None
+    diff_destination_instance: SourceInterface = None
 
     def __post_init__(self) -> None:
         self.source.config = self.sourceConfig
