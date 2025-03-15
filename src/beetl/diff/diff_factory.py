@@ -106,6 +106,8 @@ def create_updates(
 
     merged = merged.select(["identifiers", "old", "new"])
 
+    ## TODO: Continue here trying to remove nulls from the structs
+
     #    def func(struct_field: Schema, base_expr: Expr, base_name: str):
     #        if base_name == "identifiers":
     #            return []
