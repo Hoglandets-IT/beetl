@@ -5,7 +5,14 @@ from uuid import uuid4
 import polars as pl
 from polars import DataFrame, Expr, Schema, any_horizontal, struct, when
 
-from .diff_model import Diff, DiffInsert, DiffRowData, DiffRowIdentifiers, DiffUpdate
+from .diff_model import (
+    Diff,
+    DiffDelete,
+    DiffInsert,
+    DiffRowData,
+    DiffRowIdentifiers,
+    DiffUpdate,
+)
 
 
 def create_diff(
@@ -18,7 +25,9 @@ def create_diff(
     unique_columns: tuple[str, ...],
     comparison_columns: tuple[str, ...],
 ) -> Diff:
-    deletes = deletes.select(unique_columns).to_dicts()
+    deletes = tuple(
+        map(lambda row: create_delete(row), deletes.select(unique_columns).to_dicts())
+    )
     inserts = list(
         map(
             lambda row: create_insert(row, unique_columns, comparison_columns),
@@ -30,17 +39,6 @@ def create_diff(
     return Diff(name, updates, inserts, deletes)
 
 
-def remove_nulls_from_struct(struct_col: pl.Expr) -> pl.Expr:
-    """Removes null values from a struct by keeping only non-null fields."""
-    return struct_col.struct.rename_fields(
-        [
-            field
-            for field in struct_col.struct.fields
-            if not struct_col.struct.field(field).is_null().all()
-        ]
-    )
-
-
 def create_insert(
     row: dict[str, Any], unique_columns: tuple[str, ...], data_columns: tuple[str, ...]
 ) -> DiffInsert:
@@ -49,13 +47,16 @@ def create_insert(
     return DiffInsert(identifiers, data)
 
 
+def create_delete(row: dict[str, Any]) -> DiffDelete:
+    return DiffDelete(DiffRowIdentifiers(row))
+
+
 def create_updates(
     source: DataFrame,
     destination: DataFrame,
     unique_columns: tuple[str, ...],
     comparison_columns: tuple[str, ...],
 ) -> tuple[DiffUpdate, ...]:
-    # TODO: Continue here
     source = deepcopy(source).select(*unique_columns, *comparison_columns)
     destination = deepcopy(destination).select(*unique_columns, *comparison_columns)
     if not source.schema == destination.schema:
@@ -106,48 +107,15 @@ def create_updates(
 
     merged = merged.select(["identifiers", "old", "new"])
 
-    ## TODO: Continue here trying to remove nulls from the structs
-
-    #    def func(struct_field: Schema, base_expr: Expr, base_name: str):
-    #        if base_name == "identifiers":
-    #            return []
-    #        expr = []
-    #        for field in struct_field.fields:
-    #            print(field.name)
-    #            expr.append(
-    #                pl.when(base_expr.struct.field(field.name).is_not_null()).then(
-    #                    base_expr.struct.field(field.name).alias(f"{field.name}")
-    #                )
-    #            )
-    #        return expr
-
-    #    exprs = []
-
-    #    for col in merged.columns:
-    #        if col in unique_columns:
-    #            continue
-    #        exprs.extend(func(merged.schema[col], pl.col(col), col))
-
-    #    result = merged.select(*exprs)
-    #    def remove_nulls_from_struct(struct_col: pl.Expr, schema: Schema) -> pl.Expr:
-    #        """Removes null values from a struct by keeping only non-null fields."""
-    #        fields = schema.fields
-    #        non_null_fields = [
-    #            pl.when(struct_col.struct.field(field.name).is_not_null())
-    #            .then(struct_col.struct.field(field.name))
-    #            .otherwise(struct_col.struct.drop_nulls())
-    #            .alias(field.name)
-    #            for field in fields
-    #        ]
-    #        return pl.struct(non_null_fields)
-
-    #    # Remove null properties from the struct
-    #    result = merged.with_columns(
-    #        remove_nulls_from_struct(pl.col("old"), merged.schema["old"]).alias(
-    #            "filtered_data"
-    #        )
-    #    )
     print("########################")
     print(merged)
 
-    return ()
+    dicts = merged.to_dicts()
+    updates = []
+    for dict in dicts:
+        identifiers = DiffRowIdentifiers(dict["identifiers"])
+        old = DiffRowData(dict["old"])
+        new = DiffRowData(dict["new"])
+        updates.append(DiffUpdate(identifiers, old, new))
+
+    return updates
