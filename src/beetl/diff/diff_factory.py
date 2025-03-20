@@ -64,58 +64,41 @@ def create_updates(
             "DataFrames must have the same schema (columns and data types)."
         )
 
-    # Rename destination columns to have `_old` suffix (except key columns)
-    destination_renamed = destination.rename(
+    destination_renamed_as_old = destination.rename(
         {col: f"{col}_old" for col in destination.columns if col not in unique_columns}
     )
 
-    # Perform an outer join on key columns
-    merged = source.join(destination_renamed, on=unique_columns, how="outer")
+    merged = source.join(destination_renamed_as_old, on=unique_columns, how="outer")
 
-    # Identify changed columns (excluding key columns)
     diff_masks = [
         (merged[col] != merged[f"{col}_old"]).alias(f"diff_{col}")
         for col in comparison_columns
     ]
 
-    # Add diff indicators and filter rows with changes
     merged = merged.with_columns(diff_masks)
     merged = merged.filter(pl.any_horizontal(*[col for col in diff_masks]))
 
-    # Create the "identifiers" column
     merged = merged.with_columns(pl.struct(unique_columns).alias("identifiers"))
 
-    # Function to dynamically create a dictionary-like struct without nulls
-
-    # Create the "new" column containing updated values (only non-null fields)
     new_values = [
-        pl.when(pl.col(f"diff_{col}") & pl.col(col).is_not_null())
-        .then(pl.col(col))
-        .alias(col)
+        pl.when(pl.col(f"diff_{col}")).then(pl.col(col)).alias(col)
         for col in comparison_columns
     ]
     merged = merged.with_columns(pl.struct(new_values).alias("new"))
 
-    # Create the "old" column containing original values before update (only non-null fields)
     old_values = [
         pl.when(merged[f"diff_{col}"]).then(merged[f"{col}_old"]).alias(col)
         for col in comparison_columns
     ]
     merged = merged.with_columns(pl.struct(old_values).alias("old"))
 
-    # Drop unnecessary diff indicators and duplicate old columns
-
     merged = merged.select(["identifiers", "old", "new"])
 
-    print("########################")
-    print(merged)
-
-    dicts = merged.to_dicts()
     updates = []
-    for dict in dicts:
-        identifiers = DiffRowIdentifiers(dict["identifiers"])
-        old = DiffRowData(dict["old"])
-        new = DiffRowData(dict["new"])
+    for updateRow in merged.to_dicts():
+        identifiers = DiffRowIdentifiers(updateRow["identifiers"])
+        old = DiffRowData(updateRow["old"])
+        new = DiffRowData(updateRow["new"])
         updates.append(DiffUpdate(identifiers, old, new))
 
     return updates
