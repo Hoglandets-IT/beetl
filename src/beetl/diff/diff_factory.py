@@ -1,9 +1,8 @@
 from copy import deepcopy
 from typing import Any
-from uuid import uuid4
 
 import polars as pl
-from polars import DataFrame, Expr, Schema, any_horizontal, struct, when
+from polars import DataFrame
 
 from .diff_model import (
     Diff,

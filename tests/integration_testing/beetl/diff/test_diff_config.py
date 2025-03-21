@@ -4,7 +4,7 @@ from src.beetl.beetl import Beetl, BeetlConfig
 
 
 class DiffIntegrationTests(TestCase):
-    def test_diff_config(self):
+    def test_static_diff_config(self):
         dict_config = {
             "version": "V1",
             "sources": [
