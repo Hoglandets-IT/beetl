@@ -31,6 +31,7 @@ dependencies = [
   "pymongo>=4.10.1",
   "cryptography",
   "pydantic>=2.10.5",
+  "connectorx<0.4.1"
 ]
 
 [project.optional-dependencies]
