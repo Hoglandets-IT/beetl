@@ -60,10 +60,7 @@ SourceSyncArguments = Union[
         dict,
     )
 ]
-
-DiffConfigArguments = Annotated[
-    Union[SqlserverDiffArguments, StaticDiffArguments], Field(discriminator="type")
-]
+DiffArguments = Union[SqlserverDiffArguments, StaticDiffArguments]
 
 
 class ComparisonColumnV1(BaseModel):
@@ -112,7 +109,7 @@ class V1Sync(BaseModel):
     insertionTransformers: OptionalTransformers
     deletionTransformers: OptionalTransformers
 
-    diff: Annotated[Optional[DiffConfigArguments], Field(default=None)]
+    diff: DiffArguments = Field(discriminator="source_type")
 
     @model_validator(mode="before")
     def validate_sources(cls, values):

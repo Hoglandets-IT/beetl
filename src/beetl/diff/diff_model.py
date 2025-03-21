@@ -34,6 +34,9 @@ class DiffUpdate:
 
             return super().default(o)
 
+    def dump_json(self):
+        return json.dumps(self, cls=JSONEncoder)
+
 
 class DiffInsert:
     identifiers: DiffRowIdentifiers
@@ -52,6 +55,9 @@ class DiffInsert:
 
             return super().default(o)
 
+    def dump_json(self):
+        return json.dumps(self, cls=JSONEncoder)
+
 
 class DiffDelete:
     identifiers: DiffRowIdentifiers
@@ -66,6 +72,9 @@ class DiffDelete:
                     "identifiers": o.identifiers,
                 }
             return super().default(o)
+
+    def dump_json(self):
+        return json.dumps(self, cls=JSONEncoder)
 
 
 class DiffStats:
@@ -93,6 +102,9 @@ class DiffStats:
                     "updated_fields": o.updated_fields,
                 }
             return super().default(o)
+
+    def dump_json(self):
+        return json.dumps(self, cls=JSONEncoder)
 
 
 class Diff:

@@ -1,9 +1,13 @@
 import unittest
+
 import sqlalchemy
 from testcontainers.mssql import SqlServerContainer
 
 from src.beetl import beetl
-from tests.configurations.sqlserver import to_sqlserver
+from tests.configurations.sqlserver import (
+    from_static_to_sqlserver_with_diff,
+    to_sqlserver,
+)
 from tests.helpers.manual_result import ManualResult
 from tests.helpers.sqlserver_testcontainer import to_connection_string
 
@@ -74,3 +78,43 @@ class TestSqlServerSource(unittest.TestCase):
 
             oneRecordWasDeleted = ManualResult(0, 0, 1)
             self.assertEqual(deleteResult, oneRecordWasDeleted)
+
+    def test_diff_insert_into_sqlserver(self):
+        """
+        id 1 will be deleted
+        id 2 will be created
+        id 3 will have its name updated
+        id 4 will have its age updated
+        id 5 will be not have any changes
+        """
+        # TODO: Continue here trying to insert the diff into the sql database
+        with SqlServerContainer() as mssql:
+            # Arrange
+            connection_string = to_connection_string(mssql.get_connection_url())
+
+            engine = sqlalchemy.create_engine(mssql.get_connection_url())
+            with engine.begin() as connection:
+
+                connection.execute(
+                    sqlalchemy.text(
+                        "create table diffs (uuid uniqueidentifier primary key, name varchar(255), date datetime, version varchar(64), updates nvarchar(max), inserts nvarchar(max), deletes nvarchar(max), stats nvarchar(max))"
+                    )
+                )
+                connection.execute(
+                    sqlalchemy.text(
+                        "create table dst (id int primary key, name varchar(255), age int)"
+                    )
+                )
+                connection.execute(
+                    sqlalchemy.text(
+                        "insert into dst (id, name, age) values (1, 'test1', 20),(3, 'test', 20),(4, 'test4', 21), (5, 'test5', 20)"
+                    )
+                )
+
+            config = from_static_to_sqlserver_with_diff(connection_string)
+            beetlInstance = beetl.Beetl(beetl.BeetlConfig(config))
+
+            # Act
+            createResult = beetlInstance.sync()
+
+            print(1)

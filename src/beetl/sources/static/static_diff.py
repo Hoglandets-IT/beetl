@@ -6,7 +6,7 @@ from ..interface.interface_diff import SourceDiff, SourceDiffArguments
 
 
 class StaticDiffArguments(SourceDiffArguments):
-    type: Annotated[Literal["Static"], Field(default="Static")] = "Static"
+    source_type: Literal["Static"]
 
 
 class StaticDiff(SourceDiff):

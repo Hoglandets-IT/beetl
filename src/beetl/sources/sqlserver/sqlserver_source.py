@@ -1,3 +1,4 @@
+import json
 from uuid import uuid4
 
 import pandas as pd
@@ -5,9 +6,11 @@ import polars as pl
 import pyodbc
 import sqlalchemy as sqla
 
+from ...diff import Diff, DiffDelete, DiffInsert, DiffStats, DiffUpdate
 from ..interface import SourceInterface
 from ..registrated_source import register_source
 from .sqlserver_config import SqlserverConfig, SqlserverConfigArguments
+from .sqlserver_diff import SqlserverDiff, SqlserverDiffArguments
 from .sqlserver_sync import SqlserverSync, SqlserverSyncArguments
 
 
@@ -17,7 +20,11 @@ class SqlserverSource(SourceInterface):
     ConfigClass = SqlserverConfig
     SyncArgumentsClass = SqlserverSyncArguments
     SyncClass = SqlserverSync
+    DiffArgumentsClass = SqlserverDiffArguments
+    DiffClass = SqlserverDiff
 
+    diff_config_arguments: SqlserverDiffArguments = None
+    diff_config: SqlserverDiff = None
     connection: pyodbc.Connection = None
 
     """ A source for SqlServer data """
@@ -218,3 +225,19 @@ class SqlserverSource(SourceInterface):
 
     def _get_temp_table_name(self, table_name: str):
         return f"##{table_name}_{str(uuid4()).replace('-', '')}_temp".lower()
+
+    def store_diff(self, diff: Diff):
+        if not self.diff_config:
+            raise ValueError("Diff configuration is missing")
+
+        insert_statement = sqla.insert(table=self.diff_config.table).values(
+            name=diff.name,
+            date=diff.date,
+            uuid=diff.uuid,
+            version=diff.version,
+            updates=json.dumps(diff.updates, cls=DiffUpdate.JsonEncoder),
+            inserts=json.dumps(diff.inserts, cls=DiffInsert.JsonEncoder),
+            deletes=json.dumps(diff.deletes, cls=DiffDelete.JsonEncoder),
+            stats=json.dumps(diff.stats, cls=DiffStats.JsonEncoder),
+        )
+        self.connection.execute(insert_statement)

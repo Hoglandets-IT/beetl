@@ -80,7 +80,7 @@ class BeetlConfigV1(BeetlConfig):
                     raise Exception(
                         "The diff source name in the sync section does not match a source name in the sources section."
                     )
-                source_instance.set_diff_config(raw_diff_config)
+                diff_instance.set_diff_config(raw_diff_config)
 
             comparisonColumnsConf = sync.get("comparisonColumns", None)
             if not comparisonColumnsConf:

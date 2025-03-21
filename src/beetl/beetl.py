@@ -304,7 +304,6 @@ class Beetl:
                 sync.destination.disconnect()
                 continue
 
-            # TODO: Implement diff functinality here
             if sync.diff_destination_instance is not None:
                 diff = create_diff(
                     sync.name,

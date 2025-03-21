@@ -18,7 +18,7 @@ class SourceDiffArguments(BaseModel):
 
     model_config = ConfigDict(extra="forbid")
 
-    type: Literal["Interface"]
+    source_type: Literal["Interface"]
     name: Annotated[str, Field(min_length=1)]
     config: SourceDiffConfigArguments
 

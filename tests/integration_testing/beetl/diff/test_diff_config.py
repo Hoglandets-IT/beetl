@@ -46,7 +46,11 @@ class DiffIntegrationTests(TestCase):
                         "name": "Utf8",
                         "age": "Int64",
                     },
-                    "diff": {"type": "Static", "name": "dst", "config": {}},
+                    "diff": {
+                        "type": "Static",
+                        "name": "dst",
+                        "config": {"table": "arst"},
+                    },
                 }
             ],
         }

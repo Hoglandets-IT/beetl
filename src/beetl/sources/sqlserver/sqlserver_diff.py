@@ -1,4 +1,6 @@
-from typing import Literal
+from typing import Annotated, Literal
+
+from pydantic import Field
 
 from ..interface.interface_diff import (
     SourceDiff,
@@ -8,13 +10,16 @@ from ..interface.interface_diff import (
 
 
 class SqlserverDiffConfigArguments(SourceDiffConfigArguments):
-    pass
+    table: str
 
 
 class SqlserverDiffArguments(SourceDiffArguments):
-    type: Literal["Sqlserver"]
+    source_type: Literal["Sqlserver"]
     config: SqlserverDiffConfigArguments
 
 
 class SqlserverDiff(SourceDiff):
-    pass
+    table: str
+
+    def __init__(self, diff_config: SqlserverDiffArguments) -> None:
+        self.table = diff_config.config.table
