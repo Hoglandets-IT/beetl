@@ -1,3 +1,5 @@
+import datetime
+import json
 import unittest
 
 import sqlalchemy
@@ -81,13 +83,18 @@ class TestSqlServerSource(unittest.TestCase):
 
     def test_diff_insert_into_sqlserver(self):
         """
-        id 1 will be deleted
-        id 2 will be created
-        id 3 will have its name updated
-        id 4 will have its age updated
-        id 5 will be not have any changes
+        Test that the diff is inserted into the sql database and that the values match what was synced.
+
+        Id 1 will be deleted.
+
+        Id 2 will be created.
+
+        Id 3 will have its name updated.
+
+        Id 4 will have its age updated
+
+        Id 5 will be not have any changes
         """
-        # TODO: Continue here trying to insert the diff into the sql database
         with SqlServerContainer() as mssql:
             # Arrange
             connection_string = to_connection_string(mssql.get_connection_url())
@@ -115,6 +122,38 @@ class TestSqlServerSource(unittest.TestCase):
             beetlInstance = beetl.Beetl(beetl.BeetlConfig(config))
 
             # Act
-            createResult = beetlInstance.sync()
+            beetlInstance.sync()
 
-            print(1)
+            engine = sqlalchemy.create_engine(mssql.get_connection_url())
+            with engine.begin() as connection:
+                result = connection.execute(
+                    sqlalchemy.text("select * from diffs")
+                ).fetchall()
+            self.assertEqual(1, len(result))
+            diff = result[0]
+            uuid = str(diff[0])
+            name = diff[1]
+            date = diff[2].strftime("%Y-%m-%d %H:%M:%S")
+            version = diff[3]
+            updates = json.loads(diff[4])
+            inserts = json.loads(diff[5])
+            deletes = json.loads(diff[6])
+            stats = json.loads(diff[7])
+
+            self.assertEqual("diff_test", name)
+            self.assertEqual("1.0.0", version)
+            self.assertRegexpMatches(
+                date, f"{datetime.datetime.now().strftime('%Y-%m-%d')}"
+            )
+            self.assertIsNotNone(uuid)
+
+            self.assertEqual(2, len(updates))
+            self.assertEqual(1, len(inserts))
+            self.assertEqual(1, len(deletes))
+
+            self.assertEqual(1, stats["inserts"])
+            self.assertEqual(2, stats["updates"])
+            self.assertEqual(1, stats["deletes"])
+            self.assertSequenceEqual(["name", "age"], stats["updated_fields"])
+
+            print(diff)

@@ -77,6 +77,7 @@ def from_static_to_sqlserver_with_diff(sqlserver_connection_string: str):
         ],
         "sync": [
             {
+                "name": "diff_test",
                 "source": "src",
                 "destination": "dst",
                 "sourceConfig": {},
