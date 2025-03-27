@@ -431,7 +431,7 @@ class ItopSource(SourceInterface):
             deleteFunc = self.update_item
             deleteMessage = "Soft deletion via API Sync"
 
-        update_cols = tuple(
+        update_cols = set(
             column_name
             for column_name in self.source_configuration.unique_columns
             + self.source_configuration.comparison_columns
