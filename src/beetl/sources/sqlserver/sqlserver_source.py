@@ -229,8 +229,21 @@ class SqlserverSource(SourceInterface):
     def store_diff(self, diff: Diff):
         if not self.diff_config:
             raise ValueError("Diff configuration is missing")
+        metadata = sqla.MetaData()
+        table = sqla.Table(
+            self.diff_config.table,
+            metadata,
+            sqla.Column("uuid", sqla.Uuid, primary_key=True),
+            sqla.Column("name", sqla.String),
+            sqla.Column("date", sqla.DateTime),
+            sqla.Column("version", sqla.String),
+            sqla.Column("updates", sqla.String),
+            sqla.Column("inserts", sqla.String),
+            sqla.Column("deletes", sqla.String),
+            sqla.Column("stats", sqla.String),
+        )
 
-        insert_statement = sqla.insert(table=self.diff_config.table).values(
+        insert_statement = sqla.insert(table).values(
             name=diff.name,
             date=diff.date,
             uuid=diff.uuid,
