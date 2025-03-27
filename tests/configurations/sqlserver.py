@@ -101,9 +101,11 @@ def from_static_to_sqlserver_with_diff(sqlserver_connection_string: str):
                     },
                 ],
                 "diff": {
-                    "source_type": "Sqlserver",
-                    "name": "dst",
-                    "config": {"table": "diffs"},
+                    "destination": {
+                        "type": "Sqlserver",
+                        "name": "dst",
+                        "config": {"table": "diffs"},
+                    }
                 },
             }
         ],

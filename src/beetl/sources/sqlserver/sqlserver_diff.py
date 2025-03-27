@@ -14,7 +14,7 @@ class SqlserverDiffConfigArguments(SourceDiffConfigArguments):
 
 
 class SqlserverDiffArguments(SourceDiffArguments):
-    source_type: Literal["Sqlserver"]
+    type: Literal["Sqlserver"]
     config: SqlserverDiffConfigArguments
 
 

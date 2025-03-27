@@ -58,15 +58,18 @@ class SyncConfiguration:
     sourceConfig: SourceSync
     destination: SourceInterface
     destinationConfig: SourceSync
-    comparisonColumns: List[ComparisonColumn]
+    comparisonColumns: list[ComparisonColumn]
     name: str = ""
     changeDetection: ChangeDetectionConfig = None
+
     sourceTransformers: TransformerConfiguration = None
     destinationTransformers: TransformerConfiguration = None
-    insertionTransformers: List[TransformerConfiguration] = None
-    deletionTransformers: List[TransformerConfiguration] = None
+
+    insertionTransformers: list[TransformerConfiguration] = None
+    deletionTransformers: list[TransformerConfiguration] = None
 
     diff_destination_instance: SourceInterface = None
+    diff_transformers: list[TransformerConfiguration] = None
 
     def __post_init__(self) -> None:
         self.source.config = self.sourceConfig

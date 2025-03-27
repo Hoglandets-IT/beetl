@@ -47,13 +47,27 @@ class DiffIntegrationTests(TestCase):
                         "age": "Int64",
                     },
                     "diff": {
-                        "type": "Static",
-                        "name": "dst",
-                        "config": {"table": "arst"},
+                        "destination": {
+                            "type": "Static",
+                            "name": "dst",
+                            "config": {},
+                        },
+                        "transformers": [
+                            {
+                                "transformer": "strings.staticfield",
+                                "config": {"field": "name", "value": "test"},
+                            }
+                        ],
                     },
                 }
             ],
         }
         config = BeetlConfig(dict_config)
+
+        self.assertIsNotNone(config.sync_list[0].diff_destination_instance)
+        self.assertIsNotNone(config.sync_list[0].diff_transformers)
+        self.assertEqual(1, len(config.sync_list[0].diff_transformers))
+
         result = Beetl(config).sync()
+
         print(result)

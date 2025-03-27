@@ -72,15 +72,16 @@ class BeetlConfigV1(BeetlConfig):
                 location=(*location, "destinationConfig"),
             )
 
-            raw_diff_config = sync.get("diff", None)
-            if raw_diff_config:
-                diff_name = raw_diff_config.get("name", None)
+            raw_diff_section = sync.get("diff", {})
+            raw_diff_destination = raw_diff_section.get("destination", None)
+            if raw_diff_destination:
+                diff_name = raw_diff_destination.get("name", None)
                 diff_instance = copy.deepcopy(self.sources.get(diff_name, None))
                 if not diff_instance:
                     raise Exception(
                         "The diff source name in the sync section does not match a source name in the sources section."
                     )
-                diff_instance.set_diff_config(raw_diff_config)
+                diff_instance.set_diff_config(raw_diff_destination)
 
             comparisonColumnsConf = sync.get("comparisonColumns", None)
             if not comparisonColumnsConf:
@@ -166,6 +167,18 @@ class BeetlConfigV1(BeetlConfig):
                 syncConfig.deletionTransformers = []
                 for transformer in sync["deletionTransformers"]:
                     syncConfig.deletionTransformers.append(
+                        TransformerConfiguration(
+                            transformer.get("transformer"),
+                            transformer.get("config", None),
+                            transformer.get("include_sync", False),
+                        )
+                    )
+
+            # TODO: Remove diff_transformers
+            if raw_diff_section.get("transformers", None) is not None:
+                syncConfig.diff_transformers = []
+                for transformer in raw_diff_section["transformers"]:
+                    syncConfig.diff_transformers.append(
                         TransformerConfiguration(
                             transformer.get("transformer"),
                             transformer.get("config", None),
