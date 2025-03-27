@@ -254,9 +254,15 @@ class Beetl:
             self.benchmark("Finished data transformation before comparison")
 
             self.benchmark("Starting comparison")
-            unique_columns = [
+            unique_columns = tuple(
                 column.name for column in sync.comparisonColumns if column.unique
-            ]
+            )
+            comparison_columns = tuple(
+                column.name
+                for column in sync.comparisonColumns
+                if column.name not in unique_columns
+            )
+
             if len(unique_columns) == 0:
                 raise ValueError(
                     "You need to specify at least one unique column in the sync.comparisonColumns field"
@@ -283,11 +289,7 @@ class Beetl:
                     Difftool.diff_update(
                         update,
                         transformedDestination,
-                        [
-                            column.name
-                            for column in sync.comparisonColumns
-                            if not column.unique
-                        ],
+                        comparison_columns,
                         unique_columns,
                     )
                 )
@@ -305,17 +307,12 @@ class Beetl:
                 continue
 
             if sync.diff_destination_instance is not None:
-                # TODO: Minimize signature if possible
                 diff = create_diff(
                     sync.name,
                     transformedSource,
                     transformedDestination,
                     unique_columns,
-                    [
-                        column.name
-                        for column in sync.comparisonColumns
-                        if column.name not in unique_columns
-                    ],
+                    comparison_columns,
                 )
                 sync.diff_destination_instance.connect()
                 sync.diff_destination_instance.store_diff(diff)
