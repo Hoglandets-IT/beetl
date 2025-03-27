@@ -79,6 +79,10 @@ def create_updates(
     ]
 
     merged = merged.with_columns(diff_masks)
+    # TODO: Here it would be possible to split the merged dataframe into two
+    #   One with the old, one with the new
+    #   New can be passed back as the data to be updated
+    #   Then old and new can pass through the transformers and be merged again to become the update diff
     merged = merged.filter(pl.any_horizontal(*[col for col in diff_masks]))
 
     merged = merged.with_columns(pl.struct(unique_columns).alias("identifiers"))
