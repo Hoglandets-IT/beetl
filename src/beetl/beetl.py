@@ -310,7 +310,6 @@ class Beetl:
                     sync.name,
                     transformedSource,
                     transformedDestination,
-                    update,
                     unique_columns,
                     [
                         column.name

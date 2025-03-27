@@ -25,13 +25,6 @@ class DiffFactoryUnitTests(TestCase):
         }
         destination = pl.DataFrame(destination_data)
 
-        updates_data = {
-            "id": [6, 7],
-            "name": ["test6", "test7"],
-            "age": [20, 20],
-        }
-        updates = pl.DataFrame(updates_data)
-
         unique_columns = ("id",)
         comparison_columns = ("name", "age")
 
@@ -40,7 +33,6 @@ class DiffFactoryUnitTests(TestCase):
             name,
             source,
             destination,
-            updates,
             unique_columns,
             comparison_columns,
         )

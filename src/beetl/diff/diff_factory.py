@@ -18,7 +18,6 @@ def create_diff(
     name: str,
     source: DataFrame,
     destination: DataFrame,
-    updates: DataFrame,
     unique_columns: tuple[str, ...],
     comparison_columns: tuple[str, ...],
 ) -> Diff:
