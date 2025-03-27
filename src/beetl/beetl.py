@@ -305,6 +305,7 @@ class Beetl:
                 continue
 
             if sync.diff_destination_instance is not None:
+                # TODO: Minimize signature if possible
                 diff = create_diff(
                     sync.name,
                     transformedSource,
