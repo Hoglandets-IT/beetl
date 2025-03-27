@@ -18,29 +18,31 @@ def create_diff(
     name: str,
     source: DataFrame,
     destination: DataFrame,
-    inserts: DataFrame,
     updates: DataFrame,
     unique_columns: tuple[str, ...],
     comparison_columns: tuple[str, ...],
 ) -> Diff:
     deletes = create_deletes(source, destination, unique_columns)
-    inserts = list(
-        map(
-            lambda row: create_insert(row, unique_columns, comparison_columns),
-            inserts.to_dicts(),
-        )
-    )
+    inserts = create_inserts(source, destination, unique_columns, comparison_columns)
     updates = create_updates(source, destination, unique_columns, comparison_columns)
 
     return Diff(name, updates, inserts, deletes)
 
 
-def create_insert(
-    row: dict[str, Any], unique_columns: tuple[str, ...], data_columns: tuple[str, ...]
-) -> DiffInsert:
-    identifiers = DiffRowIdentifiers({col: row[col] for col in unique_columns})
-    data = DiffRowData({col: row[col] for col in data_columns})
-    return DiffInsert(identifiers, data)
+def create_inserts(
+    source: DataFrame,
+    destination: DataFrame,
+    unique_columns: tuple[str, ...],
+    comparision_columns: tuple[str, ...],
+) -> tuple[DiffInsert, ...]:
+    inserts = source.join(destination, on=unique_columns, how="anti").select(
+        *unique_columns, *comparision_columns
+    )
+    inserts = inserts.select(
+        pl.struct(unique_columns).alias("identifiers"),
+        pl.struct(comparision_columns).alias("data"),
+    )
+    return tuple(map(DiffInsert, inserts.to_dicts()))
 
 
 def create_deletes(

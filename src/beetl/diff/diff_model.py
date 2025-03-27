@@ -42,8 +42,9 @@ class DiffInsert:
     identifiers: DiffRowIdentifiers
     data: DiffRowData
 
-    def __init__(self, identifiers: DiffRowIdentifiers, data: DiffRowData):
-        self.identifiers, self.data = identifiers, data
+    def __init__(self, insert: dict[str, Any]):
+        self.identifiers = DiffRowIdentifiers(insert["identifiers"])
+        self.data = DiffRowData(insert["data"])
 
     class JsonEncoder(JSONEncoder):
         def default(self, o: Any):

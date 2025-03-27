@@ -25,26 +25,12 @@ class DiffFactoryUnitTests(TestCase):
         }
         destination = pl.DataFrame(destination_data)
 
-        inserts_data = {
-            "id": [1, 2, 3, 4],
-            "name": ["test1", "test2", "test3", "test4"],
-            "age": [20, 20, 20, 20],
-        }
-        inserts = pl.DataFrame(inserts_data)
-
         updates_data = {
             "id": [6, 7],
             "name": ["test6", "test7"],
             "age": [20, 20],
         }
         updates = pl.DataFrame(updates_data)
-
-        deletes_data = {
-            "id": [4],
-            "name": ["test4"],
-            "age": [20],
-        }
-        deletes = pl.DataFrame(deletes_data)
 
         unique_columns = ("id",)
         comparison_columns = ("name", "age")
@@ -54,7 +40,6 @@ class DiffFactoryUnitTests(TestCase):
             name,
             source,
             destination,
-            inserts,
             updates,
             unique_columns,
             comparison_columns,
