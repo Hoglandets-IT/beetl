@@ -319,6 +319,7 @@ class Beetl:
                         if column.name not in unique_columns
                     ],
                 )
+                sync.diff_destination_instance.connect()
                 sync.diff_destination_instance.store_diff(diff)
 
             self.benchmark("Starting database operations")
@@ -355,6 +356,8 @@ class Beetl:
             )
 
             sync.destination.disconnect()
+            if sync.diff_destination_instance:
+                sync.diff_destination_instance.disconnect()
 
         if generate_update_diff:
             return generate_update_diff_results
