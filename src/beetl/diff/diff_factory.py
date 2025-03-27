@@ -51,9 +51,8 @@ def create_deletes(
     deletes = destination.join(source, on=unique_columns, how="anti").select(
         *unique_columns
     )
-    return tuple(
-        map(lambda row: DiffDelete(DiffRowIdentifiers(row)), deletes.to_dicts())
-    )
+    deletes = deletes.select(pl.struct(unique_columns).alias("identifiers"))
+    return tuple(map(DiffDelete, deletes.to_dicts()))
 
 
 def create_updates(
