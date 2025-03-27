@@ -312,7 +312,6 @@ class Beetl:
                     transformedDestination,
                     create,
                     update,
-                    delete,
                     unique_columns,
                     [
                         column.name

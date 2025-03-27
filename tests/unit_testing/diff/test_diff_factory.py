@@ -56,7 +56,6 @@ class DiffFactoryUnitTests(TestCase):
             destination,
             inserts,
             updates,
-            deletes,
             unique_columns,
             comparison_columns,
         )
@@ -77,9 +76,11 @@ class DiffFactoryUnitTests(TestCase):
 
         self.assertEqual(1, len(diff.deletes))
         delete = diff.deletes[0]
-        self.assertEqual({"id": 4}, delete.identifiers)
+        self.assertEqual({"id": 5}, delete.identifiers)
 
         self.assertEqual(4, diff.stats.inserts)
         self.assertEqual(2, diff.stats.updates)
         self.assertEqual(1, diff.stats.deletes)
         self.assertEqual(("name", "age"), diff.stats.updated_fields)
+
+        print(diff.dump_json())
