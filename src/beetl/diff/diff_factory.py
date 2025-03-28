@@ -58,7 +58,7 @@ class DiffCalculator:
             self.source, self.destination, self.unique_columns, self.comparison_columns
         )
         deletes = self.calculate_deletes(
-            self.source, self.destination, self.unique_columns, self.unique_columns
+            self.source, self.destination, self.unique_columns, self.comparison_columns
         )
 
         return (inserts, updates_old, updates_new, updated_diff_mask, deletes)
@@ -140,7 +140,7 @@ class DiffCalculator:
         diff_deletes = tuple(
             map(
                 DiffDelete,
-                diff_deletes.select(
+                self.deletes.select(
                     pl.struct(self.unique_columns).alias("identifiers")
                 ).to_dicts(),
             )
@@ -148,14 +148,14 @@ class DiffCalculator:
         diff_inserts = tuple(
             map(
                 DiffInsert,
-                diff_inserts.select(
+                self.inserts.select(
                     pl.struct(self.unique_columns).alias("identifiers"),
                     pl.struct(self.comparison_columns).alias("data"),
                 ).to_dicts(),
             )
         )
 
-        update_old_columns_renamed_as_old = self.update_old.rename(
+        update_old_columns_renamed_as_old = self.updates_old.rename(
             {
                 col: f"{col}_old"
                 for col in self.updates_old.columns
@@ -194,7 +194,7 @@ class DiffCalculator:
             new = DiffRowData(updateRow["new"])
             diff_updates.append(DiffUpdate(identifiers, old, new))
 
-        return Diff(self.name, diff_updates, diff_inserts, diff_deletes)
+        return Diff(self.sync_name, diff_updates, diff_inserts, diff_deletes)
 
     def get_create_update_delete_for_sync(
         self,
