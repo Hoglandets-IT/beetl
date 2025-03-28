@@ -3,7 +3,7 @@ from unittest import TestCase
 
 import polars as pl
 
-from src.beetl.diff import create_diff
+from src.beetl.diff import DiffCalculator
 
 
 class DiffFactoryUnitTests(TestCase):
@@ -29,13 +29,10 @@ class DiffFactoryUnitTests(TestCase):
         comparison_columns = ("name", "age")
 
         # act
-        diff = create_diff(
-            name,
-            source,
-            destination,
-            unique_columns,
-            comparison_columns,
+        diff_calculator = DiffCalculator(
+            name, source, destination, unique_columns, comparison_columns
         )
+        diff = diff_calculator.create_diff()
 
         # assert
         self.assertEqual(name, diff.name)

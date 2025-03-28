@@ -200,13 +200,3 @@ class DiffCalculator:
         self,
     ) -> tuple[DataFrame, DataFrame, DataFrame]:
         return (self.inserts, self.updates_new, self.deletes)
-
-
-def create_diff(
-    name: str,
-    source: DataFrame,
-    destination: DataFrame,
-    unique_columns: tuple[str, ...],
-    comparison_columns: tuple[str, ...],
-) -> Diff:
-    return Diff(name, DataFrame(), DataFrame(), DataFrame())

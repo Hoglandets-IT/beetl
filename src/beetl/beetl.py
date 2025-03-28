@@ -7,8 +7,7 @@ from tabulate import tabulate
 from .compare.compare import Difftool
 from .comparison_result import ComparisonResult
 from .config import BeetlConfig, ComparisonColumn, SyncConfiguration
-from .diff import Diff, create_diff
-from .diff.diff_factory import DiffCalculator
+from .diff import DiffCalculator
 from .result import Result, SyncResult
 from .sources import CASTABLE
 from .transformers.interface import TransformerConfiguration
