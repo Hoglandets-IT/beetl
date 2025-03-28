@@ -8,6 +8,7 @@ from .compare.compare import Difftool
 from .comparison_result import ComparisonResult
 from .config import BeetlConfig, ComparisonColumn, SyncConfiguration
 from .diff import Diff, create_diff
+from .diff.diff_factory import DiffCalculator
 from .result import Result, SyncResult
 from .sources import CASTABLE
 from .transformers.interface import TransformerConfiguration
@@ -267,12 +268,15 @@ class Beetl:
                 raise ValueError(
                     "You need to specify at least one unique column in the sync.comparisonColumns field"
                 )
-            create, update, delete = self.compare_datasets(
+
+            diff_calculator = DiffCalculator(
+                sync.name,
                 transformedSource,
                 transformedDestination,
                 unique_columns,
-                sync.comparisonColumns,
+                comparison_columns,
             )
+            create, update, delete = diff_calculator.get_create_update_delete_for_sync()
             self.benchmark("Successfully extracted operations from dataset")
 
             load_and_compare = perf_counter() - start
@@ -307,13 +311,7 @@ class Beetl:
                 continue
 
             if sync.diff_destination_instance is not None:
-                diff = create_diff(
-                    sync.name,
-                    transformedSource,
-                    transformedDestination,
-                    unique_columns,
-                    comparison_columns,
-                )
+                diff = diff_calculator.create_diff()
                 sync.diff_destination_instance.connect()
                 sync.diff_destination_instance.store_diff(diff)
 
