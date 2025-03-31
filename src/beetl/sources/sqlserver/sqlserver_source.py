@@ -137,7 +137,7 @@ class SqlserverSource(SourceInterface):
 
         on_clause = " AND ".join(
             (
-                f"TDEST.[{column_name}] = TTEMP.[{column_name}]"
+                f"TDEST.[{column_name}] COLLATE DATABASE_DEFAULT = TTEMP.[{column_name}] COLLATE DATABASE_DEFAULT"
                 for column_name in self.source_configuration.unique_columns
             )
         )
@@ -166,7 +166,7 @@ class SqlserverSource(SourceInterface):
 
         where_clause = " AND ".join(
             (
-                f"TTEMP.[{column_name}] = TDEST.[{column_name}]"
+                f"TTEMP.[{column_name}] COLLATE DATABASE_DEFAULT = TDEST.[{column_name}] COLLATE DATABASE_DEFAULT"
                 for column_name in self.source_configuration.unique_columns
             )
         )
