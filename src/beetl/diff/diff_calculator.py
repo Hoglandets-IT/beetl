@@ -3,6 +3,7 @@ from typing import Optional
 import polars as pl
 from polars import DataFrame
 
+from ..typings import CASTABLE, ComparisonColumn
 from .diff_model import (
     Diff,
     DiffDelete,
@@ -32,14 +33,19 @@ class DiffCalculator:
         sync_name: str,
         source: DataFrame,
         destination: DataFrame,
-        unique_columns: tuple[str, ...],
-        comparison_columns: tuple[str, ...],
+        columns: list[ComparisonColumn],
     ):
         self.sync_name = sync_name
-        self.source = source
-        self.destination = destination
-        self.unique_columns = unique_columns
-        self.comparison_columns = comparison_columns
+        self.source = self._cast_columns_to_specified_types(
+            self._initialize_columns_if_empty(source, columns), columns
+        )
+        self.destination = self._cast_columns_to_specified_types(
+            self._initialize_columns_if_empty(destination, columns), columns
+        )
+        self.unique_columns = [col.name for col in columns if col.unique]
+        self.comparison_columns = [
+            col.name for col in columns if col.name not in self.unique_columns
+        ]
 
         (
             self.inserts,
@@ -47,13 +53,25 @@ class DiffCalculator:
             self.updates_new,
             self.updates_diff_mask,
             self.deletes,
-        ) = self.calculate_diff()
+        ) = self._calculate_diff()
 
-    def calculate_diff(self) -> tuple[DataFrame, DataFrame, DataFrame]:
-        inserts = self.calculate_inserts(
+    def _calculate_diff(self) -> tuple[DataFrame, DataFrame, DataFrame]:
+        columns_contain_list_column = any(
+            [
+                True
+                for name in self.comparison_columns
+                if type(self.source.get_column(name).dtype) == pl.List
+            ]
+        )
+        if columns_contain_list_column:
+            raise ValueError(
+                "Beetl does not support comparing list columns, please remove them from the sync.comparisonColumns field. If you didn't specify any non unique columns, Beetl will compare all columns by default. Please specify the columns you want to compare in the sync.comparisonColumns field."
+            )
+
+        inserts = self._calculate_inserts(
             self.source, self.destination, self.unique_columns, self.comparison_columns
         )
-        updates_old, updates_new, updated_diff_mask = self.calculate_updates(
+        updates_old, updates_new, updated_diff_mask = self._calculate_updates(
             self.source, self.destination, self.unique_columns, self.comparison_columns
         )
         deletes = self.calculate_deletes(
@@ -63,7 +81,7 @@ class DiffCalculator:
         return (inserts, updates_old, updates_new, updated_diff_mask, deletes)
 
     @staticmethod
-    def calculate_inserts(
+    def _calculate_inserts(
         source: DataFrame,
         destination: DataFrame,
         unique_columns: tuple[str, ...],
@@ -85,7 +103,7 @@ class DiffCalculator:
         )
 
     @staticmethod
-    def calculate_updates(
+    def _calculate_updates(
         source: DataFrame,
         destination: DataFrame,
         unique_columns: tuple[str, ...],
@@ -116,9 +134,7 @@ class DiffCalculator:
         ]
 
         merged = merged.with_columns(update_diff_mask_expression)
-        updated_rows = merged.filter(
-            pl.any_horizontal(*[col for col in update_diff_mask_expression])
-        )
+        updated_rows = merged.filter(pl.any_horizontal(update_diff_mask_expression))
         diff_mask = updated_rows.select(
             *unique_columns, *[f"diff_{col}" for col in comparison_columns]
         )
@@ -132,6 +148,24 @@ class DiffCalculator:
         ).select(*unique_columns, *comparison_columns)
 
         return (old, new, diff_mask)
+
+    @staticmethod
+    def _initialize_columns_if_empty(
+        dataframe: DataFrame, columns: tuple[ComparisonColumn, ...]
+    ) -> DataFrame:
+        if len(dataframe) == 0 and dataframe.width == 0:
+            for col in columns:
+                dataframe = dataframe.with_columns(pl.Series(col.name, dtype=col.type))
+        return dataframe
+
+    @staticmethod
+    def _cast_columns_to_specified_types(
+        dataframe: DataFrame, columns: tuple[ComparisonColumn, ...]
+    ) -> DataFrame:
+        for col in columns:
+            if col.name in dataframe.columns and col.type in CASTABLE:
+                dataframe = dataframe.with_columns(pl.col(col.name).cast(col.type))
+        return dataframe
 
     def create_diff(
         self,

@@ -2,9 +2,10 @@ import copy
 import json
 import os
 
-from ...sources import SourceDiffArguments, Sources
+from ...sources import Sources
 from ...transformers.interface import TransformerConfiguration
-from ..config_base import BeetlConfig, ComparisonColumn, SyncConfiguration
+from ...typings import ComparisonColumn
+from ..config_base import BeetlConfig, SyncConfiguration
 from .v1_schema import BeetlConfigSchemaV1
 
 
@@ -74,6 +75,7 @@ class BeetlConfigV1(BeetlConfig):
 
             raw_diff_section = sync.get("diff", {})
             raw_diff_destination = raw_diff_section.get("destination", None)
+            diff_instance = None
             if raw_diff_destination:
                 diff_name = raw_diff_destination.get("name", None)
                 diff_instance = copy.deepcopy(self.sources.get(diff_name, None))

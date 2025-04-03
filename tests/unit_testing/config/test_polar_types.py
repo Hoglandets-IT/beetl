@@ -1,7 +1,7 @@
 from typing import get_args
 from unittest import TestCase
 
-from src.beetl.config import PolarTypeLiterals, get_polar_type_from_literal
+from src.beetl.typings import PolarTypeLiterals, get_polar_type_from_literal
 
 
 class UnitTestPolarTypes(TestCase):

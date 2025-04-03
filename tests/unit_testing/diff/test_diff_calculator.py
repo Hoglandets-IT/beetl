@@ -4,9 +4,10 @@ from unittest import TestCase
 import polars as pl
 
 from src.beetl.diff import DiffCalculator
+from src.beetl.typings import ComparisonColumn
 
 
-class DiffFactoryUnitTests(TestCase):
+class DiffCalculatorUnitTests(TestCase):
     def test_create_diff__when_passed_known_good_values__returns_diff_instance(self):
         # arrange
         name = "name"
@@ -25,13 +26,14 @@ class DiffFactoryUnitTests(TestCase):
         }
         destination = pl.DataFrame(destination_data)
 
-        unique_columns = ("id",)
-        comparison_columns = ("name", "age")
+        columns = [
+            ComparisonColumn("id", "Int64", True),
+            ComparisonColumn("name", "String", False),
+            ComparisonColumn("age", "Int64", False),
+        ]
 
         # act
-        diff_calculator = DiffCalculator(
-            name, source, destination, unique_columns, comparison_columns
-        )
+        diff_calculator = DiffCalculator(name, source, destination, columns)
         diff = diff_calculator.create_diff()
 
         # assert

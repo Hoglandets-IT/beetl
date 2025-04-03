@@ -116,7 +116,7 @@ class V1Sync(BaseModel):
     insertionTransformers: OptionalTransformers
     deletionTransformers: OptionalTransformers
 
-    diff: DiffArguments
+    diff: Annotated[Optional[DiffArguments], Field(default=None)]
 
     @model_validator(mode="before")
     def validate_sources(cls, values):

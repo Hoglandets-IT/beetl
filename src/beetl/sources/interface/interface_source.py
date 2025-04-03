@@ -7,24 +7,6 @@ from .interface_config import SourceConfig, SourceConfigArguments
 from .interface_diff import SourceDiff, SourceDiffArguments
 from .interface_sync import SourceSync, SourceSyncArguments
 
-CASTABLE = (
-    pl.Int8,
-    pl.Int16,
-    pl.Int32,
-    pl.Int64,
-    pl.UInt8,
-    pl.UInt16,
-    pl.UInt32,
-    pl.UInt64,
-    pl.Float32,
-    pl.Float64,
-    pl.Boolean,
-    pl.Utf8,
-    pl.Object,
-    # Does not quite work
-    # pl.Binary,
-)
-
 
 class SourceInterface:
     ConfigClass = SourceConfig

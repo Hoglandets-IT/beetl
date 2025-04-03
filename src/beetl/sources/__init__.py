@@ -6,7 +6,6 @@ from .csv import CsvConfig, CsvConfigArguments, CsvSource
 from .excel import ExcelConfig, ExcelConfigArguments, ExcelSource
 from .faker import FakerConfig, FakerConfigArguments, FakerSource
 from .interface import (
-    CASTABLE,
     SourceConfig,
     SourceConfigArguments,
     SourceConnectionArguments,

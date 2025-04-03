@@ -7,6 +7,7 @@ import yaml
 
 from ..sources.interface import SourceConfig, SourceInterface, SourceSync
 from ..transformers.interface import TransformerConfiguration
+from ..typings import ComparisonColumn
 
 
 class SourceSettings:
@@ -37,17 +38,6 @@ class ChangeDetectionConfig:
     webhook: str = None
     webhookHeaders: Dict[str, str] = None
     webhookPayload: Dict[str, str] = None
-
-
-@dataclass
-class ComparisonColumn:
-    name: str
-    type: pl.DataType
-    unique: bool = False
-
-    def __init__(self, name: str, type: Any, unique: bool = False) -> None:
-        self.name, self.unique = name, unique
-        self.type = getattr(pl, type)
 
 
 @dataclass

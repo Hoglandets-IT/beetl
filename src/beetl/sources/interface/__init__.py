@@ -4,5 +4,5 @@ from .interface_config import (
     SourceConnectionArguments,
 )
 from .interface_diff import SourceDiff, SourceDiffArguments, SourceDiffConfigArguments
-from .interface_source import CASTABLE, SourceInterface
+from .interface_source import SourceInterface
 from .interface_sync import SourceSync, SourceSyncArguments
