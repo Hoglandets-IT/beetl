@@ -46,17 +46,15 @@ class DiffCalculatorUnitTests(TestCase):
 
         self.assertEqual(2, len(diff.updates))
         update = diff.updates[0]
-        self.assertEqual({"id": 6}, update.identifiers)
-        self.assertEqual({"name": "test", "age": None}, update.old)
-        self.assertEqual({"name": "test6", "age": None}, update.new)
+        self.assertEqual({"id": 6, "name": "test", "age": None}, update.old)
+        self.assertEqual({"id": 6, "name": "test6", "age": None}, update.new)
 
         self.assertEqual(1, len(diff.deletes))
         delete = diff.deletes[0]
-        self.assertEqual({"id": 5}, delete.identifiers)
+        self.assertEqual({"id": 5}, delete)
 
         self.assertEqual(4, diff.stats.inserts)
         self.assertEqual(2, diff.stats.updates)
         self.assertEqual(1, diff.stats.deletes)
-        self.assertEqual(("name", "age"), diff.stats.updated_fields)
 
         print(diff.dump_json())

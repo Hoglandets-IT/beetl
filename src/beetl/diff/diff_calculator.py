@@ -176,8 +176,10 @@ class DiffCalculator:
                 self.inserts.to_dicts(),
             )
         )
-        add_hash_expression = pl.hash(pl.struct(self.unique_columns)).alias(
-            BEETL_COMPARISON_HASH_COLUMN_IDENTIFIER
+        add_hash_expression = (
+            pl.struct(self.unique_columns)
+            .hash()
+            .alias(BEETL_COMPARISON_HASH_COLUMN_IDENTIFIER)
         )
         # hash identifiers
         old_with_hash = self.updates_old.with_columns(add_hash_expression)
