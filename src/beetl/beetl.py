@@ -1,15 +1,14 @@
 from time import perf_counter
 from typing import List, Union
 
-import polars as pl
 from tabulate import tabulate
 
 from .compare.compare import Difftool
 from .comparison_result import ComparisonResult
-from .config import BeetlConfig, SyncConfiguration
+from .config import BeetlConfig
 from .diff import DiffCalculator
 from .result import Result, SyncResult
-from .transformers.interface import TransformerConfiguration
+from .transformers import run_transformers
 
 BENCHMARK = []
 
@@ -60,24 +59,6 @@ class Beetl:
                 + str(round(BENCHMARK[-1]["perf"] - BENCHMARK[-2]["perf"], 5))
             )
 
-    def runTransformers(
-        self,
-        source: pl.DataFrame,
-        transformers: List[TransformerConfiguration],
-        sync: SyncConfiguration,
-    ) -> pl.DataFrame:
-        transformed = source.clone()
-
-        if transformers is not None and len(transformers) > 0:
-            for transformer in transformers:
-                if transformer.include_sync:
-                    transformed = transformer.transform(transformed, sync=sync)
-                    continue
-
-                transformed = transformer.transform(transformed)
-
-        return transformed
-
     def sync(
         self, dry_run: bool = False, generate_update_diff: bool = False
     ) -> Union[Result, List[ComparisonResult]]:
@@ -123,14 +104,12 @@ class Beetl:
             self.benchmark("Finished data retrieval from destination")
 
             self.benchmark("Starting source data transformation")
-            transformedSource = self.runTransformers(
-                source_data, sync.sourceTransformers, sync
-            )
+            transformedSource = run_transformers(source_data, sync.sourceTransformers)
             self.benchmark(
                 "Finished source data transformation, starting destination transformation"
             )
-            transformedDestination = self.runTransformers(
-                destination_data, sync.destinationTransformers, sync
+            transformedDestination = run_transformers(
+                destination_data, sync.destinationTransformers
             )
 
             self.benchmark("Finished data transformation before comparison")
@@ -182,9 +161,9 @@ class Beetl:
             if dry_run:
                 dry_run_results.append(
                     ComparisonResult(
-                        self.runTransformers(create, sync.insertionTransformers, sync),
-                        self.runTransformers(update, sync.insertionTransformers, sync),
-                        self.runTransformers(delete, sync.deletionTransformers, sync),
+                        run_transformers(create, sync.insertionTransformers),
+                        run_transformers(update, sync.insertionTransformers),
+                        run_transformers(delete, sync.deletionTransformers),
                     )
                 )
                 sync.destination.disconnect()
@@ -200,14 +179,14 @@ class Beetl:
             amount["deletes"] = 0
             if len(delete):
                 amount["deletes"] = sync.destination.delete(
-                    self.runTransformers(delete, sync.deletionTransformers, sync)
+                    run_transformers(delete, sync.deletionTransformers)
                 )
 
             self.benchmark("Finished deletes, starting inserts")
             amount["inserts"] = 0
             if len(create):
                 amount["inserts"] = sync.destination.insert(
-                    self.runTransformers(create, sync.insertionTransformers, sync)
+                    run_transformers(create, sync.insertionTransformers)
                 )
 
             self.benchmark("Finished inserts, starting updates")
@@ -215,7 +194,7 @@ class Beetl:
             amount["updates"] = 0
             if len(update):
                 amount["updates"] = sync.destination.update(
-                    self.runTransformers(update, sync.insertionTransformers, sync)
+                    run_transformers(update, sync.insertionTransformers)
                 )
 
             self.benchmark("Finished updates, sync finished")

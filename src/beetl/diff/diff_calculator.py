@@ -118,10 +118,6 @@ class DiffCalculator:
     ) -> tuple[DataFrame, DataFrame]:
         source_filtered = source.select(*unique_columns, *comparison_columns)
         destination_filtered = destination.select(*unique_columns, *comparison_columns)
-        # if not source_filtered.schema == destination_filtered.schema:
-        # raise ValueError(
-        # "DataFrames must have the same schema (columns and data types)."
-        # )
 
         destination_renamed_as_old = destination_filtered.rename(
             {
@@ -181,16 +177,22 @@ class DiffCalculator:
                 ).to_dicts(),
             )
         )
+        non_unique_inserts_columns = [
+            col for col in self.inserts.columns if col not in self.unique_columns
+        ]
         diff_inserts = tuple(
             map(
                 DiffInsert,
                 self.inserts.select(
                     pl.struct(self.unique_columns).alias("identifiers"),
-                    pl.struct(self.comparison_columns).alias("data"),
+                    pl.struct(non_unique_inserts_columns).alias("data"),
                 ).to_dicts(),
             )
         )
 
+        # transform
+
+        # TODO: rename all as old
         update_old_columns_renamed_as_old = self.updates_old.rename(
             {
                 col: f"{col}_old"
@@ -198,10 +200,12 @@ class DiffCalculator:
                 if col not in self.unique_columns
             }
         )
-
+        # TODO: Rename all as new
         updates = self.updates_new.join(
             update_old_columns_renamed_as_old, on=self.unique_columns, how="inner"
         )
+
+        # TODO: use new_old to pair instead of diff
         updates = updates.join(
             self.updates_diff_mask, on=self.unique_columns, how="inner"
         )
