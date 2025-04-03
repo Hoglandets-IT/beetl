@@ -1,4 +1,3 @@
-import gc
 from typing import Optional
 
 import polars as pl
