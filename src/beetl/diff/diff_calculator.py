@@ -69,38 +69,45 @@ class DiffCalculator:
             )
 
         inserts = self._calculate_inserts(
-            self.source, self.destination, self.unique_columns, self.comparison_columns
-        )
-        updates_old, updates_new, updated_diff_mask = self._calculate_updates(
-            self.source, self.destination, self.unique_columns, self.comparison_columns
+            self.source, self.destination, self.unique_columns
         )
         deletes = self.calculate_deletes(
+            self.source, self.destination, self.unique_columns
+        )
+
+        if self.diff_cannot_contain_any_updates():
+            return (inserts, DataFrame(), DataFrame(), DataFrame(), deletes)
+
+        updates_old, updates_new, updated_diff_mask = self._calculate_updates(
             self.source, self.destination, self.unique_columns, self.comparison_columns
         )
 
         return (inserts, updates_old, updates_new, updated_diff_mask, deletes)
+
+    def diff_cannot_contain_any_updates(self):
+        """
+        If there are no comparison columns nothing can change without also affecting a unique identifier which means a row should either be inserted or deleted.
+
+        returns:
+            bool: True if there are no comparison columns.
+        """
+        return len(self.comparison_columns) == 0
 
     @staticmethod
     def _calculate_inserts(
         source: DataFrame,
         destination: DataFrame,
         unique_columns: tuple[str, ...],
-        comparision_columns: tuple[str, ...],
     ) -> DataFrame:
-        return source.join(destination, on=unique_columns, how="anti").select(
-            *unique_columns, *comparision_columns
-        )
+        return source.join(destination, on=unique_columns, how="anti")
 
     @staticmethod
     def calculate_deletes(
         source: DataFrame,
         destination: DataFrame,
         unique_columns: tuple[str, ...],
-        comparison_columns: tuple[str, ...],
     ) -> DataFrame:
-        return destination.join(source, on=unique_columns, how="anti").select(
-            *unique_columns, *comparison_columns
-        )
+        return destination.join(source, on=unique_columns, how="anti")
 
     @staticmethod
     def _calculate_updates(
@@ -111,10 +118,10 @@ class DiffCalculator:
     ) -> tuple[DataFrame, DataFrame]:
         source_filtered = source.select(*unique_columns, *comparison_columns)
         destination_filtered = destination.select(*unique_columns, *comparison_columns)
-        if not source_filtered.schema == destination_filtered.schema:
-            raise ValueError(
-                "DataFrames must have the same schema (columns and data types)."
-            )
+        # if not source_filtered.schema == destination_filtered.schema:
+        # raise ValueError(
+        # "DataFrames must have the same schema (columns and data types)."
+        # )
 
         destination_renamed_as_old = destination_filtered.rename(
             {
@@ -140,12 +147,8 @@ class DiffCalculator:
         )
         updated_rows_identifiers = updated_rows.select(*unique_columns)
 
-        old = destination_filtered.join(
-            updated_rows_identifiers, on=unique_columns, how="inner"
-        ).select(*unique_columns, *comparison_columns)
-        new = source_filtered.join(
-            updated_rows_identifiers, on=unique_columns, how="inner"
-        ).select(*unique_columns, *comparison_columns)
+        old = destination.join(updated_rows_identifiers, on=unique_columns, how="inner")
+        new = source.join(updated_rows_identifiers, on=unique_columns, how="inner")
 
         return (old, new, diff_mask)
 

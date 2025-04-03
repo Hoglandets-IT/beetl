@@ -113,9 +113,9 @@ class TestXmlSource(unittest.TestCase):
 
         result = beetl_client.sync(dry_run=True)[0].create
 
-        self.assertEqual(result.height, 4)
-        self.assertSequenceEqual(result.columns, ["name", "street"])
-        self.assertEqual(result.count()["name"][0], 4)
-        self.assertEqual(result.count()["street"][0], 4)
+        self.assertEqual(4, result.height)
+        self.assertSequenceEqual(["name", "street"], result.columns)
+        self.assertEqual(4, result.count()["name"][0])
+        self.assertEqual(4, result.count()["street"][0])
 
         self.remove_if_exists(destination_path)

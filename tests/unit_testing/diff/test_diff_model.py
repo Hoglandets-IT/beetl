@@ -16,15 +16,13 @@ from src.beetl.diff.diff_model import (
 class DiffModelUnitTests(TestCase):
     def test_dump_json__when_all_fields_are_populated__returns_serialised_model(self):
         # arrange
-        insert = DiffInsert(
-            DiffRowIdentifiers({"id": 1}), DiffRowData({"name": "test1"})
-        )
+        insert = DiffInsert({"identifiers": {"id": 1}, "data": {"name": "test1"}})
         update = DiffUpdate(
             DiffRowIdentifiers({"id": 2}),
             DiffRowData({"name": "test2"}),
             DiffRowData({"name": "test2-updated"}),
         )
-        delete = DiffDelete(DiffRowIdentifiers({"id": 2}))
+        delete = DiffDelete({"identifiers": {"id": 2}})
         diff = Diff(
             "name",
             (update,),
