@@ -3,6 +3,7 @@ from typing import List
 
 import polars as pl
 
+from ..constants import RESERVED_IDENTIFIERS
 from .interface import TransformerInterface, register_transformer_class
 
 
@@ -147,6 +148,7 @@ class FrameTransformer(TransformerInterface):
             pl.DataFrame: The projected DataFrame
         """
         __class__._validate_fields(data.columns, columns)
+        columns = [col for col in columns if col not in RESERVED_IDENTIFIERS]
         return data.select(columns)
 
     @staticmethod

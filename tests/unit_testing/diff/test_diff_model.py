@@ -3,26 +3,18 @@ from datetime import datetime
 from unittest import TestCase
 from uuid import uuid4
 
-from src.beetl.diff.diff_model import (
-    Diff,
-    DiffDelete,
-    DiffInsert,
-    DiffRowData,
-    DiffRowIdentifiers,
-    DiffUpdate,
-)
+from src.beetl.diff.diff_model import Diff, DiffRow, DiffUpdate
 
 
 class DiffModelUnitTests(TestCase):
     def test_dump_json__when_all_fields_are_populated__returns_serialised_model(self):
         # arrange
-        insert = DiffInsert({"identifiers": {"id": 1}, "data": {"name": "test1"}})
+        insert = DiffRow({"id": 1, "name": "test1"})
         update = DiffUpdate(
-            DiffRowIdentifiers({"id": 2}),
-            DiffRowData({"name": "test2"}),
-            DiffRowData({"name": "test2-updated"}),
+            DiffRow({"id": 2, "name": "test2"}),
+            DiffRow({"id": 2, "name": "test2-updated"}),
         )
-        delete = DiffDelete({"identifiers": {"id": 2}})
+        delete = DiffRow({"id": 2})
         diff = Diff(
             "name",
             (update,),
@@ -34,7 +26,7 @@ class DiffModelUnitTests(TestCase):
         result_json = diff.dump_json()
 
         # assert
-        expected_json = """{"name": "name", "date": "2025-03-21T09:14:39.329739", "uuid": "354e0687-4995-42c7-a908-530e14e1622c", "version": "1.0.0", "updates": [{"identifiers": {"id": 2}, "old": {"name": "test2"}, "new": {"name": "test2-updated"}}], "inserts": [{"identifiers": {"id": 1}, "data": {"name": "test1"}}], "deletes": [{"identifiers": {"id": 2}}], "stats": {"updates": 1, "inserts": 1, "deletes": 1, "updated_fields": ["name"]}}"""
+        expected_json = """{"name": "name", "date": "2025-04-03T13:43:42.372858", "uuid": "53d684c1-5639-4efe-a455-760ff7494f1f", "version": "1.0.0", "updates": [{"old": {"id": 2, "name": "test2"}, "new": {"id": 2, "name": "test2-updated"}}], "inserts": [{"id": 1, "name": "test1"}], "deletes": [{"id": 2}], "stats": {"updates": 1, "inserts": 1, "deletes": 1}}"""
 
         ## Result uuid and date is unique per diff instance and need to be aligned before comparison.
         known_uuid = str(uuid4())

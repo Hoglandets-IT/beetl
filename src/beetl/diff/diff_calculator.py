@@ -1,17 +1,12 @@
-from typing import Optional
+from typing import Literal, Optional
 
 import polars as pl
 from polars import DataFrame
 
+from ..constants import BEETL_COMPARISON_HASH_COLUMN_IDENTIFIER, RESERVED_IDENTIFIERS
+from ..transformers import TransformerConfiguration, run_transformers
 from ..typings import CASTABLE, ComparisonColumn
-from .diff_model import (
-    Diff,
-    DiffDelete,
-    DiffInsert,
-    DiffRowData,
-    DiffRowIdentifiers,
-    DiffUpdate,
-)
+from .diff_model import Diff, DiffRow, DiffUpdate
 
 
 class DiffCalculator:
@@ -167,72 +162,68 @@ class DiffCalculator:
         return dataframe
 
     def create_diff(
-        self,
+        self, transformers: Optional[list[TransformerConfiguration]] = None
     ) -> Diff:
         diff_deletes = tuple(
             map(
-                DiffDelete,
-                self.deletes.select(
-                    pl.struct(self.unique_columns).alias("identifiers")
-                ).to_dicts(),
+                DiffRow,
+                self.deletes.to_dicts(),
             )
         )
-        non_unique_inserts_columns = [
-            col for col in self.inserts.columns if col not in self.unique_columns
-        ]
         diff_inserts = tuple(
             map(
-                DiffInsert,
-                self.inserts.select(
-                    pl.struct(self.unique_columns).alias("identifiers"),
-                    pl.struct(non_unique_inserts_columns).alias("data"),
-                ).to_dicts(),
+                DiffRow,
+                self.inserts.to_dicts(),
             )
         )
+        add_hash_expression = pl.hash(pl.struct(self.unique_columns)).alias(
+            BEETL_COMPARISON_HASH_COLUMN_IDENTIFIER
+        )
+        # hash identifiers
+        old_with_hash = self.updates_old.with_columns(add_hash_expression)
+        new_with_hash = self.updates_new.with_columns(add_hash_expression)
 
         # transform
+        old_transformed = run_transformers(old_with_hash, transformers)
+        new_transformed = run_transformers(new_with_hash, transformers)
 
-        # TODO: rename all as old
-        update_old_columns_renamed_as_old = self.updates_old.rename(
-            {
-                col: f"{col}_old"
-                for col in self.updates_old.columns
-                if col not in self.unique_columns
+        def create_rename_mapping(
+            postfix: Literal["old", "new"], column_names: tuple[str, ...]
+        ):
+            return {
+                col: f"{col}_{postfix}"
+                for col in column_names
+                if col not in RESERVED_IDENTIFIERS
             }
-        )
-        # TODO: Rename all as new
-        updates = self.updates_new.join(
-            update_old_columns_renamed_as_old, on=self.unique_columns, how="inner"
+
+        columns = old_transformed.columns
+
+        old_renamed = old_transformed.rename(create_rename_mapping("old", columns))
+        new_renamed = new_transformed.rename(create_rename_mapping("new", columns))
+
+        updates = old_renamed.join(
+            new_renamed, on=BEETL_COMPARISON_HASH_COLUMN_IDENTIFIER, how="inner"
         )
 
-        # TODO: use new_old to pair instead of diff
-        updates = updates.join(
-            self.updates_diff_mask, on=self.unique_columns, how="inner"
+        def create_struct_columns(postfix: Literal["old", "new"]):
+            return [
+                f"{col}_{postfix}" for col in columns if col not in RESERVED_IDENTIFIERS
+            ]
+
+        updates = updates.with_columns(
+            pl.struct(create_struct_columns("new")).alias("new")
         )
         updates = updates.with_columns(
-            pl.struct(self.unique_columns).alias("identifiers")
+            pl.struct(create_struct_columns("old")).alias("old")
         )
 
-        new_values_expression = [
-            pl.when(pl.col(f"diff_{col}")).then(pl.col(col)).alias(col)
-            for col in self.comparison_columns
-        ]
-        updates = updates.with_columns(pl.struct(new_values_expression).alias("new"))
-
-        old_values_expression = [
-            pl.when(updates[f"diff_{col}"]).then(updates[f"{col}_old"]).alias(col)
-            for col in self.comparison_columns
-        ]
-        updates = updates.with_columns(pl.struct(old_values_expression).alias("old"))
-
-        updates = updates.select(["identifiers", "old", "new"])
+        updates = updates.select(["old", "new"])
 
         diff_updates = []
-        for updateRow in updates.to_dicts():
-            identifiers = DiffRowIdentifiers(updateRow["identifiers"])
-            old = DiffRowData(updateRow["old"])
-            new = DiffRowData(updateRow["new"])
-            diff_updates.append(DiffUpdate(identifiers, old, new))
+        for update_row in updates.to_dicts():
+            old = DiffRow(update_row["old"])
+            new = DiffRow(update_row["new"])
+            diff_updates.append(DiffUpdate(old, new))
 
         return Diff(self.sync_name, diff_updates, diff_inserts, diff_deletes)
 

@@ -3,6 +3,7 @@ from typing import Union
 
 from .frames_schema import FramesTransformerSchemas
 from .integer_schema import IntegerTransformerSchemas
+from .interface import TransformerConfiguration
 from .itop_schema import ItopTransformerSchemas
 from .misc_schema import MiscTransformerSchemas
 from .regex_schema import RegexTransformerSchemas

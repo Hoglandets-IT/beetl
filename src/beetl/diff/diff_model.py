@@ -4,74 +4,22 @@ from json import JSONEncoder
 from typing import Any, Literal, Union
 from uuid import uuid4
 
-from polars import DataFrame
-
-
-class DiffRowIdentifiers(dict[str, Union[str, int, float]]):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-
-class DiffRowData(dict[str, Any]):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+DiffRow = dict[str, Any]
 
 
 class DiffUpdate:
-    identifiers: DiffRowIdentifiers
-    old: DiffRowData
-    new: DiffRowData
+    old: DiffRow
+    new: DiffRow
 
-    def __init__(
-        self, identifiers: DiffRowIdentifiers, old: DiffRowData, new: DiffRowData
-    ):
-        self.identifiers, self.old, self.new = identifiers, old, new
+    def __init__(self, old: DiffRow, new: DiffRow):
+        self.old = old
+        self.new = new
 
     class JsonEncoder(JSONEncoder):
         def default(self, o: Any):
             if isinstance(o, DiffUpdate):
-                return {"identifiers": o.identifiers, "old": o.old, "new": o.new}
+                return {"old": o.old, "new": o.new}
 
-            return super().default(o)
-
-    def dump_json(self):
-        return json.dumps(self, cls=JSONEncoder)
-
-
-class DiffInsert:
-    identifiers: DiffRowIdentifiers
-    data: DiffRowData
-
-    def __init__(self, insert: dict[str, Any]):
-        self.identifiers = DiffRowIdentifiers(insert["identifiers"])
-        self.data = DiffRowData(insert["data"])
-
-    class JsonEncoder(JSONEncoder):
-        def default(self, o: Any):
-            if isinstance(o, DiffInsert):
-                return {
-                    "identifiers": o.identifiers,
-                    "data": o.data,
-                }
-
-            return super().default(o)
-
-    def dump_json(self):
-        return json.dumps(self, cls=JSONEncoder)
-
-
-class DiffDelete:
-    identifiers: DiffRowIdentifiers
-
-    def __init__(self, delete: dict[str, Any]):
-        self.identifiers = DiffRowIdentifiers(delete["identifiers"])
-
-    class JsonEncoder(JSONEncoder):
-        def default(self, o: Any):
-            if isinstance(o, DiffDelete):
-                return {
-                    "identifiers": o.identifiers,
-                }
             return super().default(o)
 
     def dump_json(self):
@@ -80,7 +28,6 @@ class DiffDelete:
 
 class DiffStats:
     updates: int
-    updated_fields: tuple[str, ...] = ()
     inserts: int
     deletes: int
 
@@ -90,8 +37,6 @@ class DiffStats:
             len(inserts),
             len(deletes),
         )
-        if len(updates):
-            self.updated_fields = tuple(updates[0].new.keys())
 
     class JsonEncoder(JSONEncoder):
         def default(self, o: Any):
@@ -100,7 +45,6 @@ class DiffStats:
                     "updates": o.updates,
                     "inserts": o.inserts,
                     "deletes": o.deletes,
-                    "updated_fields": o.updated_fields,
                 }
             return super().default(o)
 
@@ -114,16 +58,16 @@ class Diff:
     uuid: str
     version: Literal["1.0.0"] = "1.0.0"
     updates: tuple[DiffUpdate, ...]
-    inserts: tuple[DiffInsert, ...]
-    deletes: tuple[DiffDelete, ...]
+    inserts: tuple[DiffRow, ...]
+    deletes: tuple[DiffRow, ...]
     stats: DiffStats
 
     def __init__(
         self,
         name: str,
-        updates: tuple[DiffInsert, ...],
-        inserts: tuple[DiffInsert, ...],
-        deletes: tuple[DiffDelete, ...],
+        updates: tuple[DiffUpdate, ...],
+        inserts: tuple[DiffRow, ...],
+        deletes: tuple[DiffRow, ...],
     ):
         self.name = name
         self.date = datetime.now()
@@ -148,12 +92,8 @@ class DiffJsonEncoder(JSONEncoder):
                 "updates": [
                     DiffUpdate.JsonEncoder().default(update) for update in o.updates
                 ],
-                "inserts": [
-                    DiffInsert.JsonEncoder().default(insert) for insert in o.inserts
-                ],
-                "deletes": [
-                    DiffDelete.JsonEncoder().default(delete) for delete in o.deletes
-                ],
+                "inserts": o.inserts,
+                "deletes": o.deletes,
                 "stats": DiffStats.JsonEncoder().default(o.stats),
             }
         return super().default(o)

@@ -6,7 +6,7 @@ import polars as pl
 import pyodbc
 import sqlalchemy as sqla
 
-from ...diff import Diff, DiffDelete, DiffInsert, DiffStats, DiffUpdate
+from ...diff import Diff, DiffStats, DiffUpdate
 from ..interface import SourceInterface
 from ..registrated_source import register_source
 from .sqlserver_config import SqlserverConfig, SqlserverConfigArguments
@@ -249,8 +249,8 @@ class SqlserverSource(SourceInterface):
             uuid=diff.uuid,
             version=diff.version,
             updates=json.dumps(diff.updates, cls=DiffUpdate.JsonEncoder),
-            inserts=json.dumps(diff.inserts, cls=DiffInsert.JsonEncoder),
-            deletes=json.dumps(diff.deletes, cls=DiffDelete.JsonEncoder),
+            inserts=json.dumps(diff.inserts),
+            deletes=json.dumps(diff.deletes),
             stats=json.dumps(diff.stats, cls=DiffStats.JsonEncoder),
         )
         self.connection.execute(insert_statement)
