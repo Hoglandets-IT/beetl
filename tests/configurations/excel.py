@@ -19,7 +19,6 @@ def to_xlsx(source_file_path: str, destination_file_path: str) -> dict:
         ],
         "sync": [
             {
-                "dryRun": True,
                 "source": "src",
                 "destination": "dst",
                 "sourceConfig": {},
