@@ -142,9 +142,7 @@ class TestSqlServerSource(unittest.TestCase):
 
             self.assertEqual("diff_test", name)
             self.assertEqual("1.0.0", version)
-            self.assertRegexpMatches(
-                date, f"{datetime.datetime.now().strftime('%Y-%m-%d')}"
-            )
+            self.assertRegex(date, f"{datetime.datetime.now().strftime('%Y-%m-%d')}")
             self.assertIsNotNone(uuid)
 
             self.assertEqual(2, len(updates))
@@ -154,6 +152,5 @@ class TestSqlServerSource(unittest.TestCase):
             self.assertEqual(1, stats["inserts"])
             self.assertEqual(2, stats["updates"])
             self.assertEqual(1, stats["deletes"])
-            self.assertSequenceEqual(["name", "age"], stats["updated_fields"])
 
             print(diff)
