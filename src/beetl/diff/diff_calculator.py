@@ -1,3 +1,5 @@
+"""Utilities related to calculating the diff between two datasets."""
+
 from typing import Literal, Optional
 
 import polars as pl
@@ -10,6 +12,12 @@ from .diff_model import Diff, DiffRow, DiffUpdate
 
 
 class DiffCalculator:
+    """
+    DiffCalculator is a utility class designed to compute the differences (inserts, updates, and deletes)
+    between two datasets represented as DataFrames. It identifies changes based on unique and comparison
+    columns specified during initialization.
+    """
+
     sync_name: str
     unique_columns: tuple[str, ...]
     comparison_columns: tuple[str, ...]
@@ -55,18 +63,20 @@ class DiffCalculator:
             [
                 True
                 for name in self.comparison_columns
-                if type(self.source.get_column(name).dtype) == pl.List
+                if isinstance(self.source.get_column(name).dtype, pl.List)
             ]
         )
         if columns_contain_list_column:
             raise ValueError(
-                "Beetl does not support comparing list columns, please remove them from the sync.comparisonColumns field. If you didn't specify any non unique columns, Beetl will compare all columns by default. Please specify the columns you want to compare in the sync.comparisonColumns field."
+                """Beetl does not support comparing list columns, please remove them from the sync.comparisonColumns field.
+                If you didn't specify any non unique columns, Beetl will compare all columns by default.
+                Please specify the columns you want to compare in the sync.comparisonColumns field."""
             )
 
         inserts = self._calculate_inserts(
             self.source, self.destination, self.unique_columns
         )
-        deletes = self.calculate_deletes(
+        deletes = self._calculate_deletes(
             self.source, self.destination, self.unique_columns
         )
 
@@ -81,7 +91,8 @@ class DiffCalculator:
 
     def diff_cannot_contain_any_updates(self):
         """
-        If there are no comparison columns nothing can change without also affecting a unique identifier which means a row should either be inserted or deleted.
+        If there are no comparison columns nothing can change without also affecting a unique identifier.
+        This means a row should either be inserted or deleted.
 
         returns:
             bool: True if there are no comparison columns.
@@ -97,7 +108,7 @@ class DiffCalculator:
         return source.join(destination, on=unique_columns, how="anti")
 
     @staticmethod
-    def calculate_deletes(
+    def _calculate_deletes(
         source: DataFrame,
         destination: DataFrame,
         unique_columns: tuple[str, ...],
@@ -164,6 +175,22 @@ class DiffCalculator:
     def create_diff(
         self, transformers: Optional[list[TransformerConfiguration]] = None
     ) -> Diff:
+        """
+        Creates a diff object that represents the differences between two datasets.
+
+        This method calculates the differences by comparing the deletes, inserts,
+        and updates between the old and new datasets. It applies optional
+        transformations to the datasets before performing the comparison.
+
+        Args:
+            transformers (Optional[list[TransformerConfiguration]]):
+                A list of transformer configurations to apply to the datasets
+                before computing the diff. Defaults to None.
+
+        Returns:
+            Diff: An object containing the differences, including updates, inserts,
+            and deletes, between the old and new datasets.
+        """
         diff_deletes = tuple(
             map(
                 DiffRow,
@@ -176,47 +203,40 @@ class DiffCalculator:
                 self.inserts.to_dicts(),
             )
         )
+
         add_hash_expression = (
             pl.struct(self.unique_columns)
             .hash()
             .alias(BEETL_COMPARISON_HASH_COLUMN_IDENTIFIER)
         )
-        # hash identifiers
         old_with_hash = self.updates_old.with_columns(add_hash_expression)
         new_with_hash = self.updates_new.with_columns(add_hash_expression)
 
-        # transform
         old_transformed = run_transformers(old_with_hash, transformers)
         new_transformed = run_transformers(new_with_hash, transformers)
 
-        def create_rename_mapping(
-            postfix: Literal["old", "new"], column_names: tuple[str, ...]
-        ):
-            return {
-                col: f"{col}_{postfix}"
-                for col in column_names
-                if col not in RESERVED_IDENTIFIERS
-            }
-
         columns = old_transformed.columns
 
-        old_renamed = old_transformed.rename(create_rename_mapping("old", columns))
-        new_renamed = new_transformed.rename(create_rename_mapping("new", columns))
+        old_renamed = old_transformed.rename(
+            self._create_rename_mapping("old", columns)
+        )
+        new_renamed = new_transformed.rename(
+            self._create_rename_mapping("new", columns)
+        )
 
         updates = old_renamed.join(
             new_renamed, on=BEETL_COMPARISON_HASH_COLUMN_IDENTIFIER, how="inner"
         )
 
-        def create_struct_columns(postfix: Literal["old", "new"]):
-            return [
-                f"{col}_{postfix}" for col in columns if col not in RESERVED_IDENTIFIERS
-            ]
-
         updates = updates.with_columns(
-            pl.struct(create_struct_columns("new")).alias("new")
+            pl.struct(self._create_struct_column_expression("new", columns)).alias(
+                "new"
+            )
         )
         updates = updates.with_columns(
-            pl.struct(create_struct_columns("old")).alias("old")
+            pl.struct(self._create_struct_column_expression("old", columns)).alias(
+                "old"
+            )
         )
 
         updates = updates.select(["old", "new"])
@@ -229,7 +249,35 @@ class DiffCalculator:
 
         return Diff(self.sync_name, diff_updates, diff_inserts, diff_deletes)
 
+    @staticmethod
+    def _create_rename_mapping(
+        postfix: Literal["old", "new"], column_names: tuple[str, ...]
+    ):
+        return {
+            col: f"{col}_{postfix}"
+            for col in column_names
+            if col not in RESERVED_IDENTIFIERS
+        }
+
+    @staticmethod
+    def _create_struct_column_expression(
+        postfix: Literal["old", "new"], columns: tuple[str, ...]
+    ):
+        return [
+            f"{col}_{postfix}" for col in columns if col not in RESERVED_IDENTIFIERS
+        ]
+
     def get_create_update_delete_for_sync(
         self,
     ) -> tuple[DataFrame, DataFrame, DataFrame]:
+        """
+        Retrieves the DataFrames representing the inserts, updates, and deletes
+        required for synchronization.
+
+        Returns:
+            tuple[DataFrame, DataFrame, DataFrame]: A tuple containing three DataFrames:
+                - The first DataFrame represents the rows to be inserted.
+                - The second DataFrame represents the rows to be updated.
+                - The third DataFrame represents the rows to be deleted.
+        """
         return (self.inserts, self.updates_new, self.deletes)

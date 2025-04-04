@@ -41,8 +41,7 @@ class DiffCalculatorUnitTests(TestCase):
 
         self.assertEqual(4, len(diff.inserts))
         insert = diff.inserts[0]
-        self.assertEqual({"id": 1}, insert.identifiers)
-        self.assertEqual({"name": "test1", "age": 20}, insert.data)
+        self.assertEqual({"id": 1, "name": "test1", "age": 20}, insert)
 
         self.assertEqual(2, len(diff.updates))
         update = diff.updates[0]
