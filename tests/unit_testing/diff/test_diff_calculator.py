@@ -39,21 +39,21 @@ class DiffCalculatorUnitTests(TestCase):
         # assert
         self.assertEqual(name, diff.name)
 
-        self.assertEqual(4, len(diff.inserts))
+        self.assertEqual(len(diff.inserts), 4)
         insert = diff.inserts[0]
-        self.assertEqual({"id": 1, "name": "test1", "age": 20}, insert)
+        self.assertEqual(insert, {"id": 1, "name": "test1", "age": 20})
 
-        self.assertEqual(2, len(diff.updates))
+        self.assertEqual(len(diff.updates), 2)
         update = diff.updates[0]
-        self.assertEqual({"id": 6, "name": "test", "age": 20}, update.old)
-        self.assertEqual({"id": 6, "name": "test6", "age": 20}, update.new)
+        self.assertEqual(update.old, {"id": 6, "name": "test", "age": 20})
+        self.assertEqual(update.new, {"id": 6, "name": "test6", "age": 20})
 
-        self.assertEqual(1, len(diff.deletes))
+        self.assertEqual(len(diff.deletes), 1)
         delete = diff.deletes[0]
-        self.assertEqual({"id": 5}, delete)
+        self.assertEqual(delete, {"id": 5, "name": "test5", "age": 20})
 
-        self.assertEqual(4, diff.stats.inserts)
-        self.assertEqual(2, diff.stats.updates)
-        self.assertEqual(1, diff.stats.deletes)
+        self.assertEqual(diff.stats.inserts, 4)
+        self.assertEqual(diff.stats.updates, 2)
+        self.assertEqual(diff.stats.deletes, 1)
 
         print(diff.dump_json())
