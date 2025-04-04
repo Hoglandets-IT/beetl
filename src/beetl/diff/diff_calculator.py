@@ -194,13 +194,13 @@ class DiffCalculator:
         diff_deletes = tuple(
             map(
                 DiffRow,
-                self.deletes.to_dicts(),
+                run_transformers(self.deletes, transformers).to_dicts(),
             )
         )
         diff_inserts = tuple(
             map(
                 DiffRow,
-                self.inserts.to_dicts(),
+                run_transformers(self.inserts, transformers).to_dicts(),
             )
         )
 
