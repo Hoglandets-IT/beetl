@@ -2,7 +2,7 @@ import os
 from typing import Literal
 
 # re-export
-from .csv import CsvConfig, CsvConfigArguments, CsvSource
+from .csv import CsvConfig, CsvConfigArguments, CsvDiff, CsvDiffArguments, CsvSource
 from .excel import ExcelConfig, ExcelConfigArguments, ExcelSource
 from .faker import FakerConfig, FakerConfigArguments, FakerSource
 from .interface import (

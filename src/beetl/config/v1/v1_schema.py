@@ -5,6 +5,7 @@ from pydantic_core import ErrorDetails
 
 from ...sources import (
     CsvConfigArguments,
+    CsvDiffArguments,
     ExcelConfigArguments,
     FakerConfigArguments,
     ItopConfigArguments,
@@ -75,7 +76,9 @@ OptionalTransformers = Annotated[
     Field(default=[]),
 ]
 
-SourceDiffArguments = Union[SqlserverDiffArguments, StaticDiffArguments]
+SourceDiffArguments = Union[
+    SqlserverDiffArguments, StaticDiffArguments, CsvDiffArguments
+]
 
 
 class DiffArguments(BaseModel):

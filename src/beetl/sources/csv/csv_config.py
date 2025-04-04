@@ -1,6 +1,6 @@
 from typing import Annotated, Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import Field
 
 from ..interface import SourceConfig, SourceConfigArguments, SourceConnectionArguments
 

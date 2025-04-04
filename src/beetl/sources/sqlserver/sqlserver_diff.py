@@ -1,6 +1,4 @@
-from typing import Annotated, Literal
-
-from pydantic import Field
+from typing import Literal
 
 from ..interface.interface_diff import (
     SourceDiff,

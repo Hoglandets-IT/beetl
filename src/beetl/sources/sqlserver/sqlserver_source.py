@@ -1,3 +1,7 @@
+"""
+Definition for the SqlServer source
+"""
+
 import json
 from uuid import uuid4
 
@@ -16,6 +20,10 @@ from .sqlserver_sync import SqlserverSync, SqlserverSyncArguments
 
 @register_source("Sqlserver")
 class SqlserverSource(SourceInterface):
+    """
+    Class for interacting with SqlServer databases.
+    """
+
     ConfigArgumentsClass = SqlserverConfigArguments
     ConfigClass = SqlserverConfig
     SyncArgumentsClass = SqlserverSyncArguments
@@ -26,8 +34,6 @@ class SqlserverSource(SourceInterface):
     diff_config_arguments: SqlserverDiffArguments = None
     diff_config: SqlserverDiff = None
     connection: pyodbc.Connection = None
-
-    """ A source for SqlServer data """
 
     def _configure(self):
         pass

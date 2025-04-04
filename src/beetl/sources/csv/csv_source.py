@@ -1,16 +1,27 @@
+"""Contains the CsvSource class for handling CSV data sources."""
+
+import json
+
 import polars as pl
 
+from ...diff import Diff, DiffStats, DiffUpdate
 from ..interface import SourceInterface
 from ..registrated_source import register_source
 from .csv_config import CsvConfig, CsvConfigArguments
+from .csv_diff import CsvDiff, CsvDiffArguments
 
 
 @register_source("Csv")
 class CsvSource(SourceInterface):
+    """Source for interacting with CSV files."""
+
     ConfigArgumentsClass = CsvConfigArguments
     ConfigClass = CsvConfig
+    DiffArgumentsClass = CsvDiffArguments
+    DiffClass = CsvDiff
 
-    """ A source for static data """
+    diff_config_arguments: CsvDiffArguments = None
+    diff_config: CsvDiff = None
 
     def _configure(self):
         pass
@@ -40,3 +51,29 @@ class CsvSource(SourceInterface):
         print("Deleting data from static source")
         print(data)
         return len(data)
+
+    def store_diff(self, diff: Diff):
+        if not self.diff_config:
+            raise ValueError("Diff configuration is missing")
+        existing_data = pl.read_csv(
+            self.connection_settings.path, encoding=self.connection_settings.encoding
+        )
+
+        new_data = pl.DataFrame(
+            {
+                "uuid": diff.uuid,
+                "name": diff.name,
+                "date": diff.date,
+                "version": diff.version,
+                "updates": json.dumps(diff.updates, cls=DiffUpdate.JsonEncoder),
+                "inserts": json.dumps(diff.inserts),
+                "deletes": json.dumps(diff.deletes),
+                "stats": json.dumps(diff.stats, cls=DiffStats.JsonEncoder),
+            }
+        )
+        if existing_data.is_empty():
+            existing_data = new_data
+        else:
+            existing_data = pl.concat([existing_data, new_data])
+
+        existing_data.write_csv(self.diff_config.path)
