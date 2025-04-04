@@ -45,8 +45,8 @@ class DiffCalculatorUnitTests(TestCase):
 
         self.assertEqual(2, len(diff.updates))
         update = diff.updates[0]
-        self.assertEqual({"id": 6, "name": "test", "age": None}, update.old)
-        self.assertEqual({"id": 6, "name": "test6", "age": None}, update.new)
+        self.assertEqual({"id": 6, "name": "test", "age": 20}, update.old)
+        self.assertEqual({"id": 6, "name": "test6", "age": 20}, update.new)
 
         self.assertEqual(1, len(diff.deletes))
         delete = diff.deletes[0]

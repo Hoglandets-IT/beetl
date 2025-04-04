@@ -229,14 +229,10 @@ class DiffCalculator:
         )
 
         updates = updates.with_columns(
-            pl.struct(self._create_struct_column_expression("new", columns)).alias(
-                "new"
-            )
+            self._create_struct_column_expression("new", columns)
         )
         updates = updates.with_columns(
-            pl.struct(self._create_struct_column_expression("old", columns)).alias(
-                "old"
-            )
+            self._create_struct_column_expression("old", columns)
         )
 
         updates = updates.select(["old", "new"])
@@ -263,9 +259,13 @@ class DiffCalculator:
     def _create_struct_column_expression(
         postfix: Literal["old", "new"], columns: tuple[str, ...]
     ):
-        return [
-            f"{col}_{postfix}" for col in columns if col not in RESERVED_IDENTIFIERS
-        ]
+        return pl.struct(
+            [
+                pl.col(f"{col}_{postfix}").alias(col)
+                for col in columns
+                if col not in RESERVED_IDENTIFIERS
+            ]
+        ).alias(postfix)
 
     def get_create_update_delete_for_sync(
         self,
