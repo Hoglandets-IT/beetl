@@ -1,4 +1,5 @@
-from copy import deepcopy
+"""Unit tests for the DiffCalculator class."""
+
 from unittest import TestCase
 
 import polars as pl
@@ -72,7 +73,7 @@ class DiffCalculatorUnitTests(TestCase):
 
         destination_data = {
             "id": [5, 6, 7],
-            "name": ["test5", "test", "test"],
+            "name": ["test5", "test", "te|^test_st"],
             "age": [20, 20, 21],
         }
         destination = pl.DataFrame(destination_data)

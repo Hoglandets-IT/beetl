@@ -18,5 +18,6 @@
   "python.testing.unittestEnabled": true,
   "files.eol": "\n",
   "remote.autoForwardPortsFallback": 0,
-  "python.testing.pytestEnabled": false
+  "python.testing.pytestEnabled": false,
+  "pylint.enabled": true,
 }

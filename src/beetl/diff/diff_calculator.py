@@ -13,9 +13,10 @@ from .diff_model import Diff, DiffRow, DiffUpdate
 
 class DiffCalculator:
     """
-    DiffCalculator is a utility class designed to compute the differences (inserts, updates, and deletes)
-    between two datasets represented as DataFrames. It identifies changes based on unique and comparison
-    columns specified during initialization.
+    DiffCalculator is a utility class designed to compute the differences
+      between two datasets represented as DataFrames.
+    It identifies changes based on unique and comparison
+      columns specified during initialization.
     """
 
     sync_name: str
@@ -68,9 +69,9 @@ class DiffCalculator:
         )
         if columns_contain_list_column:
             raise ValueError(
-                """Beetl does not support comparing list columns, please remove them from the sync.comparisonColumns field.
-                If you didn't specify any non unique columns, Beetl will compare all columns by default.
-                Please specify the columns you want to compare in the sync.comparisonColumns field."""
+                """Beetl does not support comparing list columns.
+                Please remove them from the sync.comparisonColumns field.
+                """
             )
 
         inserts = self._calculate_inserts(
@@ -91,8 +92,9 @@ class DiffCalculator:
 
     def diff_cannot_contain_any_updates(self):
         """
-        If there are no comparison columns nothing can change without also affecting a unique identifier.
-        This means a row should either be inserted or deleted.
+        Nothing can change if there are no comparison columns.
+        The only thing that can change is the unique columns.
+        That means that rows will be inserted or deleted, but not updated.
 
         returns:
             bool: True if there are no comparison columns.
