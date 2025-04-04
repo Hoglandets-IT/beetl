@@ -1,6 +1,7 @@
 """Contains the CsvSource class for handling CSV data sources."""
 
 import json
+import os
 
 import polars as pl
 
@@ -55,9 +56,18 @@ class CsvSource(SourceInterface):
     def store_diff(self, diff: Diff):
         if not self.diff_config:
             raise ValueError("Diff configuration is missing")
-        existing_data = pl.read_csv(
-            self.connection_settings.path, encoding=self.connection_settings.encoding
-        )
+
+        existing_data = pl.DataFrame()
+
+        if os.path.exists(self.connection_settings.path):
+            try:
+                existing_data = pl.read_csv(
+                    self.connection_settings.path,
+                    encoding=self.connection_settings.encoding,
+                )
+            except Exception:
+                # Do nothing, just replace the file
+                pass
 
         new_data = pl.DataFrame(
             {
@@ -71,6 +81,7 @@ class CsvSource(SourceInterface):
                 "stats": json.dumps(diff.stats, cls=DiffStats.JsonEncoder),
             }
         )
+
         if existing_data.is_empty():
             existing_data = new_data
         else:
