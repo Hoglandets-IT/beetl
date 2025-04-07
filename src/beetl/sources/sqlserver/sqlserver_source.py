@@ -112,6 +112,20 @@ class SqlserverSource(SourceInterface):
 
         return self._insert(data)
 
+    # Help function to handle COLLATE
+    def _collate_clause(
+        self, column_name: str, schema: dict, left_alias: str, right_alias: str
+    ):
+        dtype = schema.get(column_name)
+
+        if dtype in (pl.Utf8, pl.String):
+            return (
+                f"TRY_CONVERT(NVARCHAR, {left_alias}.[{column_name}]) COLLATE DATABASE_DEFAULT = "
+                f"TRY_CONVERT(NVARCHAR, {right_alias}.[{column_name}]) COLLATE DATABASE_DEFAULT"
+            )
+        else:
+            return f"{left_alias}.[{column_name}] = " f"{right_alias}.[{column_name}]"
+
     def update(self, data: pl.DataFrame):
         self._validate_unique_columns()
         if len(data) == 0:
@@ -135,11 +149,10 @@ class SqlserverSource(SourceInterface):
             )
         )
 
+        schema = data.schema
         on_clause = " AND ".join(
-            (
-                f"TDEST.[{column_name}] COLLATE DATABASE_DEFAULT = TTEMP.[{column_name}] COLLATE DATABASE_DEFAULT"
-                for column_name in self.source_configuration.unique_columns
-            )
+            self._collate_clause(column_name, schema, "TDEST", "TTEMP")
+            for column_name in self.source_configuration.unique_columns
         )
 
         query = f"""
@@ -164,9 +177,10 @@ class SqlserverSource(SourceInterface):
         tempDB = self._get_temp_table_name(self.source_configuration.table)
         self._insert(data, table=tempDB, tempDB=True)
 
+        schema = data.schema
         where_clause = " AND ".join(
             (
-                f"TTEMP.[{column_name}] COLLATE DATABASE_DEFAULT = TDEST.[{column_name}] COLLATE DATABASE_DEFAULT"
+                self._collate_clause(column_name, schema, "TTEMP", "TDEST")
                 for column_name in self.source_configuration.unique_columns
             )
         )
