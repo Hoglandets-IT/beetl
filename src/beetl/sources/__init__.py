@@ -11,7 +11,14 @@ from .excel import (
     ExcelDiffConfigArguments,
     ExcelSource,
 )
-from .faker import FakerConfig, FakerConfigArguments, FakerSource
+from .faker import (
+    FakerConfig,
+    FakerConfigArguments,
+    FakerDiff,
+    FakerDiffArguments,
+    FakerDiffConfigArguments,
+    FakerSource,
+)
 from .interface import (
     SourceConfig,
     SourceConfigArguments,

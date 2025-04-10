@@ -9,6 +9,7 @@ from ...sources import (
     ExcelConfigArguments,
     ExcelDiffArguments,
     FakerConfigArguments,
+    FakerDiffArguments,
     ItopConfigArguments,
     ItopSyncArguments,
     MongodbConfigArguments,
@@ -78,7 +79,11 @@ OptionalTransformers = Annotated[
 ]
 
 SourceDiffArguments = Union[
-    SqlserverDiffArguments, StaticDiffArguments, CsvDiffArguments, ExcelDiffArguments
+    SqlserverDiffArguments,
+    StaticDiffArguments,
+    CsvDiffArguments,
+    ExcelDiffArguments,
+    FakerDiffArguments,
 ]
 
 
