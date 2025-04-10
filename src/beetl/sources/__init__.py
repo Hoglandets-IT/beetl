@@ -37,7 +37,7 @@ from .sqlserver import (
     SqlserverSyncArguments,
 )
 from .static import StaticConfig, StaticConfigArguments, StaticSource
-from .excel import ExcelConfig, ExcelConfigArguments, ExcelSource
+from .excel import ExcelConfig, ExcelConfigArguments, ExcelSource, ExcelSyncArguments
 
 from .xml import XmlConfig, XmlConfigArguments, XmlSource, XmlSync, XmlSyncArguments
 

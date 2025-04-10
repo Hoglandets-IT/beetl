@@ -86,6 +86,17 @@ class SqlserverSource(SourceInterface):
                     )
                 )
 
+        # Replace empty strings with None
+        if self.source_configuration.replace_empty_strings:
+            for column_name in data.columns:
+                if data[column_name].dtype in (pl.Utf8, pl.String):
+                    data = data.with_columns(
+                        pl.when(pl.col(column_name).eq(""))
+                        .then(None)
+                        .otherwise(pl.col(column_name))
+                        .alias(column_name)
+                    )
+
         if table is None:
             table = self.source_configuration.table
 
