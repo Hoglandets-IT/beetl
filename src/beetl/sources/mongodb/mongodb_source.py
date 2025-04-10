@@ -1,9 +1,12 @@
+from typing import Optional
+
 from polars import DataFrame, Object
 from pymongo import DeleteOne, MongoClient, UpdateOne
 
 from ..interface import SourceInterface
 from ..registrated_source import register_source
 from .mongodb_config import MongodbConfig, MongodbConfigArguments
+from .mongodb_diff import MongodbDiff, MongodbDiffArguments
 from .mongodb_sync import MongodbSync, MongodbSyncArguments
 
 
@@ -13,6 +16,11 @@ class MongodbSource(SourceInterface):
     ConfigClass = MongodbConfig
     SyncArgumentsClass = MongodbSyncArguments
     SyncClass = MongodbSync
+    DiffArgumentsClass = MongodbDiffArguments
+    DiffClass = MongodbDiff
+
+    diff_config_arguments: Optional[MongodbDiffArguments] = None
+    diff_config: Optional[MongodbDiff] = None
 
     """ A source for MongoDB data """
 
@@ -93,3 +101,6 @@ class MongodbSource(SourceInterface):
             raise ValueError(
                 "Unique fields are required for MongoDB when used as a destination"
             )
+
+
+# TODO: Continue implementing the store diff method here tomorrow

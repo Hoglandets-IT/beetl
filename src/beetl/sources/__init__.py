@@ -33,6 +33,9 @@ from .itop import ItopConfig, ItopConfigArguments, ItopSource, ItopSyncArguments
 from .mongodb import (
     MongodbConfig,
     MongodbConfigArguments,
+    MongodbDiff,
+    MongodbDiffArguments,
+    MongodbDiffConfigArguments,
     MongodbSource,
     MongodbSync,
     MongodbSyncArguments,

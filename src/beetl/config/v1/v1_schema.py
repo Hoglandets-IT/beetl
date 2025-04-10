@@ -13,6 +13,7 @@ from ...sources import (
     ItopConfigArguments,
     ItopSyncArguments,
     MongodbConfigArguments,
+    MongodbDiffArguments,
     MongodbSyncArguments,
     MysqlConfigArguments,
     MysqlSyncArguments,
@@ -84,6 +85,7 @@ SourceDiffArguments = Union[
     CsvDiffArguments,
     ExcelDiffArguments,
     FakerDiffArguments,
+    MongodbDiffArguments,
 ]
 
 
