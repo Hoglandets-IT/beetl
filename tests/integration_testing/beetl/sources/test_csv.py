@@ -69,7 +69,9 @@ class TestCsvSource(TestCase):
                             "destination": {
                                 "type": "Csv",
                                 "name": "diff",
-                                "config": {"path": "./tests/.output/diff.csv"},
+                                "config": {
+                                    "path": os.path.join(TEMP_PATH, diff_file_name)
+                                },
                             }
                         },
                     }

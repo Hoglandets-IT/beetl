@@ -2,6 +2,7 @@
 
 import json
 import os
+from pathlib import Path
 
 import polars as pl
 
@@ -59,21 +60,24 @@ class CsvSource(SourceInterface):
 
         existing_data = pl.DataFrame()
 
-        if os.path.exists(self.connection_settings.path):
-            try:
-                existing_data = pl.read_csv(
-                    self.connection_settings.path,
-                    encoding=self.connection_settings.encoding,
-                )
-            except Exception:
-                # Do nothing, just replace the file
-                pass
+        if not os.path.exists(self.connection_settings.path):
+            os.makedirs(os.path.dirname(self.connection_settings.path), exist_ok=True)
+            Path(os.path.join(self.connection_settings.path)).touch()
+
+        try:
+            existing_data = pl.read_csv(
+                self.connection_settings.path,
+                encoding=self.connection_settings.encoding,
+            )
+        except Exception:
+            # Do nothing, just replace the file
+            pass
 
         new_data = pl.DataFrame(
             {
-                "uuid": diff.uuid,
+                "uuid": str(diff.uuid),
                 "name": diff.name,
-                "date": diff.date,
+                "date": diff.date_as_string(),
                 "version": diff.version,
                 "updates": json.dumps(diff.updates, cls=DiffUpdate.JsonEncoder),
                 "inserts": json.dumps(diff.inserts),

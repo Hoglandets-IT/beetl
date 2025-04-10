@@ -80,6 +80,9 @@ class Diff:
     def dump_json(self):
         return json.dumps(self, cls=DiffJsonEncoder)
 
+    def date_as_string(self) -> str:
+        return self.date.isoformat()
+
 
 class DiffJsonEncoder(JSONEncoder):
     def default(self, o: Any):
