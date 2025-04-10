@@ -2,6 +2,7 @@
 ## 1.2.2
 ### Changes 🔄
 - Excel added as a source.
+- Added `replace_empty_strings`flag to SQL Server to allow null values instead of empty strings.
 - Fixed a bug where unwanted attributes were sent to iTop on Delete requests.
 
 ## 1.2.1 
