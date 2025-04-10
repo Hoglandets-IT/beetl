@@ -24,6 +24,7 @@ def create_temp_file(file_name: str) -> str:
     Returns:
         str: The path to the created file.
     """
+    ensure_temp_directory()
     Path(os.path.join(TEMP_PATH, file_name)).touch()
 
 

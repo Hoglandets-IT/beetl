@@ -3,7 +3,14 @@ from typing import Literal
 
 # re-export
 from .csv import CsvConfig, CsvConfigArguments, CsvDiff, CsvDiffArguments, CsvSource
-from .excel import ExcelConfig, ExcelConfigArguments, ExcelSource
+from .excel import (
+    ExcelConfig,
+    ExcelConfigArguments,
+    ExcelDiff,
+    ExcelDiffArguments,
+    ExcelDiffConfigArguments,
+    ExcelSource,
+)
 from .faker import FakerConfig, FakerConfigArguments, FakerSource
 from .interface import (
     SourceConfig,

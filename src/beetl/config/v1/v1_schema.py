@@ -7,6 +7,7 @@ from ...sources import (
     CsvConfigArguments,
     CsvDiffArguments,
     ExcelConfigArguments,
+    ExcelDiffArguments,
     FakerConfigArguments,
     ItopConfigArguments,
     ItopSyncArguments,
@@ -77,7 +78,7 @@ OptionalTransformers = Annotated[
 ]
 
 SourceDiffArguments = Union[
-    SqlserverDiffArguments, StaticDiffArguments, CsvDiffArguments
+    SqlserverDiffArguments, StaticDiffArguments, CsvDiffArguments, ExcelDiffArguments
 ]
 
 

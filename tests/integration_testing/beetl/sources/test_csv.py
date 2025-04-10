@@ -1,21 +1,17 @@
 import os
 from unittest import TestCase
 
+from polars import read_csv
+
 from src.beetl.beetl import Beetl
 from src.beetl.config import BeetlConfig
-from tests.helpers.temp import (
-    TEMP_PATH,
-    clean_temp_directory,
-    create_temp_file,
-    ensure_temp_directory,
-)
+from tests.helpers.temp import TEMP_PATH, clean_temp_directory, create_temp_file
 
 
 class TestCsvSource(TestCase):
     def test_save_diff__when_called__saves_diff_to_file(self):
+        clean_temp_directory()
         try:
-            # TODO: Continue here, run the test
-            ensure_temp_directory()
             diff_file_name = "diff.csv"
             create_temp_file(diff_file_name)
 
@@ -69,9 +65,7 @@ class TestCsvSource(TestCase):
                             "destination": {
                                 "type": "Csv",
                                 "name": "diff",
-                                "config": {
-                                    "path": os.path.join(TEMP_PATH, diff_file_name)
-                                },
+                                "config": {},
                             }
                         },
                     }
@@ -81,5 +75,8 @@ class TestCsvSource(TestCase):
             beetl_instance = Beetl(beetl_config_instance)
 
             beetl_instance.sync()
+
+            result = read_csv(os.path.join(TEMP_PATH, diff_file_name))
+            self.assertEqual(result.height, 1)
         finally:
             clean_temp_directory()

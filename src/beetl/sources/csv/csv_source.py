@@ -91,4 +91,4 @@ class CsvSource(SourceInterface):
         else:
             existing_data = pl.concat([existing_data, new_data])
 
-        existing_data.write_csv(self.diff_config.path)
+        existing_data.write_csv(self.connection_settings.path)

@@ -8,7 +8,7 @@ from ..interface.interface_diff import (
 
 
 class CsvDiffConfigArguments(SourceDiffConfigArguments):
-    path: str
+    pass
 
 
 class CsvDiffArguments(SourceDiffArguments):
@@ -17,7 +17,6 @@ class CsvDiffArguments(SourceDiffArguments):
 
 
 class CsvDiff(SourceDiff):
-    path: str
 
     def __init__(self, diff_config: CsvDiffArguments) -> None:
-        self.path = diff_config.config.path
+        super().__init__(diff_config)
