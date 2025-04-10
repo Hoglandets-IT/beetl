@@ -5,6 +5,7 @@ from pydantic_core import ErrorDetails
 
 from ...sources import (
     ExcelConfigArguments,
+    ExcelSyncArguments,
     CsvConfigArguments,
     FakerConfigArguments,
     ItopConfigArguments,
@@ -53,6 +54,7 @@ SourceSyncArguments = Union[
         RestSyncArguments,
         SqlserverSyncArguments,
         XmlSyncArguments,
+        ExcelSyncArguments,
         # Necessary for sources that don't have a sync configuration
         dict,
     )
