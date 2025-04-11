@@ -4,6 +4,8 @@
 - Excel added as a source.
 - Added `replace_empty_strings` flag to SQL Server to allow null values instead of empty strings.
 - Fixed a bug where unwanted attributes were sent to iTop on Delete requests.
+- Updated Transformer
+    - `regex.match_single` extracts a substring from a column based on a capturing group in a regular expression.
 
 ## 1.2.1 
 ### Changes 🔄
