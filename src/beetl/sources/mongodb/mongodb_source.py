@@ -110,12 +110,12 @@ class MongodbSource(SourceInterface):
         with MongoClient(self.connection_settings.connection_string) as client:
             db = client[self.connection_settings.database]
             collection = db[self.diff_config.collection]
-            result = collection.bulk_write(
+            result = collection.insert_many(
                 [
                     {
                         "name": diff.name,
-                        "date": diff.date,
-                        "uuid": diff.uuid,
+                        "date": diff.date_as_string(),
+                        "uuid": str(diff.uuid),
                         "version": diff.version,
                         "updates": json.dumps(diff.updates, cls=DiffUpdate.JsonEncoder),
                         "inserts": json.dumps(diff.inserts),
@@ -124,7 +124,5 @@ class MongodbSource(SourceInterface):
                     }
                 ]
             )
-            if not result.inserted_count == 1:
-                raise ValueError(
-                    f"Error inserting diff into MongoDB: {result.bulk_api_result}"
-                )
+            if not len(result.inserted_ids) == 1:
+                raise ValueError(f"Error inserting diff into MongoDB")
