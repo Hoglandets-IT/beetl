@@ -34,3 +34,27 @@ class RegexTransformer(TransformerInterface):
         )
 
         return data
+
+    @staticmethod
+    def match_single(
+        data: pl.DataFrame, query: str, inField: str, outField: str = None
+    ) -> pl.DataFrame:
+        """Check if each value in the given field matches the regex query
+
+        Args:
+            data (pl.DataFrame): The data to be checked
+            query (str): The regex pattern to match against
+            inField (str): The field to evaluate
+            outField (str, optional): The field to add/replace with match results. Defaults to None.
+
+        Returns:
+            pl.DataFrame: Dataframe with a column containing the first match group
+        """
+
+        data = data.with_columns(
+            data[inField]
+            .str.extract(query, group_index=1)
+            .alias(outField if outField is not None else inField)
+        )
+
+        return data
