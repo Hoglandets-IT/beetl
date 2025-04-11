@@ -1,8 +1,12 @@
+"""Source for communicating with MongoDB"""
+
+import json
 from typing import Optional
 
 from polars import DataFrame, Object
 from pymongo import DeleteOne, MongoClient, UpdateOne
 
+from ...diff.diff_model import DiffStats, DiffUpdate
 from ..interface import SourceInterface
 from ..registrated_source import register_source
 from .mongodb_config import MongodbConfig, MongodbConfigArguments
@@ -12,6 +16,8 @@ from .mongodb_sync import MongodbSync, MongodbSyncArguments
 
 @register_source("Mongodb")
 class MongodbSource(SourceInterface):
+    """Source for communicating with MongoDB"""
+
     ConfigArgumentsClass = MongodbConfigArguments
     ConfigClass = MongodbConfig
     SyncArgumentsClass = MongodbSyncArguments
@@ -21,8 +27,6 @@ class MongodbSource(SourceInterface):
 
     diff_config_arguments: Optional[MongodbDiffArguments] = None
     diff_config: Optional[MongodbDiff] = None
-
-    """ A source for MongoDB data """
 
     def _configure(self):
         pass
@@ -45,7 +49,7 @@ class MongodbSource(SourceInterface):
             )
             if "_id" in polar.columns and polar["_id"].dtype == Object:
                 polar = polar.with_columns(
-                    polar["_id"].map_elements(lambda oid: str(oid), return_dtype=str)
+                    polar["_id"].map_elements(str, return_dtype=str)
                 )
             return polar
 
@@ -61,13 +65,13 @@ class MongodbSource(SourceInterface):
         self._validate_unique_fields()
         updates = []
         for row in data.to_dicts():
-            filter = {
+            mutation_filter = {
                 field_name: row[field_name]
                 for field_name in self.source_configuration.unique_fields
             }
             for field_name in self.source_configuration.unique_fields:
                 del row[field_name]
-            updates.append(UpdateOne(filter, {"$set": row}))
+            updates.append(UpdateOne(mutation_filter, {"$set": row}))
 
         if not len(updates):
             return 0
@@ -83,11 +87,11 @@ class MongodbSource(SourceInterface):
         self._validate_unique_fields()
         deletes = []
         for row in data.to_dicts():
-            filter = {
+            mutation_filter = {
                 field_name: row[field_name]
                 for field_name in self.source_configuration.unique_fields
             }
-            deletes.append(DeleteOne(filter))
+            deletes.append(DeleteOne(mutation_filter))
 
         with MongoClient(self.connection_settings.connection_string) as client:
             db = client[self.connection_settings.database]
@@ -102,5 +106,25 @@ class MongodbSource(SourceInterface):
                 "Unique fields are required for MongoDB when used as a destination"
             )
 
-
-# TODO: Continue implementing the store diff method here tomorrow
+    def store_diff(self, diff):
+        with MongoClient(self.connection_settings.connection_string) as client:
+            db = client[self.connection_settings.database]
+            collection = db[self.diff_config.collection]
+            result = collection.bulk_write(
+                [
+                    {
+                        "name": diff.name,
+                        "date": diff.date,
+                        "uuid": diff.uuid,
+                        "version": diff.version,
+                        "updates": json.dumps(diff.updates, cls=DiffUpdate.JsonEncoder),
+                        "inserts": json.dumps(diff.inserts),
+                        "deletes": json.dumps(diff.deletes),
+                        "stats": json.dumps(diff.stats, cls=DiffStats.JsonEncoder),
+                    }
+                ]
+            )
+            if not result.inserted_count == 1:
+                raise ValueError(
+                    f"Error inserting diff into MongoDB: {result.bulk_api_result}"
+                )

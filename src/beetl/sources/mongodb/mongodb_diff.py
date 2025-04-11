@@ -17,6 +17,8 @@ class MongodbDiffArguments(SourceDiffArguments):
 
 
 class MongodbDiff(SourceDiff):
+    collection: str
 
     def __init__(self, diff_config: MongodbDiffArguments) -> None:
         super().__init__(diff_config)
+        self.collection = diff_config.config.collection
