@@ -16,6 +16,7 @@ from ...sources import (
     MongodbDiffArguments,
     MongodbSyncArguments,
     MysqlConfigArguments,
+    MysqlDiffArguments,
     MysqlSyncArguments,
     PostgresConfigArguments,
     PostgresSyncArguments,
@@ -86,6 +87,7 @@ SourceDiffArguments = Union[
     ExcelDiffArguments,
     FakerDiffArguments,
     MongodbDiffArguments,
+    MysqlDiffArguments,
 ]
 
 

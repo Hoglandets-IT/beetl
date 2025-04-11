@@ -1,20 +1,28 @@
+"""A source for MySQL data"""
+
+import json
+
 import polars as pl
 import sqlalchemy as sqla
 
+from ...diff import DiffStats, DiffUpdate
 from ..interface import SourceInterface
 from ..registrated_source import register_source
+from .mongodb_diff import MysqlDiff, MysqlDiffArguments
 from .mysql_config import MysqlConfig, MysqlConfigArguments
 from .mysql_sync import MysqlSync, MysqlSyncArguments
 
 
 @register_source("Mysql")
 class MysqlSource(SourceInterface):
+    """A source for MySQL data"""
+
     ConfigArgumentsClass = MysqlConfigArguments
     ConfigClass = MysqlConfig
     SyncArgumentsClass = MysqlSyncArguments
     SyncClass = MysqlSync
-
-    """ A source for MySQL data """
+    DiffArgumentsClass = MysqlDiffArguments
+    DiffClass = MysqlDiff
 
     def _configure(self):
         pass
@@ -190,3 +198,33 @@ class MysqlSource(SourceInterface):
         if isinstance(id, str):
             return f"'{id}'"
         return str(id)
+
+    def store_diff(self, diff):
+        if not self.diff_config:
+            raise ValueError("Diff configuration is missing")
+        metadata = sqla.MetaData()
+        table = sqla.Table(
+            self.diff_config.table,
+            metadata,
+            sqla.Column("uuid", sqla.Uuid, primary_key=True),
+            sqla.Column("name", sqla.String),
+            sqla.Column("date", sqla.DateTime),
+            sqla.Column("version", sqla.String),
+            sqla.Column("updates", sqla.String),
+            sqla.Column("inserts", sqla.String),
+            sqla.Column("deletes", sqla.String),
+            sqla.Column("stats", sqla.String),
+        )
+
+        insert_statement = sqla.insert(table).values(
+            name=diff.name,
+            date=diff.date,
+            uuid=diff.uuid,
+            version=diff.version,
+            updates=json.dumps(diff.updates, cls=DiffUpdate.JsonEncoder),
+            inserts=json.dumps(diff.inserts),
+            deletes=json.dumps(diff.deletes),
+            stats=json.dumps(diff.stats, cls=DiffStats.JsonEncoder),
+        )
+        result = self.connection.execute(insert_statement)
+        pass

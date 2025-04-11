@@ -40,7 +40,15 @@ from .mongodb import (
     MongodbSync,
     MongodbSyncArguments,
 )
-from .mysql import MysqlConfig, MysqlConfigArguments, MysqlSource, MysqlSyncArguments
+from .mysql import (
+    MysqlConfig,
+    MysqlConfigArguments,
+    MysqlDiff,
+    MysqlDiffArguments,
+    MysqlDiffConfigArguments,
+    MysqlSource,
+    MysqlSyncArguments,
+)
 from .postgresql import (
     PostgresConfig,
     PostgresConfigArguments,
