@@ -281,3 +281,6 @@ class RestSource(SourceInterface):
             print("Delete not configured, skipping")
             return 0
         return 0
+
+    def store_diff(self, diff):
+        raise NotImplementedError("Store diff not implemented")

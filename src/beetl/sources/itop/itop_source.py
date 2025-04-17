@@ -455,3 +455,6 @@ class ItopSource(SourceInterface):
                     pr_bar()
 
         return len(data)
+
+    def store_diff(self, diff):
+        raise NotImplementedError("Store diff not implemented")
