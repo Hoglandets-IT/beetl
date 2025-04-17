@@ -127,27 +127,32 @@ class TestXmlSource(unittest.TestCase):
 
     def test_store_diff__when_diff_is_configured__stores_diff_in_file(self):
         # Arrange
-        clean_temp_directory()
+        try:
+            clean_temp_directory()
 
-        diff_path = create_temp_file("xml_diff.xml")
-        beetl_client = beetl.Beetl(BeetlConfig(diff_to_xml(diff_path)))
+            diff_path = create_temp_file("xml_diff.xml")
+            beetl_client = beetl.Beetl(BeetlConfig(diff_to_xml(diff_path)))
 
-        # Act
-        beetl_client.sync()
+            # Act
+            beetl_client.sync()
 
-        # Assert
-        ## Assert that one diff was created
-        result = pl.from_pandas(pd.read_xml(diff_path))
-        self.assertEqual(result.height, 1)
-        for value in result.to_dicts()[0].values():
-            self.assertIsNotNone(value, "All values should be present in the diff file")
-
-        ## Insert another diff into the existing file and assert that it was appended
-        beetl_client.sync()
-        result = pl.from_pandas(pd.read_xml(diff_path))
-        self.assertEqual(result.height, 2)
-        for dictionary in result.to_dicts():
-            for value in dictionary.values():
+            # Assert
+            ## Assert that one diff was created
+            result = pl.from_pandas(pd.read_xml(diff_path))
+            self.assertEqual(result.height, 1)
+            for value in result.to_dicts()[0].values():
                 self.assertIsNotNone(
                     value, "All values should be present in the diff file"
                 )
+
+            ## Insert another diff into the existing file and assert that it was appended
+            beetl_client.sync()
+            result = pl.from_pandas(pd.read_xml(diff_path))
+            self.assertEqual(result.height, 2)
+            for dictionary in result.to_dicts():
+                for value in dictionary.values():
+                    self.assertIsNotNone(
+                        value, "All values should be present in the diff file"
+                    )
+        finally:
+            clean_temp_directory()
