@@ -145,8 +145,8 @@ def diff_to_mysql(mysql_connection_string: str):
                 },
             },
             {
-                "type": "Static",
                 "name": "dst",
+                "type": "Static",
                 "connection": {
                     "static": [
                         {"id": 3, "name": "test", "age": 20},
@@ -186,6 +186,15 @@ def diff_to_mysql(mysql_connection_string: str):
                         "type": "Int64",
                     },
                 ],
+                "diff": {
+                    "destination": {
+                        "type": "Mysql",
+                        "name": "diff",
+                        "config": {
+                            "table": "diff",
+                        },
+                    }
+                },
             }
         ],
     }

@@ -200,13 +200,12 @@ class TestMysqlSource(unittest.TestCase):
         self,
     ):
         with MySqlContainer() as mysql:
-            # TODO: Continue here
             engine = sqlalchemy.create_engine(mysql.get_connection_url())
             with engine.begin() as connection:
                 # arrange
                 connection.execute(
                     sqlalchemy.text(
-                        "create table diffs (uuid CHAR(36) NOT NULL PRIMARY KEY, name VARCHAR(255), date DATETIME, version VARCHAR(64), updates TEXT, inserts TEXT, deletes TEXT, stats TEXT)"
+                        "create table diff (uuid CHAR(36) NOT NULL PRIMARY KEY, name VARCHAR(255), date DATETIME, version VARCHAR(64), updates TEXT, inserts TEXT, deletes TEXT, stats TEXT)"
                     )
                 )
                 config = diff_to_mysql(
@@ -218,7 +217,7 @@ class TestMysqlSource(unittest.TestCase):
                 beetl_instance.sync()
 
                 ## Assert
-                result = connection.execute(sqlalchemy.text("select * from diff"))
+                result = list(connection.execute(sqlalchemy.text("select * from diff")))
 
                 self.assertIsNotNone(result)
-                self.assertGreater(result.rowcount, 0)
+                self.assertGreater(len(result), 0)

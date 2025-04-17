@@ -1,6 +1,7 @@
 """A source for MySQL data"""
 
 import json
+from typing import Any
 
 import polars as pl
 import sqlalchemy as sqla
@@ -8,8 +9,8 @@ import sqlalchemy as sqla
 from ...diff import DiffStats, DiffUpdate
 from ..interface import SourceInterface
 from ..registrated_source import register_source
-from .mongodb_diff import MysqlDiff, MysqlDiffArguments
 from .mysql_config import MysqlConfig, MysqlConfigArguments
+from .mysql_diff import MysqlDiff, MysqlDiffArguments
 from .mysql_sync import MysqlSync, MysqlSyncArguments
 
 
@@ -23,6 +24,9 @@ class MysqlSource(SourceInterface):
     SyncClass = MysqlSync
     DiffArgumentsClass = MysqlDiffArguments
     DiffClass = MysqlDiff
+
+    diff_config: MysqlDiff = None
+    diff_config_arguments: MysqlDiffArguments = None
 
     def _configure(self):
         pass
@@ -44,7 +48,7 @@ class MysqlSource(SourceInterface):
 
             if query is None:
                 if self.source_configuration.table is None:
-                    raise Exception("No query or table specified")
+                    raise ValueError("No query or table specified")
 
                 query = f"SELECT * FROM {self.source_configuration.table}"
 
@@ -194,10 +198,10 @@ class MysqlSource(SourceInterface):
                 "MySQL source requires the unique_columns to be set if used as a destination"
             )
 
-    def _quote_if_needed(self, id: any) -> str:
-        if isinstance(id, str):
-            return f"'{id}'"
-        return str(id)
+    def _quote_if_needed(self, identifier: Any) -> str:
+        if isinstance(identifier, str):
+            return f"'{identifier}'"
+        return str(identifier)
 
     def store_diff(self, diff):
         if not self.diff_config:
@@ -226,5 +230,10 @@ class MysqlSource(SourceInterface):
             deletes=json.dumps(diff.deletes),
             stats=json.dumps(diff.stats, cls=DiffStats.JsonEncoder),
         )
-        result = self.connection.execute(insert_statement)
-        pass
+        with sqla.create_engine(
+            self.connection_settings.connection_string.replace(
+                "mysql://", "mysql+pymysql://"
+            )
+        ).connect() as con:
+            con.execute(insert_statement)
+            con.commit()
