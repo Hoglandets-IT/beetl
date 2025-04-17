@@ -120,6 +120,9 @@ sync:
 - [ColumnDefinitions](/sources/types/column-definition.html)
 - [PolarDatatypesAsString](/sources/types/polar-datatypes.html)
 
+## Diff settings
+iTop is not supported as a diff destination.
+
 ## Explaining itop.relations
 The best way is to read the up to date documentation that can be found [here](/transformers/itop.html#relations).
 

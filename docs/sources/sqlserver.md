@@ -74,3 +74,38 @@ When used as a destination, the "table" field has to be specified. You can still
     skip_columns:
       - street_address
 ```
+## Diff settings
+Configure the diff config as following.
+
+```yaml
+sync:
+  - name: test
+    source: srcname
+    destination: dstname
+    sourceConfig: {}
+    destinationConfig: {}
+    diff:
+      destination: 
+        # nype: string
+        # Identifies the type of diff destination to use
+        type: Sqlserver
+        # name: string
+        # Points to a destination defined in the sources section by name
+        name: diffsourcename
+        # config: dict
+        # The destination type specific configuration
+        config:
+          # table: string
+          # The table to use in the sqlserver database
+          table: difftablename
+```
+Make sure that your diff table exists in the destination with the following schema:
+
+uuid uniqueidentifier primary key
+name varchar(256)
+date Datetime
+version varchar(16)
+updates nvarchar(max)
+inserts nvarchar(max)
+deletes nvarchar(max)
+stats nvarchar(max)
