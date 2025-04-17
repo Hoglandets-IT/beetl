@@ -1,9 +1,14 @@
 import os
 import unittest
 
+import pandas as pd
+import polars as pl
+
 from src.beetl import beetl
-from tests.configurations.xml import to_xml
+from src.beetl.config import BeetlConfig
+from tests.configurations.xml import diff_to_xml, to_xml
 from tests.helpers.manual_result import ManualResult
+from tests.helpers.temp import clean_temp_directory, create_temp_file
 
 
 class TestXmlSource(unittest.TestCase):
@@ -14,7 +19,7 @@ class TestXmlSource(unittest.TestCase):
         source_path = "tests/configurations/xml/source-1.xml"
         destination_path = "tests/configurations/xml/destination.xml"
 
-        self.remove_if_exists(destination_path)
+        self._remove_if_exists(destination_path)
 
         # Act
         beetl_client = beetl.Beetl(
@@ -39,16 +44,16 @@ class TestXmlSource(unittest.TestCase):
         self.assertEqual(update_one_result, ManualResult(0, 1, 0))
         self.assertEqual(create_one_delete_one_result, ManualResult(1, 0, 1))
 
-        self.remove_if_exists(destination_path)
+        self._remove_if_exists(destination_path)
 
-    def remove_if_exists(self, path):
+    def _remove_if_exists(self, path):
         if os.path.exists(path):
             os.remove(path)
 
     def test_transforming_xml_using_xsl(self):
         source_path = "tests/configurations/xml/nested-data.xml"
         destination_path = "tests/configurations/xml/destination.xml"
-        self.remove_if_exists(destination_path)
+        self._remove_if_exists(destination_path)
 
         # Transforms persons with addresses to addresses with person names
         xsl = """<?xml version="1.0" encoding="UTF-8"?>
@@ -118,4 +123,31 @@ class TestXmlSource(unittest.TestCase):
         self.assertEqual(4, result.count()["name"][0])
         self.assertEqual(4, result.count()["street"][0])
 
-        self.remove_if_exists(destination_path)
+        self._remove_if_exists(destination_path)
+
+    def test_store_diff__when_diff_is_configured__stores_diff_in_file(self):
+        # Arrange
+        clean_temp_directory()
+
+        diff_path = create_temp_file("xml_diff.xml")
+        beetl_client = beetl.Beetl(BeetlConfig(diff_to_xml(diff_path)))
+
+        # Act
+        beetl_client.sync()
+
+        # Assert
+        ## Assert that one diff was created
+        result = pl.from_pandas(pd.read_xml(diff_path))
+        self.assertEqual(result.height, 1)
+        for value in result.to_dicts()[0].values():
+            self.assertIsNotNone(value, "All values should be present in the diff file")
+
+        ## Insert another diff into the existing file and assert that it was appended
+        beetl_client.sync()
+        result = pl.from_pandas(pd.read_xml(diff_path))
+        self.assertEqual(result.height, 2)
+        for dictionary in result.to_dicts():
+            for value in dictionary.values():
+                self.assertIsNotNone(
+                    value, "All values should be present in the diff file"
+                )

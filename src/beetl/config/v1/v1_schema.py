@@ -32,6 +32,7 @@ from ...sources import (
     StaticConfigArguments,
     StaticDiffArguments,
     XmlConfigArguments,
+    XmlDiffArguments,
     XmlSyncArguments,
 )
 from ...transformers import TransformerSchemas
@@ -91,6 +92,7 @@ SourceDiffArguments = Union[
     MongodbDiffArguments,
     MysqlDiffArguments,
     PostgresDiffArguments,
+    XmlDiffArguments,
 ]
 
 

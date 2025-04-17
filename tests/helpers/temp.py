@@ -25,7 +25,9 @@ def create_temp_file(file_name: str) -> str:
         str: The path to the created file.
     """
     ensure_temp_directory()
-    Path(os.path.join(TEMP_PATH, file_name)).touch()
+    file_path = os.path.join(TEMP_PATH, file_name)
+    Path(file_path).touch()
+    return file_path
 
 
 def clean_temp_directory():

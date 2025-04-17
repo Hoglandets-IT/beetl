@@ -77,7 +77,15 @@ from .static import (
     StaticDiffArguments,
     StaticSource,
 )
-from .xml import XmlConfig, XmlConfigArguments, XmlSource, XmlSync, XmlSyncArguments
+from .xml import (
+    XmlConfig,
+    XmlConfigArguments,
+    XmlDiff,
+    XmlDiffArguments,
+    XmlSource,
+    XmlSync,
+    XmlSyncArguments,
+)
 
 SourceTypes = Literal[
     "Sqlserver",
