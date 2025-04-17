@@ -13,6 +13,9 @@ class TestPostgresqlSource(unittest.TestCase):
 
     def _insert_test_data(self, postgresql: PostgresContainer) -> None:
         connection_url = postgresql.get_connection_url()
+        # Pylint failes to acnowledge that the context manager is used
+        # The changes won't commit if you remove it
+        # pylint: disable=not-context-manager
         with psycopg.connect(connection_url) as connection:
             with connection.cursor() as cursor:
                 cursor.execute(
@@ -29,6 +32,9 @@ class TestPostgresqlSource(unittest.TestCase):
         self, identifier: int, email: str, postgresql: PostgresContainer
     ) -> None:
         connection_url = postgresql.get_connection_url()
+        # Pylint failes to acnowledge that the context manager is used
+        # The changes won't commit if you remove it
+        # pylint: disable=not-context-manager
         with psycopg.connect(connection_url) as connection:
             with connection.cursor() as cursor:
                 cursor.execute(
@@ -37,6 +43,9 @@ class TestPostgresqlSource(unittest.TestCase):
 
     def _delete_test_data(self, identifier: int, postgresql: PostgresContainer) -> None:
         connection_url = postgresql.get_connection_url()
+        # Pylint failes to acnowledge that the context manager is used
+        # The changes won't commit if you remove it
+        # pylint: disable=not-context-manager
         with psycopg.connect(connection_url) as connection:
             with connection.cursor() as cursor:
                 cursor.execute(f"delete from srctable where id = {identifier}")
