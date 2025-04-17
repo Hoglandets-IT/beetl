@@ -59,9 +59,12 @@ class PostgresSource(SourceInterface):
                 uri=self.connection_settings.connection_string,
             )
 
-        connection = psycopg.connect(self.connection_settings.connection_string)
-        with connection.cursor() as cursor:
-            cursor.execute(query)
+            # Pylint failes to acnowledge that the context manager is used
+            # The changes won't commit if you remove it
+            # pylint: disable=not-context-manager
+        with psycopg.connect(self.connection_settings.connection_string) as connection:
+            with connection.cursor() as cursor:
+                cursor.execute(query)
 
     def _insert(
         self, data: pl.DataFrame, table: str = None, connection_string: str = None
@@ -91,10 +94,15 @@ class PostgresSource(SourceInterface):
         ).lower()
 
         try:
-            connection = psycopg.connect(self.connection_settings.connection_string)
-            with connection.cursor() as cursor:
-                create_temp_table_with_same_structure_as_destination = f"CREATE TABLE {temp_table_name} AS SELECT * FROM {self.source_configuration.table} where 1=0"
-                cursor.execute(create_temp_table_with_same_structure_as_destination)
+            # Pylint failes to acnowledge that the context manager is used
+            # The changes won't commit if you remove it
+            # pylint: disable=not-context-manager
+            with psycopg.connect(
+                self.connection_settings.connection_string
+            ) as connection:
+                with connection.cursor() as cursor:
+                    create_temp_table_with_same_structure_as_destination = f"CREATE TABLE {temp_table_name} AS SELECT * FROM {self.source_configuration.table} where 1=0"
+                    cursor.execute(create_temp_table_with_same_structure_as_destination)
 
             self._insert(data, table=temp_table_name)
 
@@ -132,9 +140,14 @@ class PostgresSource(SourceInterface):
 
             return len(data)
         finally:
-            connection = psycopg.connect(self.connection_settings.connection_string)
-            with connection.cursor() as cursor:
-                cursor.execute(f"DROP TABLE IF EXISTS {temp_table_name}")
+            # Pylint failes to acnowledge that the context manager is used
+            # The changes won't commit if you remove it
+            # pylint: disable=not-context-manager
+            with psycopg.connect(
+                self.connection_settings.connection_string
+            ) as connection:
+                with connection.cursor() as cursor:
+                    cursor.execute(f"DROP TABLE IF EXISTS {temp_table_name}")
 
     def delete(self, data: pl.DataFrame):
         self._validate_unique_columns()
@@ -195,11 +208,14 @@ class PostgresSource(SourceInterface):
             json.dumps(diff.stats, cls=DiffStats.JsonEncoder),
         )
 
-        connection = psycopg.connect(self.connection_settings.connection_string)
-        with connection.cursor() as cursor:
-            cursor.execute(create_table_sql)
-            cursor.execute(insert_sql, row_data)
-            connection.commit()
+        # Pylint failes to acnowledge that the context manager is used
+        # The changes won't commit if you remove it
+        # pylint: disable=not-context-manager
+        with psycopg.connect(self.connection_settings.connection_string) as connection:
+            with connection.cursor() as cursor:
+                cursor.execute(create_table_sql)
+                cursor.execute(insert_sql, row_data)
+                connection.commit()
 
     def _quote_if_needed(self, identifier: Any) -> str:
         if isinstance(identifier, str):
