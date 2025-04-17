@@ -19,6 +19,8 @@ from ...sources import (
     MysqlDiffArguments,
     MysqlSyncArguments,
     PostgresConfigArguments,
+    PostgresDiff,
+    PostgresDiffArguments,
     PostgresSyncArguments,
     RestConfigArguments,
     RestSyncArguments,
@@ -88,6 +90,7 @@ SourceDiffArguments = Union[
     FakerDiffArguments,
     MongodbDiffArguments,
     MysqlDiffArguments,
+    PostgresDiffArguments,
 ]
 
 

@@ -168,7 +168,7 @@ def diff_to_mysql(mysql_connection_string: str):
         "sync": [
             {
                 "source": "src",
-                "destination": "src",
+                "destination": "dst",
                 "sourceConfig": {},
                 "destinationConfig": {},
                 "comparisonColumns": [

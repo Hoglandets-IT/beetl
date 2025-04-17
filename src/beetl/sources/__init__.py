@@ -52,6 +52,8 @@ from .mysql import (
 from .postgresql import (
     PostgresConfig,
     PostgresConfigArguments,
+    PostgresDiff,
+    PostgresDiffArguments,
     PostgresSource,
     PostgresSyncArguments,
 )
