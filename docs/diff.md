@@ -1,6 +1,6 @@
-# Diff Functionality
+# Diff tracking
 
-The **diff functionality** in our application allows you to track and store the changes made during each run of a sync. This includes **inserts**, **updates**, and **deletes**. The diff object provides a structured summary of the differences, making it easy to audit and analyze changes between sync runs.
+The **diff tracking functionality** in our application allows you to track and store the changes made during each run of a sync. This includes **inserts**, **updates**, and **deletes**. The diff object provides a structured summary of the differences, making it easy to audit and analyze changes between sync runs.
 
 ## Example Output
 

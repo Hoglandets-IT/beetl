@@ -16,6 +16,7 @@ const config = defineConfig({
         text: 'General',
         items: [
           { text: 'Quickstart', link: '/getting-started' },
+          { text: 'Diff tracking', link: '/diff' },
           { text: 'Column Specification', link: '/getting-started/columns' },
           { text: 'The Flow', link: '/getting-started/flow' },
           { text: 'Change Notes', link: '/getting-started/change-notes' },
@@ -37,12 +38,16 @@ const config = defineConfig({
       {
         text: 'Sources',
         items: [
+          { text: 'Csv', link: '/sources/csv' },
+          { text: 'Excel', link: '/sources/excel' },
+          { text: 'Faker', link: '/sources/faker' },
           { text: 'iTop', link: '/sources/itop' },
           { text: 'MongoDB', link: '/sources/mongodb' },
           { text: 'MySQL', link: '/sources/mysql' },
           { text: 'Postgres', link: '/sources/postgres' },
           { text: 'Rest API', link: '/sources/restapi' },
           { text: 'SQL Server', link: '/sources/sqlserver' },
+          { text: 'Xml', link: '/sources/xml' },
         ]
       },
       {
