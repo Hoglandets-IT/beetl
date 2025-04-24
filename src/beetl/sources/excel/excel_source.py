@@ -69,6 +69,8 @@ class ExcelSource(SourceInterface):
 
         try:
             existing_data = pl.read_excel(self.connection_settings.path)
+        # Broad catch is ok here since we just want to figure out if we need to create the file
+        # pylint: disable=broad-exception-caught
         except Exception:
             # Do nothing, just replace the file
             pass
