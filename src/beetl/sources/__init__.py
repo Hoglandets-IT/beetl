@@ -10,6 +10,7 @@ from .excel import (
     ExcelDiffArguments,
     ExcelDiffConfigArguments,
     ExcelSource,
+    ExcelSyncArguments,
 )
 from .faker import (
     FakerConfig,

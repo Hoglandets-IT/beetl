@@ -17,5 +17,16 @@ class RegexTransformerSchema:
         transformer: Literal["regex.replace"]
         config: "RegexTransformerSchema.Replace.Config"
 
+    class MatchSingle(TransformerSchemaBase):
+        class Config(TransformerConfigBase):
+            inField: Annotated[str, Field(min_length=1)]
+            outField: Annotated[Optional[str], Field(default=None)]
+            query: Annotated[str, Field(min_length=1)]
 
-RegexTransformerSchemas = Union[RegexTransformerSchema.Replace,]
+        transformer: Literal["regex.match_single"]
+        config: "RegexTransformerSchema.MatchSingle.Config"
+
+
+RegexTransformerSchemas = Union[
+    RegexTransformerSchema.Replace, RegexTransformerSchema.MatchSingle
+]

@@ -4,6 +4,7 @@ import unittest
 import polars as pl
 
 from src.beetl import beetl
+from src.beetl.sources.excel.excel_source import ExcelSource
 from tests.configurations.excel import diff_to_xlsx, to_xlsx
 from tests.helpers.manual_result import ManualResult
 from tests.helpers.temp import TEMP_PATH, clean_temp_directory
@@ -46,6 +47,26 @@ class TestExcelSource(unittest.TestCase):
             self.assertTrue(os.path.exists(diff_file_path))
 
             result = pl.read_excel(diff_file_path)
-            self.assertEqual(1, result.height)
+            self.assertEqual(result.height, 1)
         finally:
             clean_temp_directory()
+
+    def test_query__with_override_columns__types_should_be_overridden(self):
+        # Arrange
+        source: ExcelSource = ExcelSource(
+            {
+                "connection": {
+                    "path": "tests/fake-data/datafiles/test_override_columns.xlsx"
+                },
+                "name": "Name",
+            }
+        )
+        source.set_sourceconfig({"types": {"2": "Int64"}}, "source", "name", [])
+
+        # Act
+        # OK to access the private method since we are testing the very method.
+        # pylint: disable=protected-access
+        data = source._query()
+
+        # # Assert
+        self.assertIsInstance(data.schema["2"], pl.Int64)

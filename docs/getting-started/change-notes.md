@@ -1,4 +1,12 @@
 # Change Notes
+## 1.2.2
+### Changes 🔄
+- Excel added as a source.
+- Added `replace_empty_strings` flag to SQL Server to allow null values instead of empty strings.
+- Fixed a bug where unwanted attributes were sent to iTop on Delete requests.
+- Updated Transformer
+    - `regex.match_single` extracts a substring from a column based on a capturing group in a regular expression.
+
 ## 1.2.1 
 ### Changes 🔄
 - iTop requires foreign key fields to be 0 in order for them to be unset. It is now possible to specify columns as `foreign_key_columns` in the iTop destination in order for the source to automatically convert `None` values in these columns to 0. See the [documentation](/sources/itop.html) for more details. 

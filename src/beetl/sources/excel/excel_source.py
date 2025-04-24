@@ -1,3 +1,5 @@
+"""A source for excel data"""
+
 import json
 import os
 from pathlib import Path
@@ -9,16 +11,24 @@ from ..interface import SourceInterface
 from ..registrated_source import register_source
 from .excel_config import ExcelConfig, ExcelConfigArguments
 from .excel_diff import ExcelDiff, ExcelDiffArguments
+from .excel_sync import ExcelSync, ExcelSyncArguments
 
 
 @register_source("Excel")
 class ExcelSource(SourceInterface):
+    """A source for excel data"""
+
     ConfigArgumentsClass = ExcelConfigArguments
     ConfigClass = ExcelConfig
     DiffArgumentsClass = ExcelDiffArguments
     DiffClass = ExcelDiff
+    SyncClass = ExcelSync
+    SyncArgumentsClass = ExcelSyncArguments
 
-    """ A source for static data """
+    connection_settings_arguments: ExcelConfigArguments = None
+    connection_settings: ExcelConfig = None
+    source_configuration_arguments: ExcelSyncArguments = None
+    source_configuration: ExcelSync = None
 
     def _configure(self):
         pass
@@ -32,6 +42,7 @@ class ExcelSource(SourceInterface):
     def _query(self, params=None) -> pl.DataFrame:
         return pl.read_excel(
             self.connection_settings.path,
+            schema_overrides=self.source_configuration.types,
         )
 
     def insert(self, data: pl.DataFrame):

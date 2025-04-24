@@ -9,6 +9,7 @@ from src.beetl import beetl
 from tests.configurations.sqlserver import (
     from_static_to_sqlserver_with_diff,
     to_sqlserver,
+    to_sqlserver_with_replace_empty_strings,
 )
 from tests.helpers.manual_result import ManualResult
 from tests.helpers.sqlserver_testcontainer import to_connection_string
@@ -154,3 +155,38 @@ class TestSqlServerSource(unittest.TestCase):
             self.assertEqual(1, stats["deletes"])
 
             print(diff)
+
+    def test_replace_empty_strings__when_set_to_true__empty_strings_becomes_null(self):
+        with SqlServerContainer() as mssql:
+            # Arrange
+            engine = sqlalchemy.create_engine(mssql.get_connection_url())
+            with engine.begin() as connection:
+
+                connection.execute(
+                    sqlalchemy.text(
+                        "create table src (id int primary key, name varchar(255))"
+                    )
+                )
+                connection.execute(
+                    sqlalchemy.text(
+                        "create table dst (id int primary key, name varchar(255) null)"
+                    )
+                )
+                connection.execute(
+                    sqlalchemy.text(
+                        "insert into src (id, name) values (1, ''),(2, ''),(3, '')"
+                    )
+                )
+            connection_string = to_connection_string(mssql.get_connection_url())
+            config = to_sqlserver_with_replace_empty_strings(connection_string)
+            beetlInstance = beetl.Beetl(beetl.BeetlConfig(config))
+
+            # Act
+            beetlInstance.sync()
+
+            # Assert
+            engine = sqlalchemy.create_engine(mssql.get_connection_url())
+            with engine.begin() as connection:
+                result = list(connection.execute(sqlalchemy.text("SELECT * FROM dst")))
+            for row in result:
+                self.assertIsNone(row[1])

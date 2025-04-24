@@ -431,9 +431,14 @@ class ItopSource(SourceInterface):
             deleteFunc = self.update_item
             deleteMessage = "Soft deletion via API Sync"
 
-        for column_name in deleteData.columns:
-            if column_name in self.source_configuration.link_columns:
-                deleteData.drop_in_place(column_name)
+        update_cols = set(
+            column_name
+            for column_name in self.source_configuration.unique_columns
+            + self.source_configuration.comparison_columns
+            if column_name not in (self.source_configuration.skip_columns or [])
+        )
+
+        deleteData = deleteData.select(update_cols)
 
         iters = (
             {
