@@ -130,3 +130,6 @@ The best way is to read the up to date documentation that can be found [here](/t
 ## Examples
 
 - [SqlServer to iTop](/examples/sqlserver-to-itop.html)
+
+## Diff settings
+The source does not support being configured as a diff destination.

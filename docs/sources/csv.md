@@ -13,7 +13,7 @@ sync:
     destinationConfig: {}
     diff:
       destination: 
-        # nype: string
+        # type: string
         # Identifies the type of diff destination to use
         type: Csv
         # name: string
