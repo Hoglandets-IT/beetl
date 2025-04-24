@@ -1,11 +1,14 @@
 # Change Notes
-## 1.2.2
+## 1.3.0
 ### Changes 🔄
-- Excel added as a source.
-- Added `replace_empty_strings` flag to SQL Server to allow null values instead of empty strings.
-- Fixed a bug where unwanted attributes were sent to iTop on Delete requests.
-- Updated Transformer
-    - `regex.match_single` extracts a substring from a column based on a capturing group in a regular expression.
+- Implemented support for storing a sync diff into one of the configured sources. Documentation can be found [here](/diff.html).
+- Integrated Excel as a data source.
+- Introduced the replace_empty_strings flag for SQL Server to convert empty strings to null values.
+- Enhanced Transformer:
+  - Added regex.match_single to extract substrings from a column using regular expression capturing groups.
+
+### Bugfixes 🐛
+- Resolved an issue where extraneous attributes were being included in Delete requests to iTop.
 
 ## 1.2.1 
 ### Changes 🔄
