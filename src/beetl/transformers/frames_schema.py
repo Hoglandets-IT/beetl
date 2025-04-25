@@ -1,3 +1,5 @@
+# Docstrings not necessary for schemas since you never use them directly
+# pylint: disable=missing-docstring
 from typing import Annotated, Any, Literal, Optional, Union
 
 from pydantic import Field

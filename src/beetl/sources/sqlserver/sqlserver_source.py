@@ -1,3 +1,9 @@
+"""
+Definition for the SqlServer source
+"""
+
+import json
+from typing import Optional
 from uuid import uuid4
 
 import pandas as pd
@@ -5,43 +11,52 @@ import polars as pl
 import pyodbc
 import sqlalchemy as sqla
 
+from ...diff import Diff, DiffStats, DiffUpdate
 from ..interface import SourceInterface
 from ..registrated_source import register_source
 from .sqlserver_config import SqlserverConfig, SqlserverConfigArguments
+from .sqlserver_diff import SqlserverDiff, SqlserverDiffArguments
 from .sqlserver_sync import SqlserverSync, SqlserverSyncArguments
 
 
 @register_source("Sqlserver")
 class SqlserverSource(SourceInterface):
+    """
+    Class for interacting with SqlServer databases.
+    """
+
     ConfigArgumentsClass = SqlserverConfigArguments
     ConfigClass = SqlserverConfig
     SyncArgumentsClass = SqlserverSyncArguments
     SyncClass = SqlserverSync
+    DiffArgumentsClass = SqlserverDiffArguments
+    DiffClass = SqlserverDiff
 
-    connection: pyodbc.Connection = None
-
-    """ A source for SqlServer data """
+    diff_config_arguments: Optional[SqlserverDiffArguments] = None
+    diff_config: Optional[SqlserverDiff] = None
+    connection: Optional[pyodbc.Connection] = None
+    engine: Optional[sqla.Engine] = None
 
     def _configure(self):
         pass
 
     def _connect(self):
         try:
-            engine = sqla.create_engine(self.connection_settings.connection_string)
+            self.engine = sqla.create_engine(self.connection_settings.connection_string)
         except ModuleNotFoundError:
             try:
-                engine = sqla.create_engine(
+                self.engine = sqla.create_engine(
                     self.connection_settings.connection_string.replace(
                         "mssql://", "mssql+pyodbc://"
                     )
                 )
             except ModuleNotFoundError:
-                engine = sqla.create_engine(
+                self.engine = sqla.create_engine(
                     self.connection_settings.connection_string.replace(
                         "mssql://", "mssql+pymssql://"
                     )
                 )
-        self.connection = engine.connect()
+        self.connection = self.engine.connect()
 
     def _disconnect(self):
         self.connection.commit()
@@ -243,3 +258,33 @@ class SqlserverSource(SourceInterface):
 
     def _get_temp_table_name(self, table_name: str):
         return f"##{table_name}_{str(uuid4()).replace('-', '')}_temp".lower()
+
+    def store_diff(self, diff: Diff):
+        if not self.diff_config:
+            raise ValueError("Diff configuration is missing")
+        metadata = sqla.MetaData()
+        table = sqla.Table(
+            self.diff_config.table,
+            metadata,
+            sqla.Column("uuid", sqla.Uuid, primary_key=True),
+            sqla.Column("name", sqla.String),
+            sqla.Column("date", sqla.DateTime),
+            sqla.Column("version", sqla.String),
+            sqla.Column("updates", sqla.String),
+            sqla.Column("inserts", sqla.String),
+            sqla.Column("deletes", sqla.String),
+            sqla.Column("stats", sqla.String),
+        )
+        metadata.create_all(self.connection)
+
+        insert_statement = sqla.insert(table).values(
+            name=diff.name,
+            date=diff.date,
+            uuid=diff.uuid,
+            version=diff.version,
+            updates=json.dumps(diff.updates, cls=DiffUpdate.JsonEncoder),
+            inserts=json.dumps(diff.inserts),
+            deletes=json.dumps(diff.deletes),
+            stats=json.dumps(diff.stats, cls=DiffStats.JsonEncoder),
+        )
+        self.connection.execute(insert_statement)

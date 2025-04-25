@@ -1,7 +1,7 @@
 from typing import Annotated, Any, Literal
 
 from polars import DataFrame
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import Field
 
 from ..interface import SourceConfig, SourceConfigArguments, SourceConnectionArguments
 

@@ -4,7 +4,8 @@ import os
 
 from ...sources import Sources
 from ...transformers.interface import TransformerConfiguration
-from ..config_base import BeetlConfig, ComparisonColumn, SyncConfiguration
+from ...typings import ComparisonColumn
+from ..config_base import BeetlConfig, SyncConfiguration
 from .v1_schema import BeetlConfigSchemaV1
 
 
@@ -40,14 +41,14 @@ class BeetlConfigV1(BeetlConfig):
         self.sources = self.initialize_sources(config)
 
         if len(config.get("sync", "")) == 0:
-            raise Exception("The configuration file is missing the 'sync' section.")
+            raise ValueError("The configuration file is missing the 'sync' section.")
 
         for sync_index, sync in enumerate(config["sync"]):
             location = ("sync", str(sync_index))
             if not self.sources.get(sync["source"], False) or not self.sources.get(
                 sync["destination"], False
             ):
-                raise Exception(
+                raise ValueError(
                     "One of the source/destination names in "
                     "the sync section does not match a source name "
                     "in the sources section."
@@ -55,8 +56,8 @@ class BeetlConfigV1(BeetlConfig):
                 )
 
             source_name = sync["source"]
-            temp_source = copy.deepcopy(self.sources[source_name])
-            temp_source.set_sourceconfig(
+            source_instance = copy.deepcopy(self.sources[source_name])
+            source_instance.set_sourceconfig(
                 sync["sourceConfig"],
                 direction="source",
                 name=source_name,
@@ -64,17 +65,29 @@ class BeetlConfigV1(BeetlConfig):
             )
 
             destination_name = sync["destination"]
-            temp_destination = copy.deepcopy(self.sources[destination_name])
-            temp_destination.set_sourceconfig(
+            destination_instance = copy.deepcopy(self.sources[destination_name])
+            destination_instance.set_sourceconfig(
                 sync["destinationConfig"],
                 direction="destination",
                 name=destination_name,
                 location=(*location, "destinationConfig"),
             )
 
+            raw_diff_section = sync.get("diff", {})
+            raw_diff_destination = raw_diff_section.get("destination", None)
+            diff_instance = None
+            if raw_diff_destination:
+                diff_name = raw_diff_destination.get("name", None)
+                diff_instance = copy.deepcopy(self.sources.get(diff_name, None))
+                if not diff_instance:
+                    raise ValueError(
+                        "The diff source name in the sync section does not match a source name in the sources section."
+                    )
+                diff_instance.set_diff_config(raw_diff_destination)
+
             comparisonColumnsConf = sync.get("comparisonColumns", None)
             if not comparisonColumnsConf:
-                raise Exception(
+                raise ValueError(
                     "The sync configuration is missing the 'comparisonColumns' key."
                 )
             if type(comparisonColumnsConf) is list:
@@ -83,7 +96,7 @@ class BeetlConfigV1(BeetlConfig):
                         ComparisonColumn(**args) for args in sync["comparisonColumns"]
                     ]
                 except TypeError as e:
-                    raise Exception(
+                    raise ValueError(
                         "When passing the comparisonColumns as a list it must be a list of dictionaries containing the mandatory keys 'name', 'type', and optionally 'unique'."
                     ) from e
             elif type(comparisonColumnsConf) is dict:
@@ -96,24 +109,25 @@ class BeetlConfigV1(BeetlConfig):
                         )
 
                 except Exception as e:
-                    raise Exception(
+                    raise ValueError(
                         "The comparisonColumns must be a list of dictionaries containing the mandatory keys 'name', 'type', and optionally 'unique'."
                     ) from e
             else:
-                raise Exception(
+                raise ValueError(
                     "The comparisonColumns must be a list of dictionaries containing the mandatory keys 'name', 'type', and optionally 'unique'. Or a dictionary with the column names as key and types as values, where the first key is treated as the unique column."
                 )
 
             syncConfig = SyncConfiguration(
                 name=sync.get("name", ""),
-                source=temp_source,
+                source=source_instance,
                 sourceConfig=sync["sourceConfig"],
-                destination=temp_destination,
+                destination=destination_instance,
                 destinationConfig=sync["destinationConfig"],
                 comparisonColumns=comparisonColumns,
+                diff_destination_instance=diff_instance,
             )
 
-            temp_source = temp_destination = None
+            source_instance = destination_instance = None
 
             if sync.get("sourceTransformer", None) is not None:
                 syncConfig.sourceTransformer = TransformerConfiguration(
@@ -162,6 +176,17 @@ class BeetlConfigV1(BeetlConfig):
                         )
                     )
 
+            if raw_diff_section.get("transformers", None) is not None:
+                syncConfig.diff_transformers = []
+                for transformer in raw_diff_section["transformers"]:
+                    syncConfig.diff_transformers.append(
+                        TransformerConfiguration(
+                            transformer.get("transformer"),
+                            transformer.get("config", None),
+                            transformer.get("include_sync", False),
+                        )
+                    )
+
             self.sync_list.append(syncConfig)
 
     def initialize_sources(self, config):
@@ -171,7 +196,7 @@ class BeetlConfigV1(BeetlConfig):
             source_type = source["type"]
             registrated_source = Sources.sources.get(source_type, None)
             if registrated_source is None:
-                raise Exception(
+                raise ValueError(
                     f"The source type '{source_type}' used in source '{name}' is not registrated in available sources"
                 )
 
@@ -190,7 +215,7 @@ class BeetlConfigV1(BeetlConfig):
         try:
             envConfig = json.loads(envJson)
         except Exception as e:
-            raise Exception(
+            raise ValueError(
                 "The environment variable specified in 'sourcesFromEnv' "
                 "is not a valid JSON string or does not exist."
             ) from e

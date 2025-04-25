@@ -1,11 +1,16 @@
+import json
 import os
+from pathlib import Path
+from typing import Optional
 
 import pandas as pd
 import polars as pl
 
+from ...diff import DiffStats, DiffUpdate
 from ..interface import SourceInterface
 from ..registrated_source import register_source
 from .xml_config import XmlConfig, XmlConfigArguments
+from .xml_diff import XmlDiff, XmlDiffArguments
 from .xml_sync import XmlSync, XmlSyncArguments
 
 
@@ -17,10 +22,14 @@ class XmlSource(SourceInterface):
     ConfigClass = XmlConfig
     SyncArgumentsClass = XmlSyncArguments
     SyncClass = XmlSync
+    DiffArgumentsClass = XmlDiffArguments
+    DiffClass = XmlDiff
 
     connection_settings: XmlConfig = None
     source_configuration: XmlSync = None
     mutation_data: pl.DataFrame = pl.DataFrame()
+    diff_config: Optional[XmlDiff] = None
+    diff_config_arguments: Optional[XmlDiffArguments] = None
 
     def _configure(self):
         pass
@@ -136,3 +145,42 @@ class XmlSource(SourceInterface):
             )
 
         return destination
+
+    def store_diff(self, diff):
+        existing_data = pl.DataFrame()
+
+        if not os.path.exists(self.connection_settings.path):
+            os.makedirs(os.path.dirname(self.connection_settings.path), exist_ok=True)
+            Path(os.path.join(self.connection_settings.path)).touch()
+
+        try:
+            # The index is automatically added when reading XML files with pandas, to be able to merge the dataframes we need to drop it.
+            # It will be automatically recreated when writing the file again.
+            existing_data = pl.from_pandas(
+                pd.read_xml(self.connection_settings.path)
+            ).drop(["index"])
+        # OK to catch all exceptions here as we're just deciding whether we need to create the file
+        # pylint: disable=broad-exception-caught
+        except Exception:
+            # Do nothing, just replace the file
+            pass
+
+        new_data = pl.DataFrame(
+            {
+                "uuid": str(diff.uuid),
+                "name": diff.name,
+                "date": diff.date_as_string(),
+                "version": diff.version,
+                "updates": json.dumps(diff.updates, cls=DiffUpdate.JsonEncoder),
+                "inserts": json.dumps(diff.inserts),
+                "deletes": json.dumps(diff.deletes),
+                "stats": json.dumps(diff.stats, cls=DiffStats.JsonEncoder),
+            }
+        )
+
+        if existing_data.is_empty():
+            existing_data = new_data
+        else:
+            existing_data = pl.concat([existing_data, new_data])
+
+        existing_data.to_pandas().to_xml(self.connection_settings.path)

@@ -1,15 +1,21 @@
-from typing import Union
 import unittest
+from typing import Union
 
-from bson import ObjectId
 import sqlalchemy
-from src.beetl import beetl
+from bson import ObjectId
+from faker import Faker
+from pymongo import MongoClient
 from testcontainers.mongodb import MongoDbContainer
 from testcontainers.mysql import MySqlContainer
-from tests.configurations.mongodb import to_mongodb_with_object_id_as_identifier, to_mongodb_with_int_as_identifier, to_mysql_with_object_id_as_identifier
-from tests.helpers.manual_result import ManualResult
-from faker import Faker
 
+from src.beetl import beetl
+from tests.configurations.mongodb import (
+    diff_to_mongodb,
+    to_mongodb_with_int_as_identifier,
+    to_mongodb_with_object_id_as_identifier,
+    to_mysql_with_object_id_as_identifier,
+)
+from tests.helpers.manual_result import ManualResult
 from tests.helpers.mysql_testcontainer import to_connection_string
 
 DATABASE_NAME = "test"
@@ -18,18 +24,30 @@ SOURCE_TABLE_NAME = "src"
 
 class TestMongodbSource(unittest.TestCase):
     """Basic functionality test for the MongoDB source found in src/beetl/sources/mongodb.py"""
+
     faker = Faker()
 
-    def insert_test_data(self, amount: int, id_type: str, mongodb: MongoDbContainer) -> list:
+    def insert_test_data(
+        self, amount: int, id_type: str, mongodb: MongoDbContainer
+    ) -> list:
         inserts = []
         for _ in range(amount):
-            inserts.append({
-                "_id": ObjectId() if id_type == "object_id" else self.faker.random_int(),
-                "name": self.faker.name(),
-                "email": self.faker.email(),
-                "children": [{"name": self.faker.first_name()}, {"name": self.faker.first_name()}],
-                "address": {"city": self.faker.city(), "state": self.faker.state()}
-            })
+            inserts.append(
+                {
+                    "_id": (
+                        ObjectId()
+                        if id_type == "object_id"
+                        else self.faker.random_int()
+                    ),
+                    "name": self.faker.name(),
+                    "email": self.faker.email(),
+                    "children": [
+                        {"name": self.faker.first_name()},
+                        {"name": self.faker.first_name()},
+                    ],
+                    "address": {"city": self.faker.city(), "state": self.faker.state()},
+                }
+            )
 
         with mongodb.get_connection_client() as client:
             collection = client[DATABASE_NAME][SOURCE_TABLE_NAME]
@@ -37,14 +55,17 @@ class TestMongodbSource(unittest.TestCase):
             self.assertEqual(len(result.inserted_ids), len(inserts))
             return result.inserted_ids
 
-    def update_test_data(self, id: Union[str, ObjectId], email: str, mongodb: MongoDbContainer) -> None:
+    def update_test_data(
+        self, id: Union[str, ObjectId], email: str, mongodb: MongoDbContainer
+    ) -> None:
         with mongodb.get_connection_client() as client:
             collection = client[DATABASE_NAME][SOURCE_TABLE_NAME]
-            result = collection.update_one(
-                {"_id": id}, {"$set": {"email": email}})
+            result = collection.update_one({"_id": id}, {"$set": {"email": email}})
             self.assertEqual(result.modified_count, 1)
 
-    def delete_test_data(self, id: Union[str, ObjectId], mongodb: MongoDbContainer) -> None:
+    def delete_test_data(
+        self, id: Union[str, ObjectId], mongodb: MongoDbContainer
+    ) -> None:
         with mongodb.get_connection_client() as client:
             collection = client[DATABASE_NAME][SOURCE_TABLE_NAME]
             result = collection.delete_one({"_id": id})
@@ -58,7 +79,8 @@ class TestMongodbSource(unittest.TestCase):
             # Arrange
             inserted_ids = self.insert_test_data(3, "object_id", mongodb)
             config = to_mongodb_with_object_id_as_identifier(
-                mongodb.get_connection_url())
+                mongodb.get_connection_url()
+            )
             beetlInstance = beetl.Beetl(beetl.BeetlConfig(config))
 
             # Act
@@ -89,8 +111,7 @@ class TestMongodbSource(unittest.TestCase):
         with MongoDbContainer() as mongodb:
             # Arrange
             inserted_ids = self.insert_test_data(3, "int", mongodb)
-            config = to_mongodb_with_int_as_identifier(
-                mongodb.get_connection_url())
+            config = to_mongodb_with_int_as_identifier(mongodb.get_connection_url())
             beetlInstance = beetl.Beetl(beetl.BeetlConfig(config))
 
             # Act
@@ -146,18 +167,23 @@ class TestMongodbSource(unittest.TestCase):
 
         """
         with MongoDbContainer() as mongodb:
-            with MySqlContainer("mysql:latest", ) as mysql:
+            with MySqlContainer(
+                "mysql:latest",
+            ) as mysql:
                 # Arrange
                 engine = sqlalchemy.create_engine(mysql.get_connection_url())
                 with engine.begin() as connection:
                     create_destination_table_command = f"""
                         create table dst (id varchar({len(str(ObjectId()))}) primary key, name varchar(255), email varchar(255), city varchar(255), children varchar(255));"""
-                    connection.execute(sqlalchemy.text(
-                        create_destination_table_command))
+                    connection.execute(
+                        sqlalchemy.text(create_destination_table_command)
+                    )
 
                 inserted_ids = self.insert_test_data(3, "object_id", mongodb)
                 config = to_mysql_with_object_id_as_identifier(
-                    mongodb.get_connection_url(), to_connection_string(mysql.get_connection_url()))
+                    mongodb.get_connection_url(),
+                    to_connection_string(mysql.get_connection_url()),
+                )
                 beetlInstance = beetl.Beetl(beetl.BeetlConfig(config))
 
                 # Act
@@ -165,8 +191,7 @@ class TestMongodbSource(unittest.TestCase):
 
                 noActionResult = beetlInstance.sync()
 
-                self.update_test_data(
-                    inserted_ids[0], self.faker.email(), mongodb)
+                self.update_test_data(inserted_ids[0], self.faker.email(), mongodb)
                 updateResult = beetlInstance.sync()
 
                 self.delete_test_data(inserted_ids[0], mongodb)
@@ -184,3 +209,22 @@ class TestMongodbSource(unittest.TestCase):
 
                 oneRecordWasDeleted = ManualResult(0, 0, 1)
                 self.assertEqual(deleteResult, oneRecordWasDeleted)
+
+    def test_store_diff__when_specified_in_sync__diff_is_stored_in_the_specified_collection(
+        self,
+    ):
+        with MongoDbContainer() as mongodb:
+            connection_string = mongodb.get_connection_url()
+            config = diff_to_mongodb(connection_string)
+            beetl_instance = beetl.Beetl(beetl.BeetlConfig(config))
+
+            # Act
+            beetl_instance.sync()
+
+            mongo_client = MongoClient(connection_string)
+            db = mongo_client[DATABASE_NAME]
+            collection = db["diff"]
+            result = collection.find_one()
+            self.assertIsNotNone(result)
+            for value in result.values():
+                self.assertIsNotNone(value)

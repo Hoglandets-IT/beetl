@@ -72,34 +72,6 @@ class TestBeetlFunctions(unittest.TestCase):
         self.assertEqual(len(beetl_config.sync_list[0].destinationConfig), 0)
         self.assertEqual(len(beetl_config.sync_list[0].deletionTransformers), 0)
 
-    def test_compare_datasets(self):
-        source_data = DataFrame(self.basicConfig["sources"][0]["connection"]["static"])
-        dest_data = DataFrame(self.basicConfig["sources"][1]["connection"]["static"])
-
-        columns = [
-            config.ComparisonColumn(name="id", type="Int64", unique=True),
-            config.ComparisonColumn(name="name", type="Utf8"),
-            config.ComparisonColumn(name="email", type="Utf8"),
-        ]
-        insert, update, delete = beetl.Beetl.compare_datasets(
-            source_data, dest_data, ["id"], columns
-        )
-
-        self.assertEqual(
-            insert.to_dict(as_series=False),
-            {"id": [2], "name": ["Jane"], "email": ["jane@test.com"]},
-        )
-
-        self.assertEqual(
-            update.to_dict(as_series=False),
-            {"id": [3], "name": ["Steffen"], "email": ["steffen@test.com"]},
-        )
-
-        self.assertEqual(
-            delete.to_dict(as_series=False),
-            {"id": [4], "name": ["James"], "email": ["jane@test.com"]},
-        )
-
     def test_dry_run_sync(self):
 
         beetl_config = beetl.BeetlConfig(to_static())

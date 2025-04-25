@@ -4,25 +4,34 @@ from pydantic import BaseModel, ConfigDict, Field, ValidationError, model_valida
 from pydantic_core import ErrorDetails
 
 from ...sources import (
-    ExcelConfigArguments,
-    ExcelSyncArguments,
     CsvConfigArguments,
+    CsvDiffArguments,
+    ExcelConfigArguments,
+    ExcelDiffArguments,
+    ExcelSyncArguments,
     FakerConfigArguments,
+    FakerDiffArguments,
     ItopConfigArguments,
     ItopSyncArguments,
     MongodbConfigArguments,
+    MongodbDiffArguments,
     MongodbSyncArguments,
     MysqlConfigArguments,
+    MysqlDiffArguments,
     MysqlSyncArguments,
     PostgresConfigArguments,
+    PostgresDiffArguments,
     PostgresSyncArguments,
     RestConfigArguments,
     RestSyncArguments,
     Sources,
     SqlserverConfigArguments,
+    SqlserverDiffArguments,
     SqlserverSyncArguments,
     StaticConfigArguments,
+    StaticDiffArguments,
     XmlConfigArguments,
+    XmlDiffArguments,
     XmlSyncArguments,
 )
 from ...transformers import TransformerSchemas
@@ -74,8 +83,28 @@ OptionalTransformers = Annotated[
     Field(default=[]),
 ]
 
+SourceDiffArguments = Union[
+    SqlserverDiffArguments,
+    StaticDiffArguments,
+    CsvDiffArguments,
+    ExcelDiffArguments,
+    FakerDiffArguments,
+    MongodbDiffArguments,
+    MysqlDiffArguments,
+    PostgresDiffArguments,
+    XmlDiffArguments,
+]
+
+
+class DiffArguments(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    transformers: OptionalTransformers
+    destination: Annotated[SourceDiffArguments, Field(discriminator="type")]
+
 
 class V1Sync(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     source_to_type: Annotated[
         dict[str, str],
         Field(
@@ -91,6 +120,7 @@ class V1Sync(BaseModel):
         ),
     ]
 
+    name: Annotated[Optional[str], Field(default=None)]
     source: Annotated[str, Field(min_length=1)]
     destination: Annotated[str, Field(min_length=1)]
     sourceConfig: Annotated[SourceSyncArguments, Field()]
@@ -103,6 +133,8 @@ class V1Sync(BaseModel):
     destinationTransformers: OptionalTransformers
     insertionTransformers: OptionalTransformers
     deletionTransformers: OptionalTransformers
+
+    diff: Annotated[Optional[DiffArguments], Field(default=None)]
 
     @model_validator(mode="before")
     def validate_sources(cls, values):
@@ -151,6 +183,8 @@ class V1Sync(BaseModel):
 
 class BeetlConfigSchemaV1(BaseModel):
     """Represents the configuration as supplied by the user. This class is used to validate the configuration against the static jsonschema and the dynamic beetl validation rules."""
+
+    model_config = ConfigDict(extra="forbid")
 
     version: Literal["V1"]
     sources: Annotated[SourceConfigArguments, Field(min_items=1)]

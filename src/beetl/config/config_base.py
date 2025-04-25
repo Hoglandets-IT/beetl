@@ -1,13 +1,13 @@
-import yaml
 import json
-from typing import Any, List, Dict, Literal
 from dataclasses import dataclass
+from typing import Any, Dict, List, Literal
+
 import polars as pl
-from ..sources.interface import (
-    SourceSync,
-    SourceConfig,
-)
+import yaml
+
+from ..sources.interface import SourceConfig, SourceInterface, SourceSync
 from ..transformers.interface import TransformerConfiguration
+from ..typings import ComparisonColumn
 
 
 class SourceSettings:
@@ -28,8 +28,7 @@ class SourceSettings:
             source_class, f"{source_type}SourceConnectionSettings"
         )(**connection)
 
-        self.config = getattr(
-            source_class, f"{source_type}SourceConfig")(**config)
+        self.config = getattr(source_class, f"{source_type}SourceConfig")(**config)
 
 
 @dataclass
@@ -42,31 +41,25 @@ class ChangeDetectionConfig:
 
 
 @dataclass
-class ComparisonColumn:
-    name: str
-    type: pl.DataType
-    unique: bool = False
-
-    def __init__(self, name: str, type: Any, unique: bool = False) -> None:
-        self.name, self.unique = name, unique
-        self.type = getattr(pl, type)
-
-
-@dataclass
 class SyncConfiguration:
     """The configuration for a single sync between two sources"""
 
-    source: SourceSettings
+    source: SourceInterface
     sourceConfig: SourceSync
-    destination: SourceSettings
+    destination: SourceInterface
     destinationConfig: SourceSync
-    comparisonColumns: List[ComparisonColumn]
+    comparisonColumns: list[ComparisonColumn]
     name: str = ""
     changeDetection: ChangeDetectionConfig = None
+
     sourceTransformers: TransformerConfiguration = None
     destinationTransformers: TransformerConfiguration = None
-    insertionTransformers: List[TransformerConfiguration] = None
-    deletionTransformers: List[TransformerConfiguration] = None
+
+    insertionTransformers: list[TransformerConfiguration] = None
+    deletionTransformers: list[TransformerConfiguration] = None
+
+    diff_destination_instance: SourceInterface = None
+    diff_transformers: list[TransformerConfiguration] = None
 
     def __post_init__(self) -> None:
         self.source.config = self.sourceConfig

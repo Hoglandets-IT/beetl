@@ -6,7 +6,7 @@ import requests.adapters
 import urllib3
 from alive_progress import alive_bar
 
-from ...config.polar_types import PolarTypeOverridesParameters
+from ...typings import PolarTypeOverridesParameters
 from ..interface import SourceInterface
 from ..registrated_source import register_source
 from ..request_threader import RequestThreader
@@ -460,3 +460,6 @@ class ItopSource(SourceInterface):
                     pr_bar()
 
         return len(data)
+
+    def store_diff(self, diff):
+        raise NotImplementedError("The iTop source does not support diff storage")

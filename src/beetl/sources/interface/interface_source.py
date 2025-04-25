@@ -2,26 +2,10 @@ from typing import Literal
 
 import polars as pl
 
+from ...diff import Diff
 from .interface_config import SourceConfig, SourceConfigArguments
+from .interface_diff import SourceDiff, SourceDiffArguments
 from .interface_sync import SourceSync, SourceSyncArguments
-
-CASTABLE = (
-    pl.Int8,
-    pl.Int16,
-    pl.Int32,
-    pl.Int64,
-    pl.UInt8,
-    pl.UInt16,
-    pl.UInt32,
-    pl.UInt64,
-    pl.Float32,
-    pl.Float64,
-    pl.Boolean,
-    pl.Utf8,
-    pl.Object,
-    # Does not quite work
-    # pl.Binary,
-)
 
 
 class SourceInterface:
@@ -29,6 +13,8 @@ class SourceInterface:
     ConfigArgumentsClass = SourceConfigArguments
     SyncClass = SourceSync
     SyncArgumentsClass = SourceSyncArguments
+    DiffClass = SourceDiff
+    DiffArgumentsClass = SourceDiffArguments
 
     """ Abstract interface for a connection to a data source """
     connection = None
@@ -36,6 +22,8 @@ class SourceInterface:
     connection_settings = None
     source_configuration_arguments = None
     source_configuration = None
+    diff_config_arguments: SourceDiffArguments = None
+    diff_config: SourceDiff = None
 
     def __init__(self, source: dict) -> None:
         """Initiates a source class
@@ -63,6 +51,10 @@ class SourceInterface:
             direction=direction, name=name, location=location, **config
         )
         self.source_configuration = self.SyncClass(self.source_configuration_arguments)
+
+    def set_diff_config(self, diff_config: dict) -> None:
+        self.diff_config_arguments = self.DiffArgumentsClass(**diff_config)
+        self.diff_config = self.DiffClass(self.diff_config_arguments)
 
     def __enter__(self):
         self._connect()
@@ -139,5 +131,13 @@ class SourceInterface:
 
         Args:
             data (pl.DataFrame): The data to delete
+        """
+        raise NotImplementedError
+
+    def store_diff(self, diff: Diff):
+        """Store the diff in the source
+
+        Args:
+            diff (Diff): The diff to store
         """
         raise NotImplementedError

@@ -24,7 +24,9 @@
 				"tamasfe.even-better-toml",
 				"redhat.vscode-xml",
 				"ms-python.isort",
-				"ms-python.black-formatter"
+				"ms-python.black-formatter",
+				"ms-python.pylint",
+				"yzhang.markdown-all-in-one"
 			]
 		}
 	}

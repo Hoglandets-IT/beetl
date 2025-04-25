@@ -102,6 +102,77 @@ def to_mongodb_with_int_as_identifier(connectionString: str):
     }
 
 
+def diff_to_mongodb(connection_string: str):
+    if not connection_string:
+        raise Exception("Connection string is required")
+
+    return {
+        "version": "V1",
+        "sources": [
+            {
+                "name": "src",
+                "type": "Static",
+                "connection": {
+                    "static": [
+                        {"id": 2, "name": "test2", "age": 20},
+                        {"id": 3, "name": "test3", "age": 20},
+                        {"id": 4, "name": "test4", "age": 20},
+                    ]
+                },
+            },
+            {
+                "type": "Static",
+                "name": "dst",
+                "connection": {
+                    "static": [
+                        {"id": 3, "name": "test", "age": 20},
+                        {"id": 4, "name": "test4", "age": 20},
+                        {"id": 5, "name": "test5", "age": 20},
+                    ]
+                },
+            },
+            {
+                "name": "diff",
+                "type": "Mongodb",
+                "connection": {
+                    "settings": {
+                        "connection_string": connection_string,
+                        "database": "test",
+                    }
+                },
+            },
+        ],
+        "sync": [
+            {
+                "source": "src",
+                "destination": "dst",
+                "sourceConfig": {},
+                "destinationConfig": {},
+                "comparisonColumns": [
+                    {"name": "id", "type": "Utf8", "unique": True},
+                    {
+                        "name": "name",
+                        "type": "Utf8",
+                    },
+                    {
+                        "name": "age",
+                        "type": "Int64",
+                    },
+                ],
+                "diff": {
+                    "destination": {
+                        "type": "Mongodb",
+                        "name": "diff",
+                        "config": {
+                            "collection": "diff",
+                        },
+                    }
+                },
+            }
+        ],
+    }
+
+
 def to_mysql_with_object_id_as_identifier(
     mongodb_connection_string: str, mysql_connection_string: str
 ):

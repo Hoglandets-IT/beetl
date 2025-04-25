@@ -3,6 +3,8 @@
     "ms-python.python",
     "ms-python.debugpy",
     "ms-vscode-remote.remote-containers",
-    "ms-python.autopep8"
+    "ms-python.autopep8",
+    "ms-python.pylint",
+    "yzhang.markdown-all-in-one"
   ]
 }

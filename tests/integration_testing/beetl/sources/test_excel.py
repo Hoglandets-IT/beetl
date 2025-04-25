@@ -1,9 +1,13 @@
+import os
 import unittest
+
 import polars as pl
-from src.beetl.sources.excel.excel_source import ExcelSource
+
 from src.beetl import beetl
-from tests.configurations.excel import to_xlsx
+from src.beetl.sources.excel.excel_source import ExcelSource
+from tests.configurations.excel import diff_to_xlsx, to_xlsx
 from tests.helpers.manual_result import ManualResult
+from tests.helpers.temp import TEMP_PATH, clean_temp_directory
 
 
 class TestExcelSource(unittest.TestCase):
@@ -26,6 +30,32 @@ class TestExcelSource(unittest.TestCase):
         # # Assert
         self.assertEqual(amounts, ManualResult(91, 7, 8))
 
+    def test_save_diff__when_configured__diff_is_saved_to_temp_dir(self):
+        clean_temp_directory()
+        try:
+            # Arrange
+
+            diff_file_path = os.path.join(TEMP_PATH, "diff.xlsx")
+            beetl_instance = beetl.Beetl(
+                beetl.BeetlConfig(diff_to_xlsx(diff_file_path))
+            )
+
+            # Act
+            beetl_instance.sync()
+
+            # # Assert
+            self.assertTrue(os.path.exists(diff_file_path))
+
+            result = pl.read_excel(diff_file_path)
+            self.assertGreater(result.height, 0)
+            for row in result.to_dicts():
+                self.assertIsNotNone(row)
+                for key, value in row.items():
+                    self.assertIsNotNone(value, f"Value for key '{key}' is None")
+
+        finally:
+            clean_temp_directory()
+
     def test_query__with_override_columns__types_should_be_overridden(self):
         # Arrange
         source: ExcelSource = ExcelSource(
@@ -39,6 +69,8 @@ class TestExcelSource(unittest.TestCase):
         source.set_sourceconfig({"types": {"2": "Int64"}}, "source", "name", [])
 
         # Act
+        # OK to access the private method since we are testing the very method.
+        # pylint: disable=protected-access
         data = source._query()
 
         # # Assert

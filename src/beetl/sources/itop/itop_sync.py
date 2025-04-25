@@ -2,7 +2,7 @@ from typing import Annotated, Literal, Optional
 
 from pydantic import BaseModel, Field
 
-from ...config.polar_types import PolarTypeOverrides, PolarTypeOverridesParameters
+from ...typings import PolarTypeOverrides, PolarTypeOverridesParameters
 from ..interface import SourceSync, SourceSyncArguments
 
 DATAMODELS_WITHOUT_SOFT_DELETE = (

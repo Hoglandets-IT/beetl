@@ -1,20 +1,32 @@
+"""A source for MySQL data"""
+
+import json
+from typing import Any
+
 import polars as pl
 import sqlalchemy as sqla
 
+from ...diff import DiffStats, DiffUpdate
 from ..interface import SourceInterface
 from ..registrated_source import register_source
 from .mysql_config import MysqlConfig, MysqlConfigArguments
+from .mysql_diff import MysqlDiff, MysqlDiffArguments
 from .mysql_sync import MysqlSync, MysqlSyncArguments
 
 
 @register_source("Mysql")
 class MysqlSource(SourceInterface):
+    """A source for MySQL data"""
+
     ConfigArgumentsClass = MysqlConfigArguments
     ConfigClass = MysqlConfig
     SyncArgumentsClass = MysqlSyncArguments
     SyncClass = MysqlSync
+    DiffArgumentsClass = MysqlDiffArguments
+    DiffClass = MysqlDiff
 
-    """ A source for MySQL data """
+    diff_config: MysqlDiff = None
+    diff_config_arguments: MysqlDiffArguments = None
 
     def _configure(self):
         pass
@@ -36,7 +48,7 @@ class MysqlSource(SourceInterface):
 
             if query is None:
                 if self.source_configuration.table is None:
-                    raise Exception("No query or table specified")
+                    raise ValueError("No query or table specified")
 
                 query = f"SELECT * FROM {self.source_configuration.table}"
 
@@ -186,7 +198,43 @@ class MysqlSource(SourceInterface):
                 "MySQL source requires the unique_columns to be set if used as a destination"
             )
 
-    def _quote_if_needed(self, id: any) -> str:
-        if isinstance(id, str):
-            return f"'{id}'"
-        return str(id)
+    def _quote_if_needed(self, identifier: Any) -> str:
+        if isinstance(identifier, str):
+            return f"'{identifier}'"
+        return str(identifier)
+
+    def store_diff(self, diff):
+        if not self.diff_config:
+            raise ValueError("Diff configuration is missing")
+        metadata = sqla.MetaData()
+        table = sqla.Table(
+            self.diff_config.table,
+            metadata,
+            sqla.Column("uuid", sqla.Uuid, primary_key=True),
+            sqla.Column("name", sqla.String(length=255)),
+            sqla.Column("date", sqla.DateTime),
+            sqla.Column("version", sqla.String(length=64)),
+            sqla.Column("updates", sqla.TEXT),
+            sqla.Column("inserts", sqla.TEXT),
+            sqla.Column("deletes", sqla.TEXT),
+            sqla.Column("stats", sqla.TEXT),
+        )
+
+        insert_statement = sqla.insert(table).values(
+            name=diff.name,
+            date=diff.date,
+            uuid=diff.uuid,
+            version=diff.version,
+            updates=json.dumps(diff.updates, cls=DiffUpdate.JsonEncoder),
+            inserts=json.dumps(diff.inserts),
+            deletes=json.dumps(diff.deletes),
+            stats=json.dumps(diff.stats, cls=DiffStats.JsonEncoder),
+        )
+        with sqla.create_engine(
+            self.connection_settings.connection_string.replace(
+                "mysql://", "mysql+pymysql://"
+            )
+        ).connect() as con:
+            metadata.create_all(con)
+            con.execute(insert_statement)
+            con.commit()

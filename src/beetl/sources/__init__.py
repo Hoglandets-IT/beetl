@@ -1,13 +1,32 @@
 import os
+from typing import Literal
 
 # re-export
-from .csv import CsvConfig, CsvConfigArguments, CsvSource
-from .faker import FakerConfig, FakerConfigArguments, FakerSource
+from .csv import CsvConfig, CsvConfigArguments, CsvDiff, CsvDiffArguments, CsvSource
+from .excel import (
+    ExcelConfig,
+    ExcelConfigArguments,
+    ExcelDiff,
+    ExcelDiffArguments,
+    ExcelDiffConfigArguments,
+    ExcelSource,
+    ExcelSyncArguments,
+)
+from .faker import (
+    FakerConfig,
+    FakerConfigArguments,
+    FakerDiff,
+    FakerDiffArguments,
+    FakerDiffConfigArguments,
+    FakerSource,
+)
 from .interface import (
-    CASTABLE,
     SourceConfig,
     SourceConfigArguments,
     SourceConnectionArguments,
+    SourceDiff,
+    SourceDiffArguments,
+    SourceDiffConfigArguments,
     SourceSync,
     SourceSyncArguments,
 )
@@ -15,14 +34,27 @@ from .itop import ItopConfig, ItopConfigArguments, ItopSource, ItopSyncArguments
 from .mongodb import (
     MongodbConfig,
     MongodbConfigArguments,
+    MongodbDiff,
+    MongodbDiffArguments,
+    MongodbDiffConfigArguments,
     MongodbSource,
     MongodbSync,
     MongodbSyncArguments,
 )
-from .mysql import MysqlConfig, MysqlConfigArguments, MysqlSource, MysqlSyncArguments
+from .mysql import (
+    MysqlConfig,
+    MysqlConfigArguments,
+    MysqlDiff,
+    MysqlDiffArguments,
+    MysqlDiffConfigArguments,
+    MysqlSource,
+    MysqlSyncArguments,
+)
 from .postgresql import (
     PostgresConfig,
     PostgresConfigArguments,
+    PostgresDiff,
+    PostgresDiffArguments,
     PostgresSource,
     PostgresSyncArguments,
 )
@@ -32,15 +64,29 @@ from .rest import RestConfig, RestConfigArguments, RestSource, RestSyncArguments
 from .sqlserver import (
     SqlserverConfig,
     SqlserverConfigArguments,
+    SqlserverDiff,
+    SqlserverDiffArguments,
+    SqlserverDiffConfigArguments,
     SqlserverSource,
     SqlserverSync,
     SqlserverSyncArguments,
 )
-from .static import StaticConfig, StaticConfigArguments, StaticSource
-from .excel import ExcelConfig, ExcelConfigArguments, ExcelSource, ExcelSyncArguments
-
-from .xml import XmlConfig, XmlConfigArguments, XmlSource, XmlSync, XmlSyncArguments
-
+from .static import (
+    StaticConfig,
+    StaticConfigArguments,
+    StaticDiff,
+    StaticDiffArguments,
+    StaticSource,
+)
+from .xml import (
+    XmlConfig,
+    XmlConfigArguments,
+    XmlDiff,
+    XmlDiffArguments,
+    XmlSource,
+    XmlSync,
+    XmlSyncArguments,
+)
 
 cDir = os.path.dirname(__file__)
 for file in os.listdir(cDir):

@@ -1,15 +1,14 @@
 from time import perf_counter
-from typing import List, Union, get_args
+from typing import List, Union
 
-import polars as pl
 from tabulate import tabulate
 
 from .compare.compare import Difftool
 from .comparison_result import ComparisonResult
-from .config import BeetlConfig, ComparisonColumn, SyncConfiguration
+from .config import BeetlConfig
+from .diff import DiffCalculator
 from .result import Result, SyncResult
-from .sources import CASTABLE
-from .transformers.interface import TransformerConfiguration
+from .transformers import run_transformers
 
 BENCHMARK = []
 
@@ -49,123 +48,6 @@ class Beetl:
         """
         return cls(BeetlConfig.from_json_file(path, encoding))
 
-    @staticmethod
-    def compare_datasets(
-        source: pl.DataFrame,
-        destination: pl.DataFrame,
-        keys: List[str] = ["id"],
-        columns: List[ComparisonColumn] = [],
-    ) -> tuple[pl.DataFrame, pl.DataFrame, pl.DataFrame]:
-        """
-        This function uses polars DataFrames to quickly compare two datasets and return the differences.
-
-        Polars is roughly 10-50x faster than Pandas for this task, but this can vary depending on the dataset.
-
-        Args:
-            source (pl.DataFrame): The source dataset
-            destination (pl.DataFrame): The destination dataset
-            keys (List[str], optional): Unique keys in the dataset. Defaults to ["id"].
-            columns (List[str], optional): List of columns to compare for differences. Defaults to [].
-
-        Returns:
-            List[pl.DataFrame]: A list of Polars Dataframes (Insert, Update, Delete) containing the differences between source and destination
-        """
-
-        if isinstance(source, get_args(Union[list, set, tuple])):
-            source = pl.DataFrame(source)
-
-        if isinstance(destination, get_args(Union[list, set, tuple])):
-            destination = pl.DataFrame(destination)
-
-        source = Beetl._initialize_columns_if_empty(source, columns)
-        source = Beetl._cast_columns_to_types(source, columns)
-        destination = Beetl._initialize_columns_if_empty(destination, columns)
-        destination = Beetl._cast_columns_to_types(destination, columns)
-        column_names = [col.name for col in columns]
-
-        for column in column_names:
-
-            if column not in source.columns and column not in destination.columns:
-                raise Exception(
-                    f"Column {column} does not exist in any of the datasets"
-                )
-
-            if column not in source.columns and len(source) > 0:
-                source = source.with_columns(
-                    pl.lit(None).alias(column).cast(destination[column].dtype)
-                )
-
-            if column not in destination.columns and len(destination) > 0:
-                destination = destination.with_columns(
-                    pl.lit(None).alias(column).cast(source[column].dtype)
-                )
-
-        columns_contain_list_column = any(
-            [
-                True
-                for name in column_names
-                if type(source.get_column(name).dtype) == pl.List
-            ]
-        )
-        if columns_contain_list_column:
-            raise ValueError(
-                "Beetl does not support comparing list columns, please remove them from the sync.comparisonColumns field. If you didn't specify any non unique columns, Beetl will compare all columns by default. Please specify the columns you want to compare in the sync.comparisonColumns field."
-            )
-
-        # If source is empty, delete all in destination
-        if len(source) == 0:
-            return source, source, destination
-
-        # If destination is empty, create all from source
-        if len(destination) == 0:
-            return (source, destination, destination)
-        try:
-            # Get rows that only exist in source (Creates)
-            create = source.join(destination, on=keys, how="anti")
-
-            # Get rows that exist in both and have differing values (Updates)
-            update = source.join(destination, on=keys, how="semi").join(
-                destination, on=column_names, how="anti", join_nulls=True
-            )
-
-            # Get rows that only exist in destination (Deletes)
-            delete = destination.join(source, on=keys, how="anti")
-
-        except pl.ColumnNotFoundError as e:
-            raise ValueError(
-                "One or more comparison columns do not exist \n"
-                f"Source columns: {','.join(source.columns)} \n"
-                f"Destination columns: {','.join(destination.columns)} \n"
-                f"Comparison columns: {','.join(column_names)} \n"
-            ) from e
-
-        try:
-            comparison_results = (
-                create.select(source.columns),
-                update.select(source.columns),
-                delete.select(destination.columns),
-            )
-        except Exception:
-            raise Exception(
-                "Could not create comparison results. Most likely due to a mismatch in column names between source and destination."
-            )
-
-        return comparison_results
-
-    @staticmethod
-    def _initialize_columns_if_empty(source, columns):
-        if len(source) == 0 and source.width == 0:
-            for col in columns:
-                source = source.with_columns(pl.Series(col.name, dtype=col.type))
-        return source
-
-    @staticmethod
-    def _cast_columns_to_types(source, columns):
-        for col in columns:
-            if col.name in source.columns and col.type in CASTABLE:
-                source = source.with_columns(pl.col(col.name).cast(col.type))
-        return source
-
     def benchmark(self, text: str) -> None:
         """Inserts a benchmark into the log"""
         BENCHMARK.append({"text": text, "perf": perf_counter()})
@@ -176,24 +58,6 @@ class Beetl:
                 + ": "
                 + str(round(BENCHMARK[-1]["perf"] - BENCHMARK[-2]["perf"], 5))
             )
-
-    def runTransformers(
-        self,
-        source: pl.DataFrame,
-        transformers: List[TransformerConfiguration],
-        sync: SyncConfiguration,
-    ) -> pl.DataFrame:
-        transformed = source.clone()
-
-        if transformers is not None and len(transformers) > 0:
-            for transformer in transformers:
-                if transformer.include_sync:
-                    transformed = transformer.transform(transformed, sync=sync)
-                    continue
-
-                transformed = transformer.transform(transformed)
-
-        return transformed
 
     def sync(
         self, dry_run: bool = False, generate_update_diff: bool = False
@@ -240,32 +104,38 @@ class Beetl:
             self.benchmark("Finished data retrieval from destination")
 
             self.benchmark("Starting source data transformation")
-            transformedSource = self.runTransformers(
-                source_data, sync.sourceTransformers, sync
-            )
+            transformedSource = run_transformers(source_data, sync.sourceTransformers)
             self.benchmark(
                 "Finished source data transformation, starting destination transformation"
             )
-            transformedDestination = self.runTransformers(
-                destination_data, sync.destinationTransformers, sync
+            transformedDestination = run_transformers(
+                destination_data, sync.destinationTransformers
             )
 
             self.benchmark("Finished data transformation before comparison")
 
             self.benchmark("Starting comparison")
-            unique_columns = [
+            unique_columns = tuple(
                 column.name for column in sync.comparisonColumns if column.unique
-            ]
+            )
+            comparison_columns = tuple(
+                column.name
+                for column in sync.comparisonColumns
+                if column.name not in unique_columns
+            )
+
             if len(unique_columns) == 0:
                 raise ValueError(
                     "You need to specify at least one unique column in the sync.comparisonColumns field"
                 )
-            create, update, delete = self.compare_datasets(
+
+            diff_calculator = DiffCalculator(
+                sync.name,
                 transformedSource,
                 transformedDestination,
-                unique_columns,
                 sync.comparisonColumns,
             )
+            create, update, delete = diff_calculator.get_create_update_delete_for_sync()
             self.benchmark("Successfully extracted operations from dataset")
 
             load_and_compare = perf_counter() - start
@@ -282,11 +152,7 @@ class Beetl:
                     Difftool.diff_update(
                         update,
                         transformedDestination,
-                        [
-                            column.name
-                            for column in sync.comparisonColumns
-                            if not column.unique
-                        ],
+                        comparison_columns,
                         unique_columns,
                     )
                 )
@@ -295,27 +161,32 @@ class Beetl:
             if dry_run:
                 dry_run_results.append(
                     ComparisonResult(
-                        self.runTransformers(create, sync.insertionTransformers, sync),
-                        self.runTransformers(update, sync.insertionTransformers, sync),
-                        self.runTransformers(delete, sync.deletionTransformers, sync),
+                        run_transformers(create, sync.insertionTransformers),
+                        run_transformers(update, sync.insertionTransformers),
+                        run_transformers(delete, sync.deletionTransformers),
                     )
                 )
                 sync.destination.disconnect()
                 continue
+
+            if sync.diff_destination_instance is not None:
+                diff = diff_calculator.create_diff(sync.diff_transformers)
+                sync.diff_destination_instance.connect()
+                sync.diff_destination_instance.store_diff(diff)
 
             self.benchmark("Starting database operations")
             self.benchmark("Starting deletes")
             amount["deletes"] = 0
             if len(delete):
                 amount["deletes"] = sync.destination.delete(
-                    self.runTransformers(delete, sync.deletionTransformers, sync)
+                    run_transformers(delete, sync.deletionTransformers)
                 )
 
             self.benchmark("Finished deletes, starting inserts")
             amount["inserts"] = 0
             if len(create):
                 amount["inserts"] = sync.destination.insert(
-                    self.runTransformers(create, sync.insertionTransformers, sync)
+                    run_transformers(create, sync.insertionTransformers)
                 )
 
             self.benchmark("Finished inserts, starting updates")
@@ -323,7 +194,7 @@ class Beetl:
             amount["updates"] = 0
             if len(update):
                 amount["updates"] = sync.destination.update(
-                    self.runTransformers(update, sync.insertionTransformers, sync)
+                    run_transformers(update, sync.insertionTransformers)
                 )
 
             self.benchmark("Finished updates, sync finished")
@@ -337,6 +208,8 @@ class Beetl:
             )
 
             sync.destination.disconnect()
+            if sync.diff_destination_instance:
+                sync.diff_destination_instance.disconnect()
 
         if generate_update_diff:
             return generate_update_diff_results
