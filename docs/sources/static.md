@@ -1,7 +1,8 @@
-# Faker
-The faker source has not yet been implemented completely. Its purpose is to automatically generate data for you but as of right now it just functions exactly like the static source. If you are looking to use static data, then use the static source instead.
+# Static
+The static source has predefined data defined by you in the configuration.
+This source is very good for testing out a sync with static data and is often used for internal beetl development.
 
-- Type identifier: `Faker`
+- Type identifier: `Static`
 
 ## Source Configuration 
 Declare the data in the source configuration
@@ -10,10 +11,10 @@ sources:
   - name: src
     type: Source
     connection:
-      # faker: <list<dict<string, any>>>
+      # static: <list<dict<string, any>>>
       # List of dictionaries representing the data in the source..
       # You can think of the dictionaries as rows in a database table.
-      faker: 
+      static: 
         - id: 1
           name: John
         - id: 2
@@ -21,7 +22,7 @@ sources:
 ```
 
 ## Sync Settings
-There are no faker specific sync settings. Pass an empty object.
+There are no static specific sync settings. Pass an empty object.
 ```yaml
 sync:
   - source: src
@@ -45,12 +46,12 @@ sync:
       destination: 
         # type: string
         # Identifies the type of diff destination to use
-        type: Faker
+        type: Static
         # name: string
         # Points to a destination defined in the sources section by name
         name: diffsourcename
         # config: dict
         # The destination type specific configuration
-        # The Faker source does not have any specific config, pass an empty dict.
+        # The Static source does not have any specific config, pass an empty dict.
         config: {}
 ```

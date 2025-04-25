@@ -283,4 +283,4 @@ class RestSource(SourceInterface):
         return 0
 
     def store_diff(self, diff):
-        raise NotImplementedError("Store diff not implemented")
+        raise NotImplementedError("The rest source does not support diff storage")

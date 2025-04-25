@@ -101,11 +101,13 @@ sync:
 ```
 Make sure that your diff table exists in the destination with the following schema:
 
-uuid uniqueidentifier primary key
-name varchar(256)
-date Datetime
-version varchar(16)
-updates nvarchar(max)
-inserts nvarchar(max)
-deletes nvarchar(max)
-stats nvarchar(max)
+| Column Name | Type             | Constraints |
+| :---------- | :--------------- | :---------- |
+| uuid        | uniqueidentifier | primary key |
+| name        | varchar(256)     |             |
+| date        | Datetime         |             |
+| version     | varchar(16)      |             |
+| updates     | nvarchar(max)    |             |
+| inserts     | nvarchar(max)    |             |
+| deletes     | nvarchar(max)    |             |
+| stats       | nvarchar(max)    |             |

@@ -41,14 +41,14 @@ class BeetlConfigV1(BeetlConfig):
         self.sources = self.initialize_sources(config)
 
         if len(config.get("sync", "")) == 0:
-            raise Exception("The configuration file is missing the 'sync' section.")
+            raise ValueError("The configuration file is missing the 'sync' section.")
 
         for sync_index, sync in enumerate(config["sync"]):
             location = ("sync", str(sync_index))
             if not self.sources.get(sync["source"], False) or not self.sources.get(
                 sync["destination"], False
             ):
-                raise Exception(
+                raise ValueError(
                     "One of the source/destination names in "
                     "the sync section does not match a source name "
                     "in the sources section."
@@ -80,14 +80,14 @@ class BeetlConfigV1(BeetlConfig):
                 diff_name = raw_diff_destination.get("name", None)
                 diff_instance = copy.deepcopy(self.sources.get(diff_name, None))
                 if not diff_instance:
-                    raise Exception(
+                    raise ValueError(
                         "The diff source name in the sync section does not match a source name in the sources section."
                     )
                 diff_instance.set_diff_config(raw_diff_destination)
 
             comparisonColumnsConf = sync.get("comparisonColumns", None)
             if not comparisonColumnsConf:
-                raise Exception(
+                raise ValueError(
                     "The sync configuration is missing the 'comparisonColumns' key."
                 )
             if type(comparisonColumnsConf) is list:
@@ -96,7 +96,7 @@ class BeetlConfigV1(BeetlConfig):
                         ComparisonColumn(**args) for args in sync["comparisonColumns"]
                     ]
                 except TypeError as e:
-                    raise Exception(
+                    raise ValueError(
                         "When passing the comparisonColumns as a list it must be a list of dictionaries containing the mandatory keys 'name', 'type', and optionally 'unique'."
                     ) from e
             elif type(comparisonColumnsConf) is dict:
@@ -109,11 +109,11 @@ class BeetlConfigV1(BeetlConfig):
                         )
 
                 except Exception as e:
-                    raise Exception(
+                    raise ValueError(
                         "The comparisonColumns must be a list of dictionaries containing the mandatory keys 'name', 'type', and optionally 'unique'."
                     ) from e
             else:
-                raise Exception(
+                raise ValueError(
                     "The comparisonColumns must be a list of dictionaries containing the mandatory keys 'name', 'type', and optionally 'unique'. Or a dictionary with the column names as key and types as values, where the first key is treated as the unique column."
                 )
 
@@ -176,7 +176,6 @@ class BeetlConfigV1(BeetlConfig):
                         )
                     )
 
-            # TODO: Remove diff_transformers
             if raw_diff_section.get("transformers", None) is not None:
                 syncConfig.diff_transformers = []
                 for transformer in raw_diff_section["transformers"]:
@@ -197,7 +196,7 @@ class BeetlConfigV1(BeetlConfig):
             source_type = source["type"]
             registrated_source = Sources.sources.get(source_type, None)
             if registrated_source is None:
-                raise Exception(
+                raise ValueError(
                     f"The source type '{source_type}' used in source '{name}' is not registrated in available sources"
                 )
 
@@ -216,7 +215,7 @@ class BeetlConfigV1(BeetlConfig):
         try:
             envConfig = json.loads(envJson)
         except Exception as e:
-            raise Exception(
+            raise ValueError(
                 "The environment variable specified in 'sourcesFromEnv' "
                 "is not a valid JSON string or does not exist."
             ) from e

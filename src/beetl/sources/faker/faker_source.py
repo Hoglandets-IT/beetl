@@ -1,3 +1,5 @@
+"""A source for fake data"""
+
 from polars import DataFrame
 
 from ...diff.diff_model import Diff
@@ -9,12 +11,12 @@ from .faker_diff import FakerDiff, FakerDiffArguments
 
 @register_source("Faker")
 class FakerSource(SourceInterface):
+    """A source for fake data"""
+
     ConfigArgumentsClass = FakerConfigArguments
     ConfigClass = FakerConfig
     DiffArgumentsClass = FakerDiffArguments
     DiffClass = FakerDiff
-
-    """ A source for faker data """
 
     def _configure(self):
         pass

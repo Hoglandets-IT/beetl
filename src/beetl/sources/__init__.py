@@ -88,20 +88,6 @@ from .xml import (
     XmlSyncArguments,
 )
 
-SourceTypes = Literal[
-    "Sqlserver",
-    "Mysql",
-    "Postgresql",
-    "Mongodb",
-    "Itop",
-    "Rest",
-    "Csv",
-    "Faker",
-    "Static",
-    "Xml",
-    "Excel",
-]
-
 cDir = os.path.dirname(__file__)
 for file in os.listdir(cDir):
     if file.endswith(".py") and not file.startswith("__") and file != "interface.py":

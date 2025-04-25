@@ -25,11 +25,15 @@ sync:
 ```
 Make sure that your diff table exists in the destination with the following schema:
 
-uuid CHAR(36) NOT NULL PRIMARY KEY
-name VARCHAR(255)
-date DATETIME
-version VARCHAR(64)
-updates TEXT
-inserts TEXT
-deletes TEXT
-stats TEXT
+| Column Name | Type         | Constraints          |
+| :---------- | :----------- | :------------------- |
+| uuid        | CHAR(36)     | NOT NULL PRIMARY KEY |
+| name        | VARCHAR(255) |                      |
+| date        | DATETIME     |                      |
+| version     | VARCHAR(64)  |                      |
+| updates     | TEXT         |                      |
+| inserts     | TEXT         |                      |
+| deletes     | TEXT         |                      |
+| stats       | TEXT         |                      |
+
+

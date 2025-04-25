@@ -170,7 +170,7 @@ class Beetl:
                 continue
 
             if sync.diff_destination_instance is not None:
-                diff = diff_calculator.create_diff()
+                diff = diff_calculator.create_diff(sync.diff_transformers)
                 sync.diff_destination_instance.connect()
                 sync.diff_destination_instance.store_diff(diff)
 

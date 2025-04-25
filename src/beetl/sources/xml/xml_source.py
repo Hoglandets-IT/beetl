@@ -1,6 +1,7 @@
 import json
 import os
 from pathlib import Path
+from typing import Optional
 
 import pandas as pd
 import polars as pl
@@ -27,8 +28,8 @@ class XmlSource(SourceInterface):
     connection_settings: XmlConfig = None
     source_configuration: XmlSync = None
     mutation_data: pl.DataFrame = pl.DataFrame()
-    diff_config: XmlDiff = None
-    diff_config_arguments: XmlDiffArguments = None
+    diff_config: Optional[XmlDiff] = None
+    diff_config_arguments: Optional[XmlDiffArguments] = None
 
     def _configure(self):
         pass

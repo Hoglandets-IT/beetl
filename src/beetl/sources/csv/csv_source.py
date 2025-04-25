@@ -69,6 +69,8 @@ class CsvSource(SourceInterface):
                 self.connection_settings.path,
                 encoding=self.connection_settings.encoding,
             )
+        # Ok to catch broadly here since we are just figuring out if we should replace the file or not.
+        # pylint: disable=broad-exception-caught
         except Exception:
             # Do nothing, just replace the file
             pass

@@ -462,4 +462,4 @@ class ItopSource(SourceInterface):
         return len(data)
 
     def store_diff(self, diff):
-        raise NotImplementedError("Store diff not implemented")
+        raise NotImplementedError("The iTop source does not support diff storage")

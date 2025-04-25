@@ -300,7 +300,7 @@ Updated: 1
 Deleted: 1
 
 ```
-### Export diff 
+### Diff tracking 
 It is possible to configure beetl to store diffs for each sync in a source.
 Check out the [diff functionality page](/diff.html) to see how it works.
 

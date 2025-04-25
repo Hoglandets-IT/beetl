@@ -16,7 +16,7 @@ const config = defineConfig({
         text: 'General',
         items: [
           { text: 'Quickstart', link: '/getting-started' },
-          { text: 'Diff tracking', link: '/diff' },
+          { text: 'Diff tracking', link: '/diff-tracking' },
           { text: 'Column Specification', link: '/getting-started/columns' },
           { text: 'The Flow', link: '/getting-started/flow' },
           { text: 'Change Notes', link: '/getting-started/change-notes' },
@@ -45,7 +45,8 @@ const config = defineConfig({
           { text: 'MongoDB', link: '/sources/mongodb' },
           { text: 'MySQL', link: '/sources/mysql' },
           { text: 'Postgres', link: '/sources/postgres' },
-          { text: 'Rest API', link: '/sources/restapi' },
+          { text: 'Rest API', link: '/sources/rest' },
+          { text: 'Static', link: '/sources/static' },
           { text: 'SQL Server', link: '/sources/sqlserver' },
           { text: 'Xml', link: '/sources/xml' },
         ]
