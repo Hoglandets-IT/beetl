@@ -221,3 +221,7 @@ class TestMysqlSource(unittest.TestCase):
 
                 self.assertIsNotNone(result)
                 self.assertGreater(len(result), 0)
+                for row in result:
+                    self.assertIsNotNone(row)
+                    for value in row:
+                        self.assertIsNotNone(value)

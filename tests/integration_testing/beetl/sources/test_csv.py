@@ -78,5 +78,8 @@ class TestCsvSource(TestCase):
 
             result = read_csv(os.path.join(TEMP_PATH, diff_file_name))
             self.assertEqual(result.height, 1)
+            for row in result.to_dicts():
+                for value in row.values():
+                    self.assertIsNotNone(value)
         finally:
             clean_temp_directory()

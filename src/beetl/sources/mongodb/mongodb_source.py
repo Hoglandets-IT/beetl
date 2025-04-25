@@ -117,12 +117,12 @@ class MongodbSource(SourceInterface):
                         "date": diff.date_as_string(),
                         "uuid": str(diff.uuid),
                         "version": diff.version,
-                        "updates": json.dumps(diff.updates, cls=DiffUpdate.JsonEncoder),
-                        "inserts": json.dumps(diff.inserts),
-                        "deletes": json.dumps(diff.deletes),
-                        "stats": json.dumps(diff.stats, cls=DiffStats.JsonEncoder),
+                        "updates": [update.to_dict() for update in diff.updates],
+                        "inserts": diff.inserts,
+                        "deletes": diff.deletes,
+                        "stats": diff.stats.to_dict(),
                     }
                 ]
             )
             if not len(result.inserted_ids) == 1:
-                raise ValueError(f"Error inserting diff into MongoDB")
+                raise ValueError("Error inserting diff into MongoDB")

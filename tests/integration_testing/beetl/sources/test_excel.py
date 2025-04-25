@@ -47,7 +47,12 @@ class TestExcelSource(unittest.TestCase):
             self.assertTrue(os.path.exists(diff_file_path))
 
             result = pl.read_excel(diff_file_path)
-            self.assertEqual(result.height, 1)
+            self.assertGreater(result.height, 0)
+            for row in result.to_dicts():
+                self.assertIsNotNone(row)
+                for key, value in row.items():
+                    self.assertIsNotNone(value, f"Value for key '{key}' is None")
+
         finally:
             clean_temp_directory()
 

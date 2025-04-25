@@ -75,6 +75,7 @@ def diff_to_xlsx(diff_file_path: str) -> dict:
         ],
         "sync": [
             {
+                "name": "testing_diff",
                 "source": "src",
                 "destination": "dst",
                 "sourceConfig": {},

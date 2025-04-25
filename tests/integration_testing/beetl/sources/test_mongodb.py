@@ -226,3 +226,5 @@ class TestMongodbSource(unittest.TestCase):
             collection = db["diff"]
             result = collection.find_one()
             self.assertIsNotNone(result)
+            for value in result.values():
+                self.assertIsNotNone(value)

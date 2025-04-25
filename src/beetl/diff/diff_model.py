@@ -1,7 +1,7 @@
 import json
 from datetime import datetime
 from json import JSONEncoder
-from typing import Any, Literal, Union
+from typing import Any, Literal
 from uuid import uuid4
 
 DiffRow = dict[str, Any]
@@ -24,6 +24,12 @@ class DiffUpdate:
 
     def dump_json(self):
         return json.dumps(self, cls=JSONEncoder)
+
+    def to_dict(self) -> dict[str, DiffRow]:
+        return {
+            "old": self.old,
+            "new": self.new,
+        }
 
 
 class DiffStats:
@@ -50,6 +56,13 @@ class DiffStats:
 
     def dump_json(self):
         return json.dumps(self, cls=JSONEncoder)
+
+    def to_dict(self) -> dict[str, int]:
+        return {
+            "updates": self.updates,
+            "inserts": self.inserts,
+            "deletes": self.deletes,
+        }
 
 
 class Diff:
