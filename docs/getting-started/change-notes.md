@@ -1,7 +1,7 @@
 # Change Notes
 ## 1.3.0
 ### Changes 🔄
-- Implemented support for storing a sync diff into one of the configured sources. Documentation can be found [here](/diff.html).
+- Implemented support for storing a sync diff into one of the configured sources. Documentation can be found [here](/getting-started/diff-tracking.html).
 - Integrated Excel as a data source.
 - Introduced the replace_empty_strings flag for SQL Server to convert empty strings to null values.
 - Enhanced Transformer:

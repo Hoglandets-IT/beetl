@@ -37,11 +37,11 @@ id,name,age,email,phone
 ```
 
 ### SQL Server Data
-| id | name | age | email | phone |
-|----|------|-----|-------|-------|
-| 1  | John Doe | 25 | john.doe@example.com | +11234567890 |
-| 2  | Jane Doe | 20 | jane.doe@example.com | +11234567891 |
-| 4 | Jack Doe | 30 | jack.doe@example.com | +11234567892 |
+| id  | name     | age | email                | phone        |
+| --- | -------- | --- | -------------------- | ------------ |
+| 1   | John Doe | 25  | john.doe@example.com | +11234567890 |
+| 2   | Jane Doe | 20  | jane.doe@example.com | +11234567891 |
+| 4   | Jack Doe | 30  | jack.doe@example.com | +11234567892 |
 
 
 ## Configuration
@@ -302,7 +302,7 @@ Deleted: 1
 ```
 ### Diff tracking 
 It is possible to configure beetl to store diffs for each sync in a source.
-Check out the [diff functionality page](/diff.html) to see how it works.
+Check out the [diff tracking page](/getting-started/diff-tracking.html) to see how it works.
 
 ### Dry run
 
