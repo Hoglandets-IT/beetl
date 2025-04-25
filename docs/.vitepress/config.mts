@@ -16,7 +16,7 @@ const config = defineConfig({
         text: 'General',
         items: [
           { text: 'Quickstart', link: '/getting-started' },
-          { text: 'Diff tracking', link: '/diff-tracking' },
+          { text: 'Diff tracking', link: '/getting-started/diff-tracking' },
           { text: 'Column Specification', link: '/getting-started/columns' },
           { text: 'The Flow', link: '/getting-started/flow' },
           { text: 'Change Notes', link: '/getting-started/change-notes' },
