@@ -3,6 +3,7 @@ Definition for the SqlServer source
 """
 
 import json
+from typing import Optional
 from uuid import uuid4
 
 import pandas as pd
@@ -31,30 +32,31 @@ class SqlserverSource(SourceInterface):
     DiffArgumentsClass = SqlserverDiffArguments
     DiffClass = SqlserverDiff
 
-    diff_config_arguments: SqlserverDiffArguments = None
-    diff_config: SqlserverDiff = None
-    connection: pyodbc.Connection = None
+    diff_config_arguments: Optional[SqlserverDiffArguments] = None
+    diff_config: Optional[SqlserverDiff] = None
+    connection: Optional[pyodbc.Connection] = None
+    engine: Optional[sqla.Engine] = None
 
     def _configure(self):
         pass
 
     def _connect(self):
         try:
-            engine = sqla.create_engine(self.connection_settings.connection_string)
+            self.engine = sqla.create_engine(self.connection_settings.connection_string)
         except ModuleNotFoundError:
             try:
-                engine = sqla.create_engine(
+                self.engine = sqla.create_engine(
                     self.connection_settings.connection_string.replace(
                         "mssql://", "mssql+pyodbc://"
                     )
                 )
             except ModuleNotFoundError:
-                engine = sqla.create_engine(
+                self.engine = sqla.create_engine(
                     self.connection_settings.connection_string.replace(
                         "mssql://", "mssql+pymssql://"
                     )
                 )
-        self.connection = engine.connect()
+        self.connection = self.engine.connect()
 
     def _disconnect(self):
         self.connection.commit()
@@ -273,6 +275,7 @@ class SqlserverSource(SourceInterface):
             sqla.Column("deletes", sqla.String),
             sqla.Column("stats", sqla.String),
         )
+        metadata.create_all(self.connection)
 
         insert_statement = sqla.insert(table).values(
             name=diff.name,

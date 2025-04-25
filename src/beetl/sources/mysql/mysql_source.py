@@ -211,13 +211,13 @@ class MysqlSource(SourceInterface):
             self.diff_config.table,
             metadata,
             sqla.Column("uuid", sqla.Uuid, primary_key=True),
-            sqla.Column("name", sqla.String),
+            sqla.Column("name", sqla.String(length=255)),
             sqla.Column("date", sqla.DateTime),
-            sqla.Column("version", sqla.String),
-            sqla.Column("updates", sqla.String),
-            sqla.Column("inserts", sqla.String),
-            sqla.Column("deletes", sqla.String),
-            sqla.Column("stats", sqla.String),
+            sqla.Column("version", sqla.String(length=64)),
+            sqla.Column("updates", sqla.TEXT),
+            sqla.Column("inserts", sqla.TEXT),
+            sqla.Column("deletes", sqla.TEXT),
+            sqla.Column("stats", sqla.TEXT),
         )
 
         insert_statement = sqla.insert(table).values(
@@ -235,5 +235,6 @@ class MysqlSource(SourceInterface):
                 "mysql://", "mysql+pymysql://"
             )
         ).connect() as con:
+            metadata.create_all(con)
             con.execute(insert_statement)
             con.commit()

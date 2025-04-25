@@ -102,12 +102,6 @@ class TestSqlServerSource(unittest.TestCase):
 
             engine = sqlalchemy.create_engine(mssql.get_connection_url())
             with engine.begin() as connection:
-
-                connection.execute(
-                    sqlalchemy.text(
-                        "create table diffs (uuid uniqueidentifier primary key, name varchar(255), date datetime, version varchar(64), updates nvarchar(max), inserts nvarchar(max), deletes nvarchar(max), stats nvarchar(max))"
-                    )
-                )
                 connection.execute(
                     sqlalchemy.text(
                         "create table dst (id int primary key, name varchar(255), age int)"

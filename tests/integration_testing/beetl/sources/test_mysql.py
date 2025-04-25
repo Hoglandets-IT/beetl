@@ -203,11 +203,6 @@ class TestMysqlSource(unittest.TestCase):
             engine = sqlalchemy.create_engine(mysql.get_connection_url())
             with engine.begin() as connection:
                 # arrange
-                connection.execute(
-                    sqlalchemy.text(
-                        "create table diff (uuid CHAR(36) NOT NULL PRIMARY KEY, name VARCHAR(255), date DATETIME, version VARCHAR(64), updates TEXT, inserts TEXT, deletes TEXT, stats TEXT)"
-                    )
-                )
                 config = diff_to_mysql(
                     to_connection_string(mysql.get_connection_url()),
                 )
