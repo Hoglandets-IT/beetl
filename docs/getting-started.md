@@ -37,11 +37,11 @@ id,name,age,email,phone
 ```
 
 ### SQL Server Data
-| id | name | age | email | phone |
-|----|------|-----|-------|-------|
-| 1  | John Doe | 25 | john.doe@example.com | +11234567890 |
-| 2  | Jane Doe | 20 | jane.doe@example.com | +11234567891 |
-| 4 | Jack Doe | 30 | jack.doe@example.com | +11234567892 |
+| id  | name     | age | email                | phone        |
+| --- | -------- | --- | -------------------- | ------------ |
+| 1   | John Doe | 25  | john.doe@example.com | +11234567890 |
+| 2   | Jane Doe | 20  | jane.doe@example.com | +11234567891 |
+| 4   | Jack Doe | 30  | jack.doe@example.com | +11234567892 |
 
 
 ## Configuration
@@ -300,6 +300,10 @@ Updated: 1
 Deleted: 1
 
 ```
+### Diff tracking 
+It is possible to configure beetl to store diffs for each sync in a source.
+Check out the [diff tracking page](/getting-started/diff-tracking.html) to see how it works.
+
 ### Dry run
 
 While developing your integration it might be helpful to be able to see what is going to happen without applying any changes to your destination. You can do this by simply passing `dry_run=True` to the `sync` method like this.
@@ -324,7 +328,7 @@ The results is a list of ComparisonResult with the following schema
 
 If you print any of the dataframes you will be presented by an ascii table representation of what will be created, updated and deleted from the destination dataset.
 
-### Generate update diffs
+### Generate update diffs (debug only)
 
 As a tool to help you understand what is going to be updated you can tell beetl to perform a dry run and output a diff for each row that is going to be updated containing only the unique indentifiers and the values that have changed. You can do this by passing `generate_update_diff=True` to the `sync` method.
 

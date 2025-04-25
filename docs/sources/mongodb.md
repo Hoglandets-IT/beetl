@@ -229,3 +229,31 @@ sync:
 ```
 **links**:
 - [strings.to_object_id](/transformers/strings#to-object-id)
+
+## Diff settings
+Configure the diff config as following.
+
+```yaml
+sync:
+  - name: test
+    source: srcname
+    destination: dstname
+    sourceConfig: {}
+    destinationConfig: {}
+    diff:
+      destination: 
+        # type: string
+        # Identifies the type of diff destination to use
+        type: Mongodb
+        # name: string
+        # Points to a destination defined in the sources section by name
+        name: diffsourcename
+        # config: dict
+        # The destination type specific configuration
+        config:
+          # collection: string
+          # The collection to use in the mongodb database
+          collection: diffcollectionname
+```
+
+The collection will be created automatically if it doesn't already exist.

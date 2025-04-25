@@ -62,6 +62,13 @@ class SqlserverSyncArguments(SourceSyncArguments):
             description="Defines what columns to skip when inserting and updating. Only allowed when used as a destination.",
         ),
     ]
+    replace_empty_strings: Annotated[
+        bool,
+        Field(
+            default=False,
+            description="If True, empty strings ('') in text columns will be replaced with None.",
+        ),
+    ]
 
     @model_validator(mode="after")
     def validate_as_source(cls, instance: "SqlserverSyncArguments"):
@@ -140,6 +147,7 @@ class SqlserverSync(SourceSync):
     deleted_value: str = "'true'"
     unique_columns: list[str] = None
     skip_columns: list[str] = None
+    replace_empty_strings: bool = False
 
     def __init__(
         self,
@@ -155,3 +163,4 @@ class SqlserverSync(SourceSync):
         self.deleted_value = arguments.deleted_value
         self.unique_columns = arguments.uniqueColumns
         self.skip_columns = arguments.skipColumns
+        self.replace_empty_strings = arguments.replace_empty_strings

@@ -1,16 +1,22 @@
+"""A source for fake data"""
+
 from polars import DataFrame
 
+from ...diff.diff_model import Diff
 from ..interface import SourceInterface
 from ..registrated_source import register_source
 from .faker_config import FakerConfig, FakerConfigArguments
+from .faker_diff import FakerDiff, FakerDiffArguments
 
 
 @register_source("Faker")
 class FakerSource(SourceInterface):
+    """A source for fake data"""
+
     ConfigArgumentsClass = FakerConfigArguments
     ConfigClass = FakerConfig
-
-    """ A source for faker data """
+    DiffArgumentsClass = FakerDiffArguments
+    DiffClass = FakerDiff
 
     def _configure(self):
         pass
@@ -25,16 +31,20 @@ class FakerSource(SourceInterface):
         return self.connection_settings.data
 
     def insert(self, data: DataFrame):
-        print("Inserting data into static source...")
+        print("Printing insert data to console...")
         print(data)
         return len(data)
 
     def update(self, data: DataFrame):
-        print("Updating data in static source...")
+        print("Printing update data to console...")
         print(data)
         return len(data)
 
     def delete(self, data: DataFrame):
-        print("Deleting data from static source")
+        print("Printing delete data to console...")
         print(data)
         return len(data)
+
+    def store_diff(self, diff: Diff):
+        print("Printing diff to console...")
+        print(diff.dump_json())

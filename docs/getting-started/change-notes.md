@@ -1,4 +1,15 @@
 # Change Notes
+## 1.3.0
+### Changes 🔄
+- Implemented support for storing a sync diff into one of the configured sources. Documentation can be found [here](/getting-started/diff-tracking.html).
+- Integrated Excel as a data source.
+- Introduced the replace_empty_strings flag for SQL Server to convert empty strings to null values.
+- Enhanced Transformer:
+  - Added regex.match_single to extract substrings from a column using regular expression capturing groups.
+
+### Bugfixes 🐛
+- Resolved an issue where extraneous attributes were being included in Delete requests to iTop.
+
 ## 1.2.1 
 ### Changes 🔄
 - iTop requires foreign key fields to be 0 in order for them to be unset. It is now possible to specify columns as `foreign_key_columns` in the iTop destination in order for the source to automatically convert `None` values in these columns to 0. See the [documentation](/sources/itop.html) for more details. 

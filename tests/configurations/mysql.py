@@ -124,3 +124,77 @@ def to_mongodb_with_object_id_as_identifier(
             }
         ],
     }
+
+
+def diff_to_mysql(mysql_connection_string: str):
+    if not mysql_connection_string:
+        raise Exception("Connection string is required")
+
+    return {
+        "version": "V1",
+        "sources": [
+            {
+                "name": "src",
+                "type": "Static",
+                "connection": {
+                    "static": [
+                        {"id": 2, "name": "test2", "age": 20},
+                        {"id": 3, "name": "test3", "age": 20},
+                        {"id": 4, "name": "test4", "age": 20},
+                    ]
+                },
+            },
+            {
+                "name": "dst",
+                "type": "Static",
+                "connection": {
+                    "static": [
+                        {"id": 3, "name": "test", "age": 20},
+                        {"id": 4, "name": "test4", "age": 20},
+                        {"id": 5, "name": "test5", "age": 20},
+                    ]
+                },
+            },
+            {
+                "name": "diff",
+                "type": "Mysql",
+                "connection": {
+                    "settings": {
+                        "connection_string": mysql_connection_string,
+                    }
+                },
+            },
+        ],
+        "sync": [
+            {
+                "source": "src",
+                "destination": "dst",
+                "sourceConfig": {},
+                "destinationConfig": {},
+                "comparisonColumns": [
+                    {
+                        "name": "id",
+                        "type": "Int32",
+                        "unique": True,
+                    },
+                    {
+                        "name": "name",
+                        "type": "Utf8",
+                    },
+                    {
+                        "name": "age",
+                        "type": "Int64",
+                    },
+                ],
+                "diff": {
+                    "destination": {
+                        "type": "Mysql",
+                        "name": "diff",
+                        "config": {
+                            "table": "diff",
+                        },
+                    }
+                },
+            }
+        ],
+    }
