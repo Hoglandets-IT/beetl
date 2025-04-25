@@ -8,7 +8,7 @@ Declare the data in the source configuration
 ```yaml
 sources:
   - name: src
-    type: Source
+    type: Faker
     connection:
       # faker: <list<dict<string, any>>>
       # List of dictionaries representing the data in the source..
@@ -31,7 +31,7 @@ sync:
 ```
 
 ## Diff settings
-The static source will simply write the json serialized diff to the terminal output.
+The faker source will simply write the json serialized diff to the terminal output.
 Configure the diff config as following.
 
 ```yaml
