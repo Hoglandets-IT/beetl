@@ -30,6 +30,7 @@ polar_to_xml_type_map = {
 
 class XmlSyncArguments(SourceSyncArguments):
     xpath: Annotated[str, Field(default="./*")]
+    namespaces: Annotated[Optional[dict[str, str]], Field(default=None)]
     unique_columns: Annotated[tuple[str, ...], Field(default=tuple([]))]
     root_name: Annotated[str, Field(default="root")]
     row_name: Annotated[str, Field(default="row")]
@@ -72,6 +73,7 @@ class XmlSync(SourceSync):
     """The configuration class used for XML file sources"""
 
     xpath: str = ""
+    namespaces: Optional[dict[str, str]] = None
     unique_columns: tuple[str] = ()
     root_name: str = ""
     row_name: str = ""
@@ -85,6 +87,7 @@ class XmlSync(SourceSync):
         self.unique_columns = arguments.unique_columns
         self.root_name = arguments.root_name
         self.row_name = arguments.row_name
+        self.namespaces = arguments.namespaces
 
         if arguments.xsl is not None:
             self.xsl = arguments.xsl
