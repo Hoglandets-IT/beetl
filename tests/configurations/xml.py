@@ -126,3 +126,41 @@ def diff_to_xml(
             }
         ],
     }
+
+
+def from_xml_with_namespace(source_file_path: str) -> dict:
+    return {
+        "version": "V1",
+        "sources": [
+            {
+                "name": "src",
+                "type": "Xml",
+                "connection": {
+                    "path": source_file_path,
+                },
+            },
+            {
+                "name": "dst",
+                "type": "Static",
+                "connection": {"static": []},
+            },
+        ],
+        "sync": [
+            {
+                "source": "src",
+                "destination": "dst",
+                "sourceConfig": {
+                    "namespaces": {"ns": "http://example.com/beetl"},
+                    "xpath": ".//ns:group",
+                },
+                "destinationConfig": {},
+                "comparisonColumns": [
+                    {
+                        "name": "id",
+                        "type": "Int64",
+                        "unique": True,
+                    },
+                ],
+            }
+        ],
+    }

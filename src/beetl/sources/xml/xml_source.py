@@ -56,6 +56,7 @@ class XmlSource(SourceInterface):
             pd.read_xml(
                 self.connection_settings.path,
                 encoding=self.connection_settings.encoding,
+                namespaces=self.source_configuration.namespaces,
                 parser=self.source_configuration.parser,
                 xpath=self.source_configuration.xpath,
                 dtype=self.source_configuration.types,
