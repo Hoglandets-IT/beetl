@@ -26,6 +26,11 @@ Declare how your file should be read, and if used as destination how the file sh
 sync:
   - source: src
     sourceConfig:
+      # namespaces: <dict<string, string>>, (optional, default=None, only used when reading xml)
+      # namespaces defines what namespaces are present in the xml file and is necessary when trying to select elements nested within a namespace, see example:
+      # E.g: If your root element has its namespace set to "http://example.com/beetl/ns" and there are nested <item> elements within it you can send in {'ns': 'http://example.com/beetl/ns'} as your namespaces and then use ".//ns:items" as the xpath to select all items within the namespace.
+      namespaces:
+        namespace_name: http://example.com/beetl/ns
       # xpath: <string>, (optional, default="./*", only used when configured as source)
       # Querystring defining how the xml file should be read, see the link below.
       # Etree supported xpath syntax https://docs.python.org/3/library/xml.etree.elementtree.html#supported-xpath-syntax

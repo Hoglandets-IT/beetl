@@ -1,4 +1,8 @@
 # Change Notes
+## 1.3.1
+### Changes 🔄
+- Added support for namespaces in the XML source. See the example in the [sync settings](/sources/xml.html).
+
 ## 1.3.0
 ### Changes 🔄
 - Implemented support for storing a sync diff into one of the configured sources. Documentation can be found [here](/getting-started/diff-tracking.html).

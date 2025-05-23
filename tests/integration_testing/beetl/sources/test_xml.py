@@ -6,7 +6,7 @@ import polars as pl
 
 from src.beetl import beetl
 from src.beetl.config import BeetlConfig
-from tests.configurations.xml import diff_to_xml, to_xml
+from tests.configurations.xml import diff_to_xml, from_xml_with_namespace, to_xml
 from tests.helpers.manual_result import ManualResult
 from tests.helpers.temp import clean_temp_directory, create_temp_file
 
@@ -156,3 +156,16 @@ class TestXmlSource(unittest.TestCase):
                     )
         finally:
             clean_temp_directory()
+
+    def test_reading_xml_with_namespace(self):
+        # Arrange
+        source_path = "tests/configurations/xml/source-with-namespaces.xml"
+
+        # Act
+        beetl_client = beetl.Beetl(
+            beetl.BeetlConfig(from_xml_with_namespace(source_path))
+        )
+        create_three_result = beetl_client.sync()
+
+        # Assert
+        self.assertEqual(create_three_result, ManualResult(3, 0, 0))
