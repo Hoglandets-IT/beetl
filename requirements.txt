@@ -26,3 +26,5 @@ faker
 # Also remove the pinned version in the pyproject.toml
 # https://github.com/pola-rs/polars/pull/21277
 connectorx<0.4.2
+protobuf>=4.25.8 # not directly required, pinned by Snyk to avoid a vulnerability
+urllib3>=2.5.0 # not directly required, pinned by Snyk to avoid a vulnerability
