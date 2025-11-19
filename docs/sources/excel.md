@@ -1,5 +1,21 @@
 # Excel
-This page is a work in progress..
+
+## Source Configuration
+```yaml
+sources:
+  - name: src
+    type: Excel
+    connection:
+      path: "path/to/excel.xlsx"
+```
+
+## Sync Settings
+The Excel source does not have any sync settings and can be left empty.
+```yaml
+sync:
+  - source: src
+    sourceConfig: {}
+```
 
 ## Diff settings
 Configure the diff config as following.
