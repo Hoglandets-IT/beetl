@@ -43,6 +43,7 @@ class ExcelSource(SourceInterface):
         return pl.read_excel(
             self.connection_settings.path,
             schema_overrides=self.source_configuration.types,
+            sheet_name=self.source_configuration.sheet_name,
         )
 
     def insert(self, data: pl.DataFrame):
