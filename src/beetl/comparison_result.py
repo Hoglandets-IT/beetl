@@ -1,5 +1,5 @@
 from polars import DataFrame
-from src.beetl.result import Result
+from result import Result
 
 
 class ComparisonResult:
