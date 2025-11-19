@@ -1,5 +1,5 @@
 from polars import DataFrame
-from result import Result
+from .result import Result
 
 
 class ComparisonResult:
