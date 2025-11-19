@@ -19,8 +19,11 @@ class TestBeetlFunctions(unittest.TestCase):
     def setUpClass(self):
         self.basicConfig = to_static()
 
+        if not os.path.isdir("/tmp"):
+            os.mkdir(os.path.normpath("/tmp"))
+
         if not os.path.isdir("/tmp/beetl"):
-            os.mkdir("/tmp/beetl")
+            os.mkdir(os.path.normpath("/tmp/beetl"))
 
         with open("/tmp/beetl/test-basic-config.yaml", "w") as f:
             yaml.dump(self.basicConfig, f)
