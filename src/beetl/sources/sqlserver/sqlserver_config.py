@@ -84,7 +84,7 @@ class SqlserverSettingsArguments(ValidationBaseModel):
                 errstring = "You need to download a more recent version of the driver (Microsoft ODBC Driver 17 for SQL Server or above)"
                 found = [driver for driver in drivers() if driver.startswith("ODBC")]
                 if len(found) > 0:
-                    errstring = f"You have the following ODBC drivers installed, please use one of them or download a more recent version: {found.join(', ')}"
+                    errstring = f"You have the following ODBC drivers installed, please use one of them or download a more recent version: {', '.join(found)}"
 
                 errors.append(
                     InvalidDependencyError(
