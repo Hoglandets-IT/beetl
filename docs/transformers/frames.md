@@ -143,3 +143,19 @@ sourceTransformers:
     config:
       inField: disk_id
 ```
+
+## Coalesce
+Set a field to the value from the first field that is not null. 
+
+Given that the fields ["first_name", "full_name", "last_name"] are provided and their values are [null, "TestTestsson", "Testsson"]. The outfield of "name" will have the value "Test Testsson".
+
+```yaml
+- transformer: frames.conditional
+  config:
+    fields:
+      - first_name
+      - full_name
+      - last_name
+    outField: name
+```
+

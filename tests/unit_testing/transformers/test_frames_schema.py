@@ -105,6 +105,15 @@ class UnitTestFrameTransformersSchema(TestCase):
 
         self.assertValidatesSuccessfully(input, cls)
 
+    def test_coalesce__with_valid_input__model_is_valid(self):
+        cls = FramesTransformerSchema.Coalesce
+        input = {
+            "transformer": "frames.coalesce",
+            "config": {"fields": ("field1", "field2", "field3"), "outField": "field1"},
+        }
+
+        self.assertValidatesSuccessfully(input, cls)
+
     def assertValidatesSuccessfully(self, input, cls: TransformerSchemaBase):
         result = cls(**input)
 
