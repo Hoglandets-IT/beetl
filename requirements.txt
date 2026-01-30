@@ -26,3 +26,7 @@ faker
 # Also remove the pinned version in the pyproject.toml
 # https://github.com/pola-rs/polars/pull/21277
 connectorx<0.4.2
+
+# Local debugging
+pytest
+debugpy

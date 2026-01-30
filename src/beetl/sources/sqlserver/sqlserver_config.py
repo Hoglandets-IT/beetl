@@ -96,7 +96,13 @@ class SqlserverSettingsArguments(ValidationBaseModel):
                 )
 
             if len(sql_drivers) == 1 and sql_drivers[0] == "SQL Server":
-                errors.append(ConfigValueError("connection_string"))
+                errors.append(
+                    ConfigValueError(
+                        "connection_string",
+                        "The sql driver installed is not supported. You need to download a more recent version of the driver (Microsoft ODBC Driver 17 for SQL Server or above)",
+                        [],
+                    )
+                )
 
             return instance
 
