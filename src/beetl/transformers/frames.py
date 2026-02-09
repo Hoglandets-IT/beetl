@@ -1,5 +1,5 @@
 import json
-from typing import List
+from typing import List, Optional
 
 import polars as pl
 
@@ -227,3 +227,32 @@ class FrameTransformer(TransformerInterface):
                 new_obj.append(new_row)
 
         return pl.DataFrame(new_obj)
+
+    @staticmethod
+    def coalesce(
+        data: pl.DataFrame,
+        fields: tuple[str, ...],
+        outField: str,
+    ) -> pl.DataFrame:
+        """Set field to fields field value that isnt Null.
+
+        Args:
+            data (pl.DataFrame): The DataFrame to get distinct values from.
+            fields (tuple[str, ...]): Tuple of fields that will be tried for non Null values.
+            outField (str): The field where the value will be put.
+
+        Returns:
+            pl.DataFrame: DataFrame with the new field
+        """
+        for field in fields:
+            if field is None or field not in data.columns:
+                raise ValueError(
+                    f"When using the frames.coalesce transformer all fields must be valid fields present in the data. The field {field} is either Null or not in the dataframe."
+                )
+
+        if outField is None:
+            raise ValueError(
+                f"When using frames.coalesce transformer outField must be a non Null value."
+            )
+
+        return data.with_columns(pl.coalesce(fields).alias(outField))
