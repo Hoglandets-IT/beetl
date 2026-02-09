@@ -58,3 +58,28 @@ class UnitTestFramesTransformers(TestCase):
         self.assertEquals(
             json.dumps(result.to_dicts()), json.dumps(expected.to_dicts())
         )
+
+    def test_coalesce__with_valid_input__out_field_has_first_non_null_value(
+        self,
+    ):
+        data = DataFrame(
+            [
+                {"id": 1, "field1": None, "field2": 3, "field3": 4},
+            ]
+        )
+        config = {
+            "fields": ("field1", "field2", "field3"),
+            "outField": "out",
+        }
+
+        result = FrameTransformer.coalesce(data, **config)
+
+        expected = DataFrame(
+            [
+                {"id": 1, "field1": None, "field2": 3, "field3": 4, "out": 3},
+            ]
+        )
+
+        self.assertEquals(
+            json.dumps(result.to_dicts()), json.dumps(expected.to_dicts())
+        )

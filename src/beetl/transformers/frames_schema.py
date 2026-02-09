@@ -78,6 +78,14 @@ class FramesTransformerSchema:
         transformer: Literal["frames.extract_nested_rows"]
         config: Config
 
+    class Coalesce(TransformerSchemaBase):
+        class Config(TransformerConfigBase):
+            fields: tuple[str, ...]
+            outField: str
+
+        transformer: Literal["frames.coalesce"]
+        config: Config
+
 
 FramesTransformerSchemas = Union[
     FramesTransformerSchema.Filter,
@@ -88,4 +96,5 @@ FramesTransformerSchemas = Union[
     FramesTransformerSchema.ProjectColumns,
     FramesTransformerSchema.Distinct,
     FramesTransformerSchema.ExtractNestedRows,
+    FramesTransformerSchema.Coalesce,
 ]
