@@ -21,7 +21,10 @@ sources:
         password: "password"
         # verify_ssl: <string>, (optional, default="true")
         # Wether to verify or skip verifying the server ssl certificate
-        veryfy_ssl: "true"
+        verify_ssl: "true"
+        # Enable this if you are running itop on php version 8+ where dynamic properties have been deprecated.
+        # It will be very appearant since the sync will fail in the initialization step.
+        skip_credentials_verification: "false"
 ```
 
 ## Sync Settings
