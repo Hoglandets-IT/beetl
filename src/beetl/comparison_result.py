@@ -1,4 +1,5 @@
 from polars import DataFrame
+from .result import Result
 
 
 class ComparisonResult:
@@ -16,3 +17,11 @@ class ComparisonResult:
 
     def __repr__(self):
         return str(self)
+
+    def to_beetl_result(self):
+        result = Result()
+        result.inserts = self.create.height
+        result.updates = self.update.height
+        result.deletes = self.delete.height
+        result.names = ("dry run",)
+        return result

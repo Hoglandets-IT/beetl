@@ -13,6 +13,13 @@ class ItopConfigArguments(SourceConfigArguments):
         username: Annotated[str, Field(min_length=1)]
         password: Annotated[str, Field(min_length=1)]
         verify_ssl: Annotated[str, Field(default="true")]
+        skip_credentials_verification: Annotated[
+            str,
+            Field(
+                default="false",
+                description="Enable this if you run an itop version where the check_credendials api call has not been adapted to the new php dynamic properties deprication. The fix is not present in the latest itop version 3.2.2. The request will fail completely otherwise.",
+            ),
+        ]
 
         @model_validator(mode="before")
         def transform_input(cls, values):
@@ -22,10 +29,18 @@ class ItopConfigArguments(SourceConfigArguments):
             transformed_values["username"] = settings.get("username", None)
             transformed_values["password"] = settings.get("password", None)
             transformed_values["verify_ssl"] = settings.get("verify_ssl", "true")
+            transformed_values["skip_credentials_verification"] = settings.get(
+                "skip_credentials_verification", "false"
+            )
 
             if type(transformed_values["verify_ssl"]) is bool:
                 transformed_values["verify_ssl"] = str(
                     transformed_values["verify_ssl"]
+                ).lower()
+
+            if type(transformed_values["skip_credentials_verification"]) is bool:
+                transformed_values["skip_credentials_verification"] = str(
+                    transformed_values["skip_credentials_verification"]
                 ).lower()
             return transformed_values
 
@@ -40,6 +55,7 @@ class ItopConfig(SourceConfig):
     username: str
     password: str
     verify_ssl: bool
+    skip_credentials_verification: bool
 
     def __init__(self, arguments: ItopConfigArguments):
         super().__init__(arguments)
@@ -47,3 +63,6 @@ class ItopConfig(SourceConfig):
         self.username = arguments.connection.username
         self.password = arguments.connection.password
         self.verify_ssl = arguments.connection.verify_ssl == "true"
+        self.skip_credentials_verification = (
+            arguments.connection.skip_credentials_verification == "true"
+        )

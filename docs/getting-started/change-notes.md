@@ -1,4 +1,9 @@
 # Change Notes
+## 1.4.0
+### Changes 🔄
+- Added support for turning off credential validation when integrating with itop since the endpoint on itop versions running php 8+ is currently broken.
+- Added the coalesce transformer.
+
 ## 1.3.1
 ### Changes 🔄
 - Added support for namespaces in the XML source. See the example in the [sync settings](/sources/xml.html).

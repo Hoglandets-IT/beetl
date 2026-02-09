@@ -51,7 +51,9 @@ class ItopSource(SourceInterface):
 
         self.url = f"https://{self.connection_settings.host}/webservices/rest.php?version=1.3&login_mode=form"
 
-        # Test Connection
+        if self.connection_settings.skip_credentials_verification:
+            return
+
         files = self._create_body(
             "core/check_credentials",
             {
