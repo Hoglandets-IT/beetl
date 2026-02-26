@@ -4,7 +4,7 @@ Definition for the SqlServer source
 
 import json
 from typing import Optional
-from uuid import uuid4
+from uuid import uuid4, UUID
 
 import pandas as pd
 import polars as pl
@@ -138,13 +138,30 @@ class SqlserverSource(SourceInterface):
 
         return self._insert(data)
 
-    # Help function to handle COLLATE
-    def _collate_clause(
-        self, column_name: str, schema: dict, left_alias: str, right_alias: str
-    ):
-        dtype = schema.get(column_name)
+    def _is_valid_uuid(self, value):
+        try:
+            UUID(str(value))
+            return True
+        except ValueError:
+            return False
 
-        if dtype in (pl.Utf8, pl.String):
+    def _collate_clause(
+        self, column_name: str, data: pl.DataFrame, left_alias: str, right_alias: str
+    ):
+        dtype = data.schema.get(column_name)
+
+        type_is_string = dtype in (pl.Utf8, pl.String)
+        first_value = (
+            data.filter(
+                pl.col(column_name).is_not_null(), pl.col(column_name).eq("").not_()
+            )[column_name].first()
+            if type_is_string
+            else None
+        )
+        is_uuid = self._is_valid_uuid(first_value) if first_value is not None else False
+        should_collate_string = type_is_string and not is_uuid
+
+        if should_collate_string:
             return (
                 f"TRY_CONVERT(NVARCHAR, {left_alias}.[{column_name}]) COLLATE DATABASE_DEFAULT = "
                 f"TRY_CONVERT(NVARCHAR, {right_alias}.[{column_name}]) COLLATE DATABASE_DEFAULT"
@@ -175,9 +192,8 @@ class SqlserverSource(SourceInterface):
             )
         )
 
-        schema = data.schema
         on_clause = " AND ".join(
-            self._collate_clause(column_name, schema, "TDEST", "TTEMP")
+            self._collate_clause(column_name, data, "TDEST", "TTEMP")
             for column_name in self.source_configuration.unique_columns
         )
 
@@ -203,10 +219,9 @@ class SqlserverSource(SourceInterface):
         tempDB = self._get_temp_table_name(self.source_configuration.table)
         self._insert(data, table=tempDB, tempDB=True)
 
-        schema = data.schema
         where_clause = " AND ".join(
             (
-                self._collate_clause(column_name, schema, "TTEMP", "TDEST")
+                self._collate_clause(column_name, data, "TTEMP", "TDEST")
                 for column_name in self.source_configuration.unique_columns
             )
         )
