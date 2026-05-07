@@ -60,8 +60,8 @@ class UnitTestMiscTransformers(TestCase):
 
         expected = DataFrame(
             [
+                {"municipality": "stockholm", "municipalityCode": "0180"},
                 {"municipality": "TRANÅS", "municipalityCode": "0564"},
-                {"municipality": "STOCKHOLM", "municipalityCode": "0180"},
                 {"municipality": "GöTEBORG", "municipalityCode": "1480"},
                 {"municipality": "MALMÖ", "municipalityCode": "1280"},
             ]
