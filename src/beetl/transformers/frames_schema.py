@@ -86,6 +86,17 @@ class FramesTransformerSchema:
         transformer: Literal["frames.coalesce"]
         config: Config
 
+    class CoalesceIf(TransformerSchemaBase):
+        class Config(TransformerConfigBase):
+            conditionField: Annotated[str, Field(min_length=1)]
+            conditionValue: str | int | bool
+            trueField: Annotated[str, Field(min_length=1)]
+            falseField: Annotated[str, Field(min_length=1)]
+            outField: Annotated[str, Field(min_length=1)]
+
+        transformer: Literal["frames.coalesce_if"]
+        config: Config
+
 
 FramesTransformerSchemas = Union[
     FramesTransformerSchema.Filter,
@@ -97,4 +108,5 @@ FramesTransformerSchemas = Union[
     FramesTransformerSchema.Distinct,
     FramesTransformerSchema.ExtractNestedRows,
     FramesTransformerSchema.Coalesce,
+    FramesTransformerSchema.CoalesceIf,
 ]
