@@ -256,3 +256,24 @@ class FrameTransformer(TransformerInterface):
             )
 
         return data.with_columns(pl.coalesce(fields).alias(outField))
+
+    @staticmethod
+    def coalesce_if(
+        data: pl.DataFrame,
+        conditionField: str,
+        conditionValue: str | int | bool,
+        trueField: str,
+        falseField: str,
+        outField: str,
+    ) -> pl.DataFrame:
+        __class__._validate_fields(
+            data.columns,
+            [conditionField, trueField, falseField],
+        )
+
+        return data.with_columns(
+            pl.when(pl.col(conditionField) == conditionValue)
+                .then(pl.col(trueField))
+                .otherwise(pl.col(falseField))
+                .alias(outField)
+            )
