@@ -2,7 +2,6 @@ import json
 from typing import List, Optional
 
 import polars as pl
-from tests.benchmark_testing.tools import data
 
 from ..constants import RESERVED_IDENTIFIERS
 from .interface import TransformerInterface, register_transformer_class
