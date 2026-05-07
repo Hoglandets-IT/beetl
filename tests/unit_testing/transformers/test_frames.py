@@ -83,3 +83,40 @@ class UnitTestFramesTransformers(TestCase):
         self.assertEquals(
             json.dumps(result.to_dicts()), json.dumps(expected.to_dicts())
         )
+
+    def test_coalesce_if__with_valid_input__out_field_is_selected_by_condition(
+        self,
+    ):
+        data = DataFrame(
+            [
+                {"isActive": True, "primaryValue": "A", "fallbackValue": "B"},
+                {"isActive": False, "primaryValue": "C", "fallbackValue": "D"},
+            ]
+        )
+        config = {
+            "conditionField": "isActive",
+            "conditionValue": True,
+            "trueField": "primaryValue",
+            "falseField": "fallbackValue",
+            "outField": "selectedValue",
+        }
+        result = FrameTransformer.coalesce_if(data, **config)
+        expected = DataFrame(
+            [
+                {
+                    "isActive": True,
+                    "primaryValue": "A",
+                    "fallbackValue": "B",
+                    "selectedValue": "A",
+                },
+                {
+                    "isActive": False,
+                    "primaryValue": "C",
+                    "fallbackValue": "D",
+                    "selectedValue": "D",
+                },
+            ]
+        )
+        self.assertEqual(
+            json.dumps(result.to_dicts()), json.dumps(expected.to_dicts())
+        )
