@@ -89,7 +89,7 @@ class FramesTransformerSchema:
     class CoalesceIf(TransformerSchemaBase):
         class Config(TransformerConfigBase):
             conditionField: Annotated[str, Field(min_length=1)]
-            conditionValue: str | int | bool
+            conditionValue: str | int | bool | None
             trueField: Annotated[str, Field(min_length=1)]
             falseField: Annotated[str, Field(min_length=1)]
             outField: Annotated[str, Field(min_length=1)]

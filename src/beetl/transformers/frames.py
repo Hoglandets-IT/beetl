@@ -261,7 +261,7 @@ class FrameTransformer(TransformerInterface):
     def coalesce_if(
         data: pl.DataFrame,
         conditionField: str,
-        conditionValue: str | int | bool,
+        conditionValue: str | int | bool | None,
         trueField: str,
         falseField: str,
         outField: str,
@@ -271,8 +271,14 @@ class FrameTransformer(TransformerInterface):
             [conditionField, trueField, falseField],
         )
 
+        condition = (
+            pl.col(conditionField).is_null()
+            if conditionValue is None
+            else pl.col(conditionField) == conditionValue
+        )
+
         return data.with_columns(
-            pl.when(pl.col(conditionField) == conditionValue)
+            pl.when(condition)
                 .then(pl.col(trueField))
                 .otherwise(pl.col(falseField))
                 .alias(outField)
