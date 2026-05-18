@@ -145,13 +145,13 @@ class UnitTestFramesTransformers(TestCase):
                     "isNone": "not None",
                     "primaryValue": "A",
                     "fallbackValue": "B",
-                    "selectedValue": "A",
+                    "selectedValue": "B",
                 },
                 {
                     "isNone": None,
                     "primaryValue": "C",
                     "fallbackValue": "D",
-                    "selectedValue": "D",
+                    "selectedValue": "C",
                 },
             ]
         )
