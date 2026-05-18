@@ -134,7 +134,7 @@ class UnitTestFrameTransformersSchema(TestCase):
 
         self.assertValidatesSuccessfully(input, cls)
 
-def test_coalesce_if__with_valid_input__model_is_valid_with_none_condition_value(self):
+    def test_coalesce_if__with_valid_input__model_is_valid_with_none_condition_value(self):
         cls = FramesTransformerSchema.CoalesceIf
         input = {
             "transformer": "frames.coalesce_if",
