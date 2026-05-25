@@ -61,6 +61,18 @@ class UnitTestStructTransformersSchema(TestCase):
 
         self.assertValidatesSuccessfully(input, cls)
 
+    def test_list_columns_to_key_value_rows__with_valid_input__model_is_valid(self):
+        cls = StructTransformerSchema.ListColumnsToKeyValueRows
+        input = {
+            "transformer": "structs.list_columns_to_key_value_rows",
+            "config": {
+                "keyField": "field1",
+                "listField": "field2",
+            }
+        }
+
+        self.assertValidatesSuccessfully(input, cls)
+
     def assertValidatesSuccessfully(self, input, cls: TransformerSchemaBase):
         result = cls(**input)
 
