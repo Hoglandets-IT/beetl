@@ -98,3 +98,34 @@ Adds a static field to the dataset
     # default=False
     only_add_if_missing: False
 ```
+
+## List Columns to Key Value Rows
+Converts a list-valued column into key-value rows. Each processed column name is used as the key, and each item in that column's list becomes a separate row.
+
+This is useful when an object/map has been normalized into DataFrame columns, where the original object keys are now column names and the column values are lists.
+
+```yaml
+- transformer: structs.list_columns_to_key_value_rows
+  config:
+    # keyField: The destination field that will contain the source column name. (Mandatory)
+    keyField: id
+    # listField: The destination field that will contain each item from the list. (Mandatory)
+    listField: names
+    # objSource: Only process this column. If omitted, all columns are processed. (Optional)
+```
+
+### Example
+If the configuration above was used on this DataFrame:
+
+|       someID      | 
+| ----------------- | 
+| `["John", "Jane"]`| 
+
+You would get the following DataFrame:
+
+|   id   |  name  |
+| ------ | ------ | 
+| someID | "John" |
+| someID | "Jane" |
+
+If used with a vlue for objSource it would then use the it would transform that column.
