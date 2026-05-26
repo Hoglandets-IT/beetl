@@ -27,4 +27,3 @@ node_modules
 /*.xml
 config.mts.timestamp*.mjs
 .temp
-report.html

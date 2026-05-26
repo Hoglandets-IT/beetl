@@ -1,8 +1,4 @@
 # Change Notes
-## 1.4.1
-### Bugfixes 🐛
-- Fixed bug where sqlserver source incorrectly compared uniqueidentifier type fields.
-
 ## 1.4.0
 ### Changes 🔄
 - Added support for turning off credential validation when integrating with itop since the endpoint on itop versions running php 8+ is currently broken.

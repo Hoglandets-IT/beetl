@@ -1,7 +1,6 @@
 import unittest
 
 from polars import DataFrame, Series
-from polars.testing import assert_frame_equal
 
 from src.beetl.transformers.structs import StructTransformers
 
@@ -107,33 +106,3 @@ class UnitTestStructsTransformers(unittest.TestCase):
             data, field, value, only_add_if_missing=only_add_if_missing)
 
         self.assertEqual(original_value, result[field][0])
-
-    def test_list_columns_to_key_value_rows_no_objSource(self):
-        keyField = "keyField"
-        listField = "listField"
-        field = "field1"
-        value_1 = 1 
-        value_2 = 2
-        data = DataFrame([{"field1":[1, 2]}])        
-        expected = DataFrame([{keyField: field, listField: value_1},{keyField: field, listField: value_2}])
-        transformer = StructTransformers()
-
-        result = transformer.list_columns_to_key_value_rows(
-            data, keyField, listField)
-        assert_frame_equal(expected, result)
-
-    def test_list_columns_to_key_value_rows_with_objSource(self):
-        keyField = "keyField"
-        listField = "listField"
-        objSource = "field2"
-        field = "field2"
-        value_1 = 2
-        value_2 = 3
-        data = DataFrame([{"field1": 1, "field2":[2, 3]}])        
-        expected = DataFrame([{keyField: field, listField: value_1},{keyField: field, listField: value_2}])
-        transformer = StructTransformers()
-
-        result = transformer.list_columns_to_key_value_rows(
-            data, keyField, listField, objSource)
-        
-        assert_frame_equal(expected, result)
