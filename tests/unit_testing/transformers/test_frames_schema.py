@@ -118,3 +118,33 @@ class UnitTestFrameTransformersSchema(TestCase):
         result = cls(**input)
 
         self.assertIsNotNone(result)
+
+    def test_coalesce_if__with_valid_input__model_is_valid(self):
+        cls = FramesTransformerSchema.CoalesceIf
+        input = {
+            "transformer": "frames.coalesce_if",
+            "config": {
+                "conditionField": "isActive",
+                "conditionValue": True,
+                "trueField": "primaryValue",
+                "falseField": "fallbackValue",
+                "outField": "selectedValue",
+            },
+        }
+
+        self.assertValidatesSuccessfully(input, cls)
+
+    def test_coalesce_if__with_valid_input__model_is_valid_with_none_condition_value(self):
+        cls = FramesTransformerSchema.CoalesceIf
+        input = {
+            "transformer": "frames.coalesce_if",
+            "config": {
+                "conditionField": "isActive",
+                "conditionValue": None,
+                "trueField": "primaryValue",
+                "falseField": "fallbackValue",
+                "outField": "selectedValue",
+            },
+        }
+
+        self.assertValidatesSuccessfully(input, cls)

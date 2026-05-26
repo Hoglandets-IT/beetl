@@ -26,3 +26,37 @@ class UnitTestMiscTransformersSchema(TestCase):
         result = cls(**input)
 
         self.assertIsNotNone(result)
+
+    def test_lookup__with_valid_input__model_is_valid(self):
+        cls = MiscTransformerSchema.Lookup
+        input = {
+            "transformer": "misc.lookup",
+            "config": {
+                "inField": "municipality",
+                "outField": "municipalityCode",
+                "mapping": {
+                    "TRANÅS": "0687",
+                    "STOCKHOLM": "0180",
+                    "GöTEBORG": "1480",
+                    "MALMÖ": "1280",
+                },
+                "caseInsensitive": True,
+            },
+        }
+
+        self.assertValidatesSuccessfully(input, cls)
+
+
+    def test_guid_from_fields__with_valid_input__model_is_valid(self):
+        cls = MiscTransformerSchema.GuidFromFields
+        input = {
+            "transformer": "misc.guid_from_fields",
+            "config": {
+                "inFields": ["field1", "field2"],
+                "outField": "externalId",
+                "separator": "|",
+                "namespace": "beetl",
+            },
+        }
+
+        self.assertValidatesSuccessfully(input, cls)
