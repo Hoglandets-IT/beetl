@@ -39,4 +39,3 @@ xsl = ["lxml"]
 
 [tool.setuptools]
 package-dir = { "" = "src" }
-

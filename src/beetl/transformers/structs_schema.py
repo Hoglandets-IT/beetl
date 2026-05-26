@@ -41,20 +41,10 @@ class StructTransformerSchema:
         transformer: Literal["structs.compose_list_of_structs"]
         config: "StructTransformerSchema.ComposeListOfStructs.Config"
 
-    class ListColumnsToKeyValueRows(TransformerSchemaBase):
-        class Config(TransformerConfigBase):
-            keyField: Annotated[str, Field(min_length=1)]
-            listField: Annotated[str, Field(min_length=1)]
-            objSource: Optional[str] = None
-        
-        transformer: Literal["structs.list_columns_to_key_value_rows"]
-        config: "StructTransformerSchema.ListColumnsToKeyValueRows.Config"
-
 
 StructTransformerSchemas = Union[
     StructTransformerSchema.StaticField,
     StructTransformerSchema.Jsonpath,
     StructTransformerSchema.ComposeStruct,
     StructTransformerSchema.ComposeListOfStructs,
-    StructTransformerSchema.ListColumnsToKeyValueRows,
 ]

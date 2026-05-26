@@ -29,5 +29,4 @@ connectorx<0.4.2
 
 # Local debugging
 pytest
-pytest-html
 debugpy
