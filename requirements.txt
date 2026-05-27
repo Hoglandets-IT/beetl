@@ -29,4 +29,6 @@ connectorx<0.4.2
 
 # Local debugging
 pytest
+pytest-html
 debugpy
+zipp>=3.19.1 # not directly required, pinned by Snyk to avoid a vulnerability
