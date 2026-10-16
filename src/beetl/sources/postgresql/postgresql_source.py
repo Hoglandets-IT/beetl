@@ -90,7 +90,7 @@ class PostgresSource(SourceInterface):
         temp_table_name = (
             self.source_configuration.table
             + "_udTemp_"
-            + str(uuid.uuid4()).replace("-", "")
+            + str(uuid.uuid4()).replace("-", "")[:16]
         ).lower()
 
         try:
