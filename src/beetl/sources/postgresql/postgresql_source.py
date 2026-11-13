@@ -1,7 +1,8 @@
 """Contains the Postgresql source implementation."""
 
 import json
-import uuid
+import secrets
+import string
 from typing import Any
 
 import polars as pl
@@ -89,8 +90,11 @@ class PostgresSource(SourceInterface):
         self._validate_unique_columns()
         temp_table_name = (
             self.source_configuration.table
-            + "_udTemp_"
-            + str(uuid.uuid4()).replace("-", "")[:10]
+            + "_utmp_"
+            + "".join(
+                secrets.choice(string.ascii_lowercase + string.digits)
+                for _ in range(4)
+            )
         ).lower()
 
         try:
