@@ -1,6 +1,8 @@
 """A source for MySQL data"""
 
 import json
+import secrets
+import string
 from typing import Any
 
 import polars as pl
@@ -115,7 +117,14 @@ class MysqlSource(SourceInterface):
     def update(self, data: pl.DataFrame):
         self._validate_unique_columns()
 
-        tempDB = (self.source_configuration.table + "_udTemp").lower()
+        tempDB = (
+            self.source_configuration.table
+            + "_utmp_"
+            + "".join(
+                secrets.choice(string.ascii_lowercase + string.digits)
+                for _ in range(4)
+            )
+        ).lower()
         try:
             with sqla.create_engine(
                 self.connection_settings.connection_string
