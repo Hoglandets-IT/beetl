@@ -1,9 +1,14 @@
-FROM python:3.11-trixie
+FROM python:3.11
 
 WORKDIR /app
 
-RUN curl https://packages.microsoft.com/keys/microsoft.asc | tee /etc/apt/trusted.gpg.d/microsoft.asc \
-    && curl https://packages.microsoft.com/config/debian/13/prod.list | tee /etc/apt/sources.list.d/mssql-release.list \
+RUN curl https://packages.microsoft.com/keys/microsoft-2025.asc | tee /etc/apt/trusted.gpg.d/microsoft.asc \
+    && set +e \
+    && . /etc/os-release \
+    && cat /etc/os-release \
+    && curl -sSL -O "https://packages.microsoft.com/config/${ID}/${VERSION_ID}/packages-microsoft-prod.deb" \
+    && dpkg -i packages-microsoft-prod.deb \
+    && rm packages-microsoft-prod.deb \
     && apt-get update \
     && ACCEPT_EULA=Y apt-get -y install libmariadb-dev libpq-dev unixodbc unixodbc-dev python3-venv msodbcsql18 libgssapi-krb5-2 \
     && apt-get clean \
